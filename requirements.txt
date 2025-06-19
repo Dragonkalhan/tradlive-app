@@ -1,5 +1,5 @@
 Flask==2.3.3
 deep-translator==1.11.4
 qrcode==7.4.2
-Pillow==10.0.0
+Pillow==10.4.0
 gunicorn==21.2.0
