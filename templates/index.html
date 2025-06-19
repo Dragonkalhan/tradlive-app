@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradLive</title>
+    <style>
+        /* CSS de base */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        select, button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab {
+            padding: 10px 15px;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #record-status {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .pulse {
+            animation: pulse 1.5s infinite;
+            color: #e74c3c;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .mic-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e74c3c;
+            color: white;
+            width: 120px;
+            height: 40px;
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+        .mic-button:hover {
+            background-color: #c0392b;
+        }
+        .mic-button.recording {
+            background-color: #27ae60;
+        }
+        .mic-button.recording:hover {
+            background-color: #2ecc71;
+        }
+        .listening-animation {
+            display: none;
+            margin-top: 10px;
+        }
+        .listening-animation.active {
+            display: block;
+        }
+        .bar {
+            display: inline-block;
+            width: 5px;
+            height: 10px;
+            margin: 0 2px;
+            background-color: #3498db;
+            animation: soundBars 0.5s infinite alternate;
+        }
+        .bar:nth-child(2) { animation-delay: 0.1s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-delay: 0.3s; }
+        .bar:nth-child(5) { animation-delay: 0.4s; }
+        
+        @keyframes soundBars {
+            0% { height: 10px; }
+            100% { height: 30px; }
+        }
+        
+        /* CSS pour le compteur et l'onde sonore */
+        #recording-timer {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #27ae60;
+        }
+        
+        .audio-wave {
+            display: none;
+            height: 60px;
+            width: 100%;
+            margin: 15px 0;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .audio-wave.active {
+            display: flex;
+        }
+        
+        .wave-bar {
+            display: inline-block;
+            width: 5px;
+            margin: 0 3px;
+            background-color: #3498db;
+            border-radius: 2px;
+            animation: waveAnimation 0.5s infinite alternate;
+        }
+        
+        @keyframes waveAnimation {
+            0% { height: 10px; }
+            100% { height: 50px; }
+        }
+        
+        /* Différents délais pour créer un effet d'onde */
+        .wave-bar:nth-child(1) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.5s; }
+        .wave-bar:nth-child(6) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(7) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(8) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(9) { animation-delay: 0.1s; }
+        
+        /* Style pour le bouton d'arrêt */
+        #stopRecord {
+            background-color: #e74c3c;
+            margin-left: 10px;
+        }
+        
+        #stopRecord:hover {
+            background-color: #c0392b;
+        }
+        
+        /* Désactiver les boutons */
+        .disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Style pour la nouvelle section d'alerte d'installation */
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            border-left: 5px solid;
+        }
+        
+        .alert-info {
+            background-color: #e8f4f8;
+            border-left-color: #3498db;
+            color: #2c3e50;
+        }
+        
+        .alert h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+        
+        .alert ol {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+        
+        .alert li {
+            margin-bottom: 5px;
+        }
+        
+        .alert a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .alert a:hover {
+            text-decoration: underline;
+        }
+
+        /* Styles pour le nouveau code */
+        .text-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .text-box {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        
+        #original-text, #translated-text {
+            min-height: 80px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        #status {
+            font-style: italic;
+            margin: 10px 0;
+            color: #666;
+        }
+
+        #mic-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 50px;
+            background-color: #f0f0f0;
+            border: 2px solid #ccc;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 15px 0;
+            display: block;
+        }
+        
+        #mic-button.active {
+            background-color: #ff5252;
+            color: white;
+            border-color: #ff5252;
+        }
+        
+        /* Nouveaux styles pour le QR code et bouton d'aide */
+        .header-container {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 30px;  /* Augmenté pour créer plus d'espace */
+        }
+        
+        .title-section {
+            text-align: center;
+            width: 100%;
+            margin-top: 20px;  /* Ajoute un espace au-dessus du titre */
+            margin-bottom: 15px;  /* Ajoute un espace en dessous du titre */
+            border-bottom: 1px solid #e0e0e0;  /* Ligne de séparation */
+            padding-bottom: 15px;  /* Espace après le titre avant la ligne */
+        }
+        
+        .left-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-right: 20px;
+        }
+        
+        .qrcode-container {
+            text-align: center;
+            margin-left: 20px;
+        }
+        
+        .qrcode-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            width: 150px;
+        }
+        
+        .qrcode-box img {
+            width: 100%;
+            height: auto;
+        }
+        
+        .qrcode-caption {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .settings-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .settings-icon {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #3498db;
+        }
+        
+        .settings-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .spacer {
+            flex-grow: 1;  /* Prend l'espace disponible entre les deux conteneurs */
+        }
+        
+        
+        .help-content {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        .help-content.visible {
+            display: block;
+        }
+        
+        .tunnel-status {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .tunnel-status.direct {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .tunnel-status.ngrok {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .tunnel-info {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #666;
+        }
+        
+        /* Styles pour le sélecteur de mode */
+        .mode-selector {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .mode-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            width: 250px;
+            margin: 0 auto;
+        }
+        
+        .mode-button.standard {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .mode-button.response {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .mode-icon {
+            font-size: 18px;
+            margin-right: 8px;
+        }
+        
+        .language-direction {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .arrow-icon {
+            margin: 0 10px;
+            font-size: 16px;
+        }
+        
+        /* Mise à jour pour les boîtes de texte */
+        .language-label {
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <div class="left-controls">
+            <div class="settings-button">
+                <button class="settings-icon" id="settings-button">⚙️</button>
+                <div class="settings-label">En cas de problème clique ici</div>
+            </div>
+            <div id="server-mode" class="tunnel-info">Mode: Chargement...</div>
+        </div>
+        <div class="spacer"></div>
+        <div class="qrcode-container">
+            <div class="qrcode-box">
+                <img src="/qrcode" alt="QR Code" id="qr-code-image">
+                <div class="qrcode-caption">Scanne-moi avec ton téléphone</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="title-section">
+        <h1>TradLive - Traduction en temps réel</h1>
+    </div>
+    
+    <div id="help-content" class="help-content">
+        <h4>Installation sur votre téléphone</h4>
+        <p><strong>Téléchargez le certificat</strong> sur votre téléphone:</p>
+        <ol>
+            <li><a href="/certificate" download>Télécharger le certificat</a></li>
+            <li>
+                <strong>Sur Android:</strong> Allez dans Paramètres > Sécurité > 
+                Chiffrement et identifiants > Installer un certificat > Certificat CA
+            </li>
+            <li>
+                <strong>Sur iPhone:</strong> Après téléchargement, suivez les instructions 
+                dans Réglages
+            </li>
+        </ol>
+    </div>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('text-tab')">Texte</div>
+        <div class="tab" onclick="showTab('mic-tab')">Microphone</div>
+    </div>
+    
+    <div id="text-tab" class="tab-content active">
+        <form method="POST" action="/">
+            <textarea name="text" placeholder="Écrivez le texte à traduire ici...">{{ original }}</textarea>
+            <div>
+                <select name="lang" id="text-lang">
+                    <option value="en" {% if lang == 'en' %}selected{% endif %}>Anglais</option>
+                    <option value="uk" {% if lang == 'uk' %}selected{% endif %}>Ukrainien</option>
+                    <option value="ar" {% if lang == 'ar' %}selected{% endif %}>Arabe</option>
+                    <option value="fa" {% if lang == 'fa' %}selected{% endif %}>Persan</option>
+                    <option value="es" {% if lang == 'es' %}selected{% endif %}>Espagnol</option>
+                    <option value="hi" {% if lang == 'hi' %}selected{% endif %}>Hindi</option>
+                    <option value="bn" {% if lang == 'bn' %}selected{% endif %}>Bengali</option>
+                    <option value="te" {% if lang == 'te' %}selected{% endif %}>Télougou</option>
+                    <option value="mr" {% if lang == 'mr' %}selected{% endif %}>Marathi</option>
+                    <option value="de" {% if lang == 'de' %}selected{% endif %}>Allemand</option>
+                    <option value="it" {% if lang == 'it' %}selected{% endif %}>Italien</option>
+                    <option value="pt" {% if lang == 'pt' %}selected{% endif %}>Portugais</option>
+                    <option value="ru" {% if lang == 'ru' %}selected{% endif %}>Russe</option>
+                    <option value="ja" {% if lang == 'ja' %}selected{% endif %}>Japonais</option>
+                    <option value="zh-CN" {% if lang == 'zh-CN' %}selected{% endif %}>Chinois</option>
+                </select>
+                <button type="submit">Traduire</button>
+            </div>
+        </form>
+    </div>
+    
+    <div id="mic-tab" class="tab-content">
+        <div id="status">Cliquez sur le bouton micro pour parler</div>
+        <select id="lang-select" name="lang">
+            <option value="en" {% if lang == "en" %}selected{% endif %}>Anglais</option>
+            <option value="es" {% if lang == "es" %}selected{% endif %}>Espagnol</option>
+            <option value="de" {% if lang == "de" %}selected{% endif %}>Allemand</option>
+            <option value="it" {% if lang == "it" %}selected{% endif %}>Italien</option>
+            <option value="pt" {% if lang == "pt" %}selected{% endif %}>Portugais</option>
+            <option value="ru" {% if lang == "ru" %}selected{% endif %}>Russe</option>
+            <option value="zh-CN" {% if lang == "zh-CN" %}selected{% endif %}>Chinois</option>
+            <option value="ja" {% if lang == "ja" %}selected{% endif %}>Japonais</option>
+            <option value="ar" {% if lang == "ar" %}selected{% endif %}>Arabe</option>
+            <option value="uk" {% if lang == "uk" %}selected{% endif %}>Ukrainien</option>
+            <option value="fa" {% if lang == "fa" %}selected{% endif %}>Persan</option>
+            <option value="hi" {% if lang == "hi" %}selected{% endif %}>Hindi</option>
+            <option value="bn" {% if lang == "bn" %}selected{% endif %}>Bengali</option>
+            <option value="te" {% if lang == "te" %}selected{% endif %}>Télougou</option>
+            <option value="mr" {% if lang == "mr" %}selected{% endif %}>Marathi</option>
+        </select>
+        
+        <!-- Nouveau bouton pour basculer le mode -->
+        <div class="mode-selector">
+            <button id="mode-toggle" class="mode-button standard">
+                <span class="mode-icon">🗣️</span>
+                <span class="mode-label">Mode : Vous parlez</span>
+            </button>
+        </div>
+        
+        <button id="mic-button" class="mic-button">🎤 Activer Micro</button>
+        <div class="text-container">
+            <div class="text-box">
+                <h3>Texte Original (<span class="language-label">Français</span>)</h3>
+                <p id="original-text">{{ original }}</p>
+            </div>
+            <div class="text-box">
+                <h3>Traduction (<span class="language-label" id="target-lang-label">{{ lang }}</span>)</h3>
+                <p id="translated-text">{{ translated }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Affichage des onglets
+        function showTab(tabId) {
+            // Cacher tous les contenus
+            var contents = document.getElementsByClassName('tab-content');
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
+            
+            // Désactiver tous les onglets
+            var tabs = document.getElementsByClassName('tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            // Activer l'onglet et le contenu sélectionnés
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector('.tab[onclick*="' + tabId + '"]').classList.add('active');
+        }
+        
+        // Code pour le microphone
+        document.addEventListener('DOMContentLoaded', function() {
+            const micButton = document.getElementById('mic-button');
+            const status = document.getElementById('status');
+            const originalText = document.getElementById('original-text');
+            const translatedText = document.getElementById('translated-text');
+            const langSelect = document.getElementById('lang-select');
+            const settingsButton = document.getElementById('settings-button');
+            const helpContent = document.getElementById('help-content');
+            const qrCodeImage = document.getElementById('qr-code-image');
+            const serverModeInfo = document.getElementById('server-mode');
+            const modeToggle = document.getElementById('mode-toggle');
+            const targetLangLabel = document.getElementById('target-lang-label');
+
+            let recognition;
+            let isListening = false;
+            let finalTranscript = '';
+            let processingTimeout = null;
+            let heartbeatInterval = null;
+            let isResponseMode = false;
+            
+            // Gestion du bouton de paramètres
+            settingsButton.addEventListener('click', function() {
+                helpContent.classList.toggle('visible');
+            });
+            
+            // Mettre à jour périodiquement le QR code et les infos du serveur
+            function updateServerInfo() {
+                // Mettre à jour le QR code (pour s'assurer qu'il est toujours à jour)
+                qrCodeImage.src = '/qrcode?' + new Date().getTime();
+                
+                // Récupérer les informations sur le mode du serveur
+                fetch('/server-status')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.mode === 'ngrok') {
+                            serverModeInfo.innerHTML = 'Mode: <span class="tunnel-status ngrok">Tunnel ngrok</span>';
+                            if (data.remaining) {
+                                serverModeInfo.innerHTML += `<br>Temps restant: ${data.remaining}`;
+                            }
+                        } else {
+                            serverModeInfo.innerHTML = 'Mode: <span class="tunnel-status direct">Direct</span>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de la récupération du statut du serveur:', error);
+                        serverModeInfo.textContent = 'Mode: Inconnu';
+                    });
+            }
+            
+            // Mettre à jour les informations toutes les 30 secondes
+            setInterval(updateServerInfo, 30000);
+            // Exécuter immédiatement au chargement
+            updateServerInfo();
+
+            // Démarrer le heartbeat dès le chargement de la page
+            startHeartbeat();
+
+            // Vérifier si la reconnaissance vocale est disponible
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                status.textContent = "La reconnaissance vocale n'est pas prise en charge par votre navigateur.";
+                micButton.disabled = true;
+                return;
+            }
+
+            // Initialiser la reconnaissance vocale
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            // Fonction pour créer une nouvelle instance de reconnaissance vocale en français
+            function createRecognition() {
+                const instance = new SpeechRecognition();
+                instance.lang = 'fr-FR';
+                instance.continuous = true;
+                instance.interimResults = true;
+                
+                // Gestion des résultats
+                instance.onresult = function(event) {
+                    const lastResultIndex = event.results.length - 1;
+                    const transcript = event.results[lastResultIndex][0].transcript;
+                    
+                    // Si c'est un résultat final
+                    if (event.results[lastResultIndex].isFinal) {
+                        finalTranscript = transcript;
+                        status.textContent = "Texte reconnu, traitement en cours...";
+                        originalText.textContent = finalTranscript;
+                        
+                        // Effacer tout timeout précédent
+                        if (processingTimeout) {
+                            clearTimeout(processingTimeout);
+                        }
+                        
+                        // Ajouter un délai pour éviter les traductions multiples
+                        processingTimeout = setTimeout(() => {
+                            const targetLang = langSelect.value;
+                            
+                            fetch('/translate', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    text: finalTranscript,
+                                    lang: targetLang
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                originalText.textContent = data.original;
+                                translatedText.textContent = data.translated;
+                            })
+                            .catch(error => {
+                                console.error('Erreur lors de la traduction:', error);
+                                status.textContent = 'Erreur de traduction. Veuillez réessayer.';
+                            });
+                        }, 1000); // Un délai de 1 seconde avant de traiter le résultat final
+                    } else {
+                        status.textContent = 'En cours: ' + transcript;
+                        originalText.textContent = transcript;
+                    }
+                };
+                
+                // Gestion des erreurs
+                instance.onerror = function(event) {
+                    console.error('Erreur de reconnaissance vocale:', event.error);
+                    status.textContent = "Erreur: " + event.error;
+                    toggleRecognition(false);
+                };
+                
+                // Arrêt automatique
+                instance.onend = function() {
+                    if (isListening) {
+                        try {
+                            instance.start();
+                        } catch (e) {
+                            console.error("Erreur lors du redémarrage de la reconnaissance:", e);
+                            status.textContent = "Impossible de continuer l'écoute. Veuillez réessayer.";
+                            toggleRecognition(false);
+                        }
+                    }
+                };
+                
+                return instance;
+            }
+            
+            // Fonction pour mettre à jour l'interface selon le mode
+            function updateModeUI() {
+                if (isResponseMode) {
+                    // Mode réponse : l'interlocuteur parle dans sa langue
+                    modeToggle.classList.remove('standard');
+                    modeToggle.classList.add('response');
+                    modeToggle.innerHTML = '<span class="mode-icon">👂</span><span class="mode-label">Mode : Ils répondent</span>';
+                    
+                    // Mettre à jour les en-têtes des boîtes de texte
+                    const langName = getLangNameFromCode(langSelect.value);
+                    document.querySelector('.text-box:first-child h3').innerHTML = 
+                        `Texte Original (<span class="language-label">${langName}</span>)`;
+                    document.querySelector('.text-box:last-child h3').innerHTML = 
+                        `Traduction (<span class="language-label">Français</span>)`;
+                    
+                    status.textContent = "Cliquez sur le micro pour que votre interlocuteur parle";
+                } else {
+                    // Mode standard : vous parlez en français
+                    modeToggle.classList.remove('response');
+                    modeToggle.classList.add('standard');
+                    modeToggle.innerHTML = '<span class="mode-icon">🗣️</span><span class="mode-label">Mode : Vous parlez</span>';
+                    
+                    // Remettre les en-têtes d'origine
+                    const langName = getLangNameFromCode(langSelect.value);
+                    document.querySelector('.text-box:first-child h3').innerHTML = 
+                        `Texte Original (<span class="language-label">Français</span>)`;
+                    document.querySelector('.text-box:last-child h3').innerHTML = 
+                        `Traduction (<span class="language-label">${langName}</span>)`;
+                    
+                    status.textContent = "Cliquez sur le bouton micro pour parler";
+                }
+                
+                // Si l'enregistrement est en cours, l'arrêter et réinitialiser
+                if (isListening) {
+                    toggleRecognition(false);
+                }
+            }
+            
+            // Obtenir le nom de la langue à partir du code
+            function getLangNameFromCode(code) {
+                const langNames = {
+                    'en': 'Anglais',
+                    'es': 'Espagnol',
+                    'de': 'Allemand',
+                    'it': 'Italien',
+                    'pt': 'Portugais',
+                    'ru': 'Russe',
+                    'zh-CN': 'Chinois',
+                    'ja': 'Japonais',
+                    'ar': 'Arabe',
+                    'uk': 'Ukrainien',
+                    'fa': 'Persan',
+                    'hi': 'Hindi',
+                    'bn': 'Bengali',
+                    'te': 'Télougou',
+                    'mr': 'Marathi'
+                };
+                return langNames[code] || code;
+            }
+            
+            // Basculer entre les modes
+            if (modeToggle) {
+                modeToggle.addEventListener('click', function() {
+                    isResponseMode = !isResponseMode;
+                    updateModeUI();
+                });
+            }
+            
+            // Mettre à jour l'interface quand on change de langue
+            if (langSelect) {
+                langSelect.addEventListener('change', function() {
+                    updateModeUI();
+                });
+            }
+            
+            // Fonction pour basculer l'état d'écoute
+            function toggleRecognition(startListening) {
+                if (startListening && !isListening) {
+                    // Vérifier l'accès au microphone
+                    navigator.mediaDevices.getUserMedia({ audio: true })
+                        .then(() => {
+                            // Créer l'instance de reconnaissance selon le mode actuel
+                            if (isResponseMode) {
+                                // En mode réponse, utiliser la langue sélectionnée
+                                recognition = createRecognitionForLanguage(langSelect.value);
+                            } else {
+                                // En mode standard, utiliser le français
+                                recognition = createRecognition();
+                            }
+                            
+                            recognition.start();
+                            isListening = true;
+                            micButton.textContent = '🎤 Arrêter Micro';
+                            micButton.classList.add('active');
+                            status.textContent = 'Écoute en cours...';
+                        })
+                        .catch(err => {
+                            console.error("Erreur d'accès au microphone:", err);
+                            status.textContent = "Veuillez autoriser l'accès au microphone.";
+                        });
+                } else if (!startListening && isListening) {
+                    if (recognition) {
+                        recognition.stop();
+                    }
+                    isListening = false;
+                    micButton.textContent = '🎤 Activer Micro';
+                    micButton.classList.remove('active');
+                    status.textContent = isResponseMode ? 
+                        "Cliquez sur le micro pour que votre interlocuteur parle" : 
+                        "Cliquez sur le bouton micro pour parler";
+                }
+            }
+            
+            // Gestion du clic sur le bouton
+            micButton.addEventListener('click', function() {
+                toggleRecognition(!isListening);
+            });
+            
+            // Système de polling pour le PC
+            function startPolling() {
+                // Vérifier s'il s'agit de l'ordinateur (pas le téléphone)
+                if (window.innerWidth >= 800) {  // Probablement un PC
+                    setInterval(() => {
+                        fetch('/check-updates')
+                            .then(response => response.json())
+                            .then(data => {
+                                // Si nous avons une nouvelle traduction
+                                if (data.original && data.translated) {
+                                    originalText.textContent = data.original;
+                                    translatedText.textContent = data.translated;
+                                }
+                            })
+                            .catch(error => console.error('Erreur de polling:', error));
+                    }, 1000);  // Vérifier toutes les secondes
+                }
+            }
+            
+            // Améliorez la fonction sendHeartbeat
+            function sendHeartbeat() {
+                fetch('/heartbeat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: 'active', timestamp: Date.now() })
+                })
+                .catch(error => {
+                    console.error('Erreur de heartbeat:', error);
+                });
+            }
+            
+            // Modifiez la fonction startHeartbeat pour être plus robuste
+            function startHeartbeat() {
+                // Envoyer un heartbeat immédiatement
+                sendHeartbeat();
+                
+                // Puis envoyer un heartbeat toutes les 5 secondes
+                heartbeatInterval = setInterval(sendHeartbeat, 5000);
+                
+                // S'assurer que les pings s'arrêtent lorsque la page est fermée
+                window.addEventListener('beforeunload', function(event) {
+                    // Arrêter les heartbeats périodiques
+                    if (heartbeatInterval) {
+                        clearInterval(heartbeatInterval);
+                    }
+                    
+                    // Envoyer une notification de fermeture explicite
+                    // Utiliser sendBeacon qui est conçu spécifiquement pour ce cas
+                    navigator.sendBeacon('/close', JSON.stringify({ status: 'closing' }));
+                });
+            }
+            
+            // Aussi, ajoutez une vérification périodique de la connexion
+            setInterval(function() {
+                fetch('/check-updates', { method: 'GET' })
+                    .catch(function(error) {
+                        console.error('Erreur de connexion au serveur:', error);
+                    });
+            }, 10000); // Vérifier toutes les 10 secondes
+            
+            // Démarrer le polling
+            startPolling();
+            
+            // Initialiser l'interface au chargement
+            if (modeToggle) {
+                updateModeUI();
+            }
+        });
+    </script>
+</body>
+</html>ognition(false);
+                };
+                
+                // Arrêt automatique
+                instance.onend = function() {
+                    if (isListening) {
+                        try {
+                            instance.start();
+                        } catch (e) {
+                            console.error("Erreur lors du redémarrage de la reconnaissance:", e);
+                            status.textContent = "Impossible de continuer l'écoute. Veuillez réessayer.";
+                            toggleRecognition(false);
+                        }
+                    }
+                };
+                
+                return instance;
+            }
+            
+            // Fonction pour créer une reconnaissance dans une langue spécifique
+            function createRecognitionForLanguage(lang) {
+                const instance = new SpeechRecognition();
+                
+                // Mapper les codes de langue pour la reconnaissance
+                switch(lang) {
+                    case 'en': instance.lang = 'en-US'; break;
+                    case 'es': instance.lang = 'es-ES'; break;
+                    case 'de': instance.lang = 'de-DE'; break;
+                    case 'it': instance.lang = 'it-IT'; break;
+                    case 'pt': instance.lang = 'pt-PT'; break;
+                    case 'ru': instance.lang = 'ru-RU'; break;
+                    case 'zh-CN': instance.lang = 'zh-CN'; break;
+                    case 'ja': instance.lang = 'ja-JP'; break;
+                    case 'ar': instance.lang = 'ar-SA'; break;
+                    case 'uk': instance.lang = 'uk-UA'; break;
+                    case 'fa': instance.lang = 'fa-IR'; break;
+                    case 'hi': instance.lang = 'hi-IN'; break;
+                    case 'bn': instance.lang = 'bn-IN'; break;
+                    case 'te': instance.lang = 'te-IN'; break;
+                    case 'mr': instance.lang = 'mr-IN'; break;
+                    default: instance.lang = 'en-US';
+                }
+                
+                instance.continuous = true;
+                instance.interimResults = true;
+                
+                // Gestion des résultats pour la reconnaissance dans la langue étrangère
+                instance.onresult = function(event) {
+                    const lastResultIndex = event.results.length - 1;
+                    const transcript = event.results[lastResultIndex][0].transcript;
+                    
+                    // Si c'est un résultat final
+                    if (event.results[lastResultIndex].isFinal) {
+                        finalTranscript = transcript;
+                        status.textContent = "Texte reconnu, traduction en cours...";
+                        originalText.textContent = finalTranscript;
+                        
+                        // Effacer tout timeout précédent
+                        if (processingTimeout) {
+                            clearTimeout(processingTimeout);
+                        }
+                        
+                        // Ajouter un délai pour éviter les traductions multiples
+                        processingTimeout = setTimeout(() => {
+                            fetch('/translate-to-french', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    text: finalTranscript,
+                                    source_lang: langSelect.value
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                originalText.textContent = data.original;
+                                translatedText.textContent = data.translated;
+                            })
+                            .catch(error => {
+                                console.error('Erreur lors de la traduction:', error);
+                                status.textContent = 'Erreur de traduction. Veuillez réessayer.';
+                            });
+                        }, 1000);
+                    } else {
+                        status.textContent = 'En cours: ' + transcript;
+                        originalText.textContent = transcript;
+                    }
+                };
+                
+                // Gestion des erreurs
+                instance.onerror = function(event) {
+                    console.error('Erreur de reconnaissance vocale:', event.error);
+                    status.textContent = "Erreur: " + event.error;
+                    toggleRec

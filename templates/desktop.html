@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradLive - Mode Ordinateur</title>
+    <style>
+        /* Styles CSS optimisés pour desktop */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .device-indicator {
+            text-align: center;
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        select, button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #c0392b;
+        }
+        #mic-button {
+            padding: 15px 20px;
+            font-size: 18px;
+            border-radius: 50px;
+            background-color: #e74c3c;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px 0;
+            display: block;
+            width: 300px;
+            height: 60px;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+        }
+        #mic-button.active {
+            background-color: #27ae60;
+        }
+        /* Effet de pulsation pour le bouton actif */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+        }
+        .listening-active #mic-button.active {
+            animation: pulse 2s infinite;
+        }
+        #status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            font-style: italic;
+            color: #666;
+            font-size: 18px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+        }
+        .text-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .text-box {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .text-box h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        #original-text, #translated-text {
+            min-height: 100px;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+        .language-label {
+            font-weight: bold;
+            color: #333;
+        }
+        .language-selector {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .language-selector select {
+            padding: 10px;
+            font-size: 16px;
+            width: 200px;
+        }
+        .instructions {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            line-height: 1.5;
+        }
+        
+        /* Styles pour le QR code et l'affichage du statut */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .qrcode-container {
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            width: 150px;
+        }
+        
+        .qrcode-container img {
+            width: 100%;
+            height: auto;
+        }
+        
+        .qrcode-caption {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .server-status {
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            margin-left: 5px;
+        }
+        
+        .status-badge.direct {
+            background-color: #2ecc71;
+        }
+        
+        .status-badge.ngrok {
+            background-color: #f39c12;
+        }
+        
+        .section-title {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .key-instructions {
+            font-weight: bold;
+            font-size: 16px;
+            color: #3498db;
+            margin-bottom: 8px;
+        }
+        
+        /* Audio wave animation for microphone active state */
+        .wave-container {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            height: 40px;
+            margin: 10px 0;
+        }
+        
+        .wave-container.active {
+            display: flex;
+        }
+        
+        .wave-bar {
+            display: inline-block;
+            width: 5px;
+            background-color: #27ae60;
+            margin: 0 3px;
+            border-radius: 2px;
+            animation: waveAnimation 0.5s infinite alternate;
+        }
+        
+        @keyframes waveAnimation {
+            0% { height: 10px; }
+            100% { height: 30px; }
+        }
+        
+        .wave-bar:nth-child(1) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(6) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(7) { animation-delay: 0.1s; }
+        
+        /* Detected language indicator */
+        .detected-language {
+            display: inline-block;
+            padding: 3px 10px;
+            background-color: #9b59b6;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        /* Micro icon animation */
+        .micro-icon {
+            display: inline-block;
+            margin-right: 5px;
+            animation: microPulse 1.5s infinite ease-in-out;
+        }
+        
+        @keyframes microPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Tooltip for debug info */
+        .mic-debug-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+            display: none;
+        }
+        
+        .mic-debug-info.visible {
+            display: block;
+        }
+        
+        /* Micro level indicator */
+        .mic-level-indicator {
+            width: 100%;
+            height: 5px;
+            background-color: #eee;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .mic-level-indicator.active {
+            display: block;
+        }
+        
+        .mic-level-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #27ae60;
+            transition: width 0.1s ease-out;
+        }
+        
+        /* Styles pour le mode hors-ligne et la saisie de texte */
+        #offline-mode-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            display: block;
+            width: 200px;
+            margin: 10px auto;
+        }
+        
+        .text-input-fallback {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f0f7fc;
+        }
+        
+        .text-input-fallback textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            min-height: 80px;
+            margin-bottom: 10px;
+        }
+        
+        .text-input-fallback button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <div class="server-status">
+            <h1>TradLive - Traduction en temps réel</h1>
+            <div class="device-indicator">Mode Ordinateur</div>
+            <div id="connection-status">Connexion: <span id="connection-mode">Chargement...</span></div>
+        </div>
+        <div class="qrcode-container">
+            <img src="/qrcode" alt="QR Code" id="qr-code-image">
+            <div class="qrcode-caption">Scannez avec votre téléphone</div>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <div class="key-instructions">Sur cet écran :</div>
+        <ul>
+            <li>Vous voyez ce que dit la personne en français (depuis son téléphone) et sa traduction</li>
+            <li>Votre interlocuteur peut parler dans sa langue avec le micro ci-dessous</li>
+            <li>La langue sera détectée automatiquement et traduite en français</li>
+        </ul>
+    </div>
+    
+    <div class="language-selector">
+        <label for="lang-select"><strong>Langue de l'interlocuteur :</strong></label>
+        <select id="lang-select" name="lang">
+            <option value="auto">Détection automatique</option>
+            <option value="en">Anglais</option>
+            <option value="es">Espagnol</option>
+            <option value="de">Allemand</option>
+            <option value="it">Italien</option>
+            <option value="pt">Portugais</option>
+            <option value="ru">Russe</option>
+            <option value="zh-CN">Chinois</option>
+            <option value="ja">Japonais</option>
+            <option value="ar">Arabe</option>
+            <option value="uk">Ukrainien</option>
+            <option value="fa">Persan</option>
+            <option value="hi">Hindi</option>
+            <option value="bn">Bengali</option>
+            <option value="te">Télougou</option>
+            <option value="mr">Marathi</option>
+        </select>
+    </div>
+    
+    <div class="section-title">1. Ce que la personne dit en français (depuis son téléphone)</div>
+    
+    <div class="text-container">
+        <div class="text-box">
+            <h3>Original (Français)</h3>
+            <p id="original-text-fr"></p>
+        </div>
+        <div class="text-box">
+            <h3>Traduction en <span class="language-label" id="target-lang-label">Anglais</span></h3>
+            <p id="translated-text-foreign"></p>
+        </div>
+    </div>
+    
+    <div class="section-title">2. Votre interlocuteur peut parler dans sa langue</div>
+    
+    <div id="status">Cliquez sur le micro pour que l'interlocuteur parle</div>
+    
+    <!-- Nouvel élément d'animation visuelle -->
+    <div class="wave-container" id="wave-animation">
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+        <div class="wave-bar"></div>
+    </div>
+    
+    <button id="mic-button">🎤 Parler en <span id="selected-language">Anglais</span></button>
+    
+    <!-- Ajouter le bouton de mode texte directement visible -->
+    <button id="offline-mode-button">💬 Mode Texte</button>
+    
+    <!-- Indicateur de niveau audio -->
+    <div class="mic-level-indicator" id="mic-level">
+        <div class="mic-level-bar" id="mic-level-bar"></div>
+    </div>
+    
+    <div class="text-container">
+        <div class="text-box">
+            <h3>Original (<span class="language-label" id="source-lang-label">Anglais</span>)</h3>
+            <p id="original-text"></p>
+        </div>
+        <div class="text-box">
+            <h3>Traduction (Français)</h3>
+            <p id="translated-text"></p>
+        </div>
+    </div>
+    
+    <!-- Fenêtre de débogage du microphone -->
+    <div class="mic-debug-info" id="mic-debug">
+        <h4>Diagnostic du microphone</h4>
+        <div id="mic-debug-content">Chargement...</div>
+    </div>
+    
+    <script>
+        // Code JavaScript pour le mode Ordinateur - Version améliorée
+        document.addEventListener('DOMContentLoaded', function() {
+            // Éléments DOM
+            const micButton = document.getElementById('mic-button');
+            const offlineModeButton = document.getElementById('offline-mode-button');
+            const status = document.getElementById('status');
+            const originalText = document.getElementById('original-text');
+            const translatedText = document.getElementById('translated-text');
+            const originalTextFr = document.getElementById('original-text-fr');
+            const translatedTextForeign = document.getElementById('translated-text-foreign');
+            const langSelect = document.getElementById('lang-select');
+            const connectionMode = document.getElementById('connection-mode');
+            const sourceLangLabel = document.getElementById('source-lang-label');
+            const targetLangLabel = document.getElementById('target-lang-label');
+            let selectedLanguage = document.getElementById('selected-language');
+            const qrCodeImage = document.getElementById('qr-code-image');
+            const waveAnimation = document.getElementById('wave-animation');
+            const micLevelIndicator = document.getElementById('mic-level');
+            const micLevelBar = document.getElementById('mic-level-bar');
+            const micDebug = document.getElementById('mic-debug');
+            const micDebugContent = document.getElementById('mic-debug-content');
+
+            // Variables d'état
+            let recognition = null;
+            let isListening = false;
+            let audioStream = null;
+            let heartbeatInterval = null;
+            let detectedLanguage = null;
+            let audioContext = null;
+            let analyser = null;
+            let microphone = null;
+            
+            // Nouvelles variables pour la gestion améliorée des erreurs
+            let reconnectAttempts = 0;
+            const maxReconnectAttempts = 3;
+            const recognitionServers = ['en-US', 'en-GB', 'fr-FR', 'es-ES', 'de-DE', 'it-IT'];
+            let currentServerIndex = 0;
+            let fallbackInputVisible = false;
+
+            // Double-clic sur le statut pour afficher/masquer les infos de débogage
+            status.addEventListener('dblclick', function() {
+                micDebug.classList.toggle('visible');
+                updateDebugInfo();
+            });
+
+            // Mettre à jour les infos du serveur
+            function updateServerInfo() {
+                qrCodeImage.src = '/qrcode?' + new Date().getTime();
+                
+                fetch('/server-status')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.mode === 'ngrok') {
+                            connectionMode.innerHTML = '<span class="status-badge ngrok">Tunnel ngrok</span>';
+                            if (data.remaining) {
+                                connectionMode.innerHTML += ` (${data.remaining})`;
+                            }
+                        } else {
+                            connectionMode.innerHTML = '<span class="status-badge direct">Direct</span>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur de connexion au serveur:', error);
+                        connectionMode.textContent = 'Déconnecté';
+                    });
+            }
+
+            // Système de polling pour récupérer les traductions du téléphone
+            function startPolling() {
+                setInterval(() => {
+                    fetch('/check-updates')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Si nous avons une traduction du français vers la langue cible
+                            if (data.original && data.translated && 
+                                (langSelect.value === 'auto' || data.language === langSelect.value)) {
+                                originalTextFr.textContent = data.original;
+                                translatedTextForeign.textContent = data.translated;
+                                
+                                // Mettre à jour l'affichage de la langue
+                                if (data.language) {
+                                    targetLangLabel.textContent = getLangNameFromCode(data.language);
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Erreur de polling:', error));
+                }, 1000);
+            }
+
+            // Fonction pour envoyer le heartbeat
+            function sendHeartbeat() {
+                fetch('/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'active', timestamp: Date.now() })
+                })
+                .catch(error => console.error('Erreur de heartbeat:', error));
+            }
+
+            // Fonction pour démarrer le heartbeat
+            function startHeartbeat() {
+                sendHeartbeat();
+                heartbeatInterval = setInterval(sendHeartbeat, 5000);
+                
+                window.addEventListener('beforeunload', function() {
+                    if (heartbeatInterval) clearInterval(heartbeatInterval);
+                    navigator.sendBeacon('/close', JSON.stringify({ status: 'closing' }));
+                });
+            }
+
+            // Gestion du clic sur le bouton du micro
+            micButton.addEventListener('click', function() {
+                if (isListening) {
+                    stopSpeechRecognition();
+                } else {
+                    startSpeechRecognition();
+                }
+            });
+
+            // Gestion du clic sur le bouton mode hors-ligne
+            offlineModeButton.addEventListener('click', function() {
+                if (isListening) {
+                    stopSpeechRecognition();
+                }
+                
+                // Afficher directement l'interface de saisie de texte
+                showTextInputFallback();
+                status.textContent = "Mode texte activé. L'interlocuteur peut saisir son texte ci-dessous.";
+            });
+
+            // Événement au changement de langue
+         
+            langSelect.addEventListener('change', function() {
+                const selectedLang = langSelect.value;
+                const langName = getLangNameFromCode(selectedLang);
+    
+                // Mettre à jour les labels de langue
+                if (selectedLang === 'auto') {
+                    sourceLangLabel.textContent = 'Détection automatique';
+                    if (selectedLanguage) selectedLanguage.textContent = 'auto';
+                } else {
+                    sourceLangLabel.textContent = langName;
+                    targetLangLabel.textContent = langName;
+                    if (selectedLanguage) selectedLanguage.textContent = langName;
+                }
+    
+                // NOUVEAU: Informer le serveur de la langue préférée pour MyMemory
+                fetch('/set-preferred-language', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lang: selectedLang
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Langue préférée définie:', data);
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la définition de la langue préférée:', error);
+                });
+    
+                // Si en cours d'écoute, redémarrer avec la nouvelle langue
+                if (isListening) {
+                    stopSpeechRecognition();
+                    setTimeout(startSpeechRecognition, 500);
+                } else {
+                    // Mettre à jour l'interface
+                    updateSpeechUI(false);
+                }
+            });
+// Initialisation au chargement de la page
+            updateServerInfo();
+            setInterval(updateServerInfo, 30000);
+            startPolling();
+            startHeartbeat();
+            
+            // Initialiser les noms de langue
+            const initialLang = langSelect.value;
+            const initialLangName = getLangNameFromCode(initialLang);
+
+            if (initialLang === 'auto') {
+                sourceLangLabel.textContent = 'Détection automatique';
+                selectedLanguage.textContent = 'auto';
+            } else {
+                sourceLangLabel.textContent = initialLangName;
+                targetLangLabel.textContent = initialLangName;
+                selectedLanguage.textContent = initialLangName;
+            }
+            
+            // Ouvrir automatiquement le mode texte au démarrage
+            setTimeout(() => {
+                showTextInputFallback();
+            }, 1000);
+            
+            // Fonction pour mettre à jour l'info de débogage
+            function updateDebugInfo() {
+                if (!micDebug.classList.contains('visible')) return;
+                
+                micDebugContent.innerHTML = `
+                    Navigateur: ${navigator.userAgent.substring(0, 50)}...<br>
+                    Permission micro: ${audioStream ? "Accordée" : "Non accordée"}<br>
+                    Reconnaissance: ${isListening ? "Active" : "Inactive"}<br>
+                    Langue: ${langSelect.value}<br>
+                    Tentatives: ${reconnectAttempts}/${maxReconnectAttempts}<br>
+                    Serveur: ${currentServerIndex}/${recognitionServers.length - 1}
+                `;
+                
+                setTimeout(updateDebugInfo, 1000);
+            }
+
+            // Obtenir le nom de la langue à partir du code
+            function getLangNameFromCode(code) {
+                if (code === 'auto') return 'Automatique';
+                
+                const langNames = {
+                    'en': 'Anglais',
+                    'es': 'Espagnol',
+                    'de': 'Allemand',
+                    'it': 'Italien',
+                    'pt': 'Portugais',
+                    'ru': 'Russe',
+                    'zh-CN': 'Chinois',
+                    'ja': 'Japonais',
+                    'ar': 'Arabe',
+                    'uk': 'Ukrainien',
+                    'fa': 'Persan',
+                    'hi': 'Hindi',
+                    'bn': 'Bengali',
+                    'te': 'Télougou',
+                    'mr': 'Marathi'
+                };
+                return langNames[code] || code;
+            }
+
+      // FONCTION CORRIGÉE : Nouvelle fonction pour envoyer activement les traductions au téléphone
+function sendToPhone(originalText, translatedText, sourceLang) {
+    console.log("Envoi de la traduction au téléphone:", 
+        { original: originalText, translated: translatedText, source_language: sourceLang });
+        
+    // Assurer que les données sont bien définies
+    if (!originalText || !translatedText) {
+        console.error("Erreur: texte original ou traduction manquant");
+        status.textContent = "Erreur: données incomplètes pour l'envoi au téléphone";
+        return;
+    }
+    
+    // Créer l'objet de données
+    const data = {
+        original: originalText,
+        translated: translatedText,
+        source_language: sourceLang,
+        language: 'fr' // La cible est toujours le français
+    };
+    
+    // Premier essai - envoi de la traduction
+    fetch('/update-last-translation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        cache: 'no-store' // Éviter les problèmes de mise en cache
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur lors de l\'envoi au téléphone: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Traduction envoyée au téléphone avec succès:', data);
+        status.textContent = "Traduction envoyée à votre téléphone";
+        
+        // La vérification supplémentaire est facultative et peut être ignorée 
+        // si elle cause des problèmes
+        if (window.location.hostname === 'localhost') {
+            console.log('Mode local détecté - vérification ignorée');
+            return;
+        }
+        
+        // Effectuer une vérification supplémentaire seulement en cas de succès
+        return fetch('/check-updates', {
+            cache: 'no-store' // Éviter les problèmes de mise en cache
+        });
+    })
+    .then(response => {
+        // Ne traiter la réponse que si elle existe (la fonction peut s'arrêter avant)
+        if (response && response.ok) {
+            return response.json();
+        }
+    })
+    .then(data => {
+        // Vérification facultative - ne pas bloquer le flux principal si elle échoue
+        if (data) {
+            console.log('Vérification de la dernière traduction:', data);
+            // Ne pas afficher d'erreur si les données ne correspondent pas exactement
+            // car elles pourraient avoir été mises à jour entre-temps
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'envoi de la traduction au téléphone:', error);
+        status.textContent = "Erreur d'envoi au téléphone - nouvelle tentative...";
+        
+        // Deuxième essai après une erreur (plus simple, sans vérification)
+        setTimeout(() => {
+            fetch('/update-last-translation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+                cache: 'no-store'
+            })
+            .then(response => {
+                if (response.ok) {
+                    status.textContent = "Traduction envoyée à votre téléphone (2e essai)";
+                } else {
+                    status.textContent = "Échec d'envoi au téléphone. Mode hors-ligne activé.";
+                    // Activer automatiquement le mode texte en cas d'échec
+                    showTextInputFallback();
+                }
+            })
+            .catch(() => {
+                status.textContent = "Impossible de contacter le serveur. Mode hors-ligne activé.";
+                showTextInputFallback();
+            });
+        }, 1000); // Attendre 1 seconde avant de réessayer
+    });
+}
+
+            // Fonction pour traduire vers le français (langue étrangère -> français)
+            function translateToFrench(text, sourceLang) {
+                // Afficher l'état
+                status.textContent = "Traduction en cours...";
+                console.log("Début de traduction:", text, "langue source:", sourceLang);
+                
+                // Appel à l'API de traduction
+                fetch('/translate-to-french', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        text: text, 
+                        source_lang: sourceLang === 'auto' ? 'auto' : sourceLang,
+                        disable_speech: true // Désactiver la synthèse vocale
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erreur HTTP: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Traduction reçue:", data);
+                    
+                    // Afficher la traduction
+                    translatedText.textContent = data.translated;
+                    
+                    // IMPORTANT: Envoyer cette traduction au téléphone
+                    sendToPhone(text, data.translated, sourceLang);
+                    
+                    // Si la langue a été détectée automatiquement, l'afficher
+                    if (sourceLang === 'auto' && data.detected_language) {
+                        detectedLanguage = data.detected_language;
+                        const langName = getLangNameFromCode(detectedLanguage);
+                        sourceLangLabel.innerHTML = langName + ' <span class="detected-language">Détecté</span>';
+                    }
+                    
+                    status.textContent = "Traduction terminée et envoyée à votre téléphone";
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la traduction:', error);
+                    status.textContent = "Erreur de traduction. Veuillez réessayer.";
+                });
+            }
+
+            // Fonction pour masquer la zone de saisie de texte
+            function hideFallbackInput() {
+                const container = document.getElementById('fallback-input-container');
+                if (container) {
+                    container.parentNode.removeChild(container);
+                    fallbackInputVisible = false;
+                }
+            }
+            
+            // Configurer l'analyse audio pour visualiser le niveau sonore
+            function setupAudioAnalysis(stream) {
+                try {
+                    // Nettoyer toute instance précédente
+                    if (audioContext) {
+                        try {
+                            audioContext.close();
+                        } catch (e) { /* ignorer */ }
+                    }
+                    
+                    // Créer un nouvel AudioContext
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    microphone = audioContext.createMediaStreamSource(stream);
+                    
+                    // Configurer l'analyseur
+                    analyser.smoothingTimeConstant = 0.8;
+                    analyser.fftSize = 1024;
+                    
+                    // Connecter le microphone à l'analyseur
+                    microphone.connect(analyser);
+                    
+                    // Analyser le niveau audio
+                    const bufferLength = analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+                    
+                    function checkLevel() {
+                        if (!isListening) return;
+                        
+                        analyser.getByteFrequencyData(dataArray);
+                        
+                        // Calculer le niveau moyen
+                        let sum = 0;
+                        for (let i = 0; i < bufferLength; i++) {
+                            sum += dataArray[i];
+                        }
+                        const average = sum / bufferLength;
+                        
+                        // Mettre à jour l'indicateur
+                        const levelPercent = Math.min(average * 2, 100);
+                        micLevelBar.style.width = levelPercent + '%';
+                        
+                        // Continuer l'analyse
+                        requestAnimationFrame(checkLevel);
+                    }
+                    
+                    // Démarrer l'analyse
+                    requestAnimationFrame(checkLevel);
+                    
+                } catch (e) {
+                    console.warn("Impossible de configurer l'analyse audio:", e);
+                }
+            }
+
+            // Fonction pour afficher une zone de saisie de texte comme solution de secours
+            function showTextInputFallback() {
+                // Éviter de créer plusieurs zones de saisie
+                if (fallbackInputVisible) return;
+                
+                // Marquer comme visible
+                fallbackInputVisible = true;
+                
+                // Créer et afficher une zone de saisie de texte
+                const inputContainer = document.createElement('div');
+                inputContainer.id = 'fallback-input-container';
+                inputContainer.className = 'text-input-fallback';
+                
+                const textInput = document.createElement('textarea');
+                textInput.id = 'fallback-text-input';
+                textInput.placeholder = "L'interlocuteur peut saisir son texte ici dans sa langue...";
+                
+                const submitButton = document.createElement('button');
+                submitButton.textContent = "Traduire en français";
+                submitButton.style.marginTop = '10px';
+                
+                // Ajouter un bouton pour réessayer la reconnaissance vocale
+                const retryButton = document.createElement('button');
+                retryButton.textContent = "🎤 Réessayer la reconnaissance vocale";
+                retryButton.style.marginTop = '10px';
+                retryButton.style.marginLeft = '10px';
+                retryButton.style.backgroundColor = '#3498db';
+                
+                // Ajouter les éléments au DOM
+                inputContainer.appendChild(textInput);
+                inputContainer.appendChild(submitButton);
+                inputContainer.appendChild(retryButton);
+                
+                // Insérer après le bouton du micro et le bouton offline
+                const offlineModeButton = document.getElementById('offline-mode-button');
+                offlineModeButton.parentNode.insertBefore(inputContainer, offlineModeButton.nextSibling);
+                
+                // Gérer la soumission du texte
+                submitButton.addEventListener('click', function() {
+                    const text = textInput.value.trim();
+                    if (text) {
+                        // Afficher texte original
+                        originalText.textContent = text;
+                        status.textContent = "Traduction en cours...";
+                        
+                        // Ajouter un log explicite
+                        console.log("Texte à traduire:", text, "langue:", langSelect.value);
+                        
+                        // Traduire vers le français avec API directe
+                        fetch('/translate-to-french', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                text: text,
+                                source_lang: langSelect.value,
+                                disable_speech: true // Désactiver la synthèse vocale côté serveur
+                            })
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Erreur HTTP: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Traduction reçue:", data);
+                            
+                            // Afficher la traduction
+                            translatedText.textContent = data.translated;
+                            
+                            // IMPORTANT: Envoyer EXPLICITEMENT cette traduction au téléphone
+                            console.log("Envoi de la traduction au téléphone...");
+                            
+                            return fetch('/update-last-translation', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    original: text,
+                                    translated: data.translated,
+                                    language: 'fr', // La langue cible est toujours le français
+                                    source_language: langSelect.value // La langue source
+                                })
+                            });
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Erreur d'envoi au téléphone: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Envoi au téléphone réussi:", data);
+                            status.textContent = "Traduction envoyée au téléphone avec succès";
+                        })
+                        .catch(error => {
+                            console.error('Erreur:', error);
+                            status.textContent = "Erreur: " + error.message;
+                        });
+                        
+                        // Effacer le champ de texte
+                        textInput.value = '';
+                    }
+                });
+                
+                // Activer la touche Entrée pour soumettre
+                textInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        submitButton.click();
+                    }
+                });
+                
+                // Réessayer la reconnaissance vocale
+                retryButton.addEventListener('click', function() {
+                    hideFallbackInput();
+                    reconnectAttempts = 0; // Réinitialiser le compteur
+                    startSpeechRecognition();
+                });
+                
+                // Mettre le focus sur la zone de texte
+                setTimeout(() => textInput.focus(), 100);
+                
+                // Mettre à jour le statut
+                status.textContent = "Mode texte activé - L'interlocuteur peut saisir son texte ci-dessous";
+            }
+
+            // Fonction améliorée pour démarrer la reconnaissance vocale
+            function startSpeechRecognition() {
+                if (isListening) {
+                    stopSpeechRecognition();
+                    return;
+                }
+                
+                // Masquer la zone de saisie de texte si visible
+                hideFallbackInput();
+                
+                // Vérifier si la reconnaissance vocale est disponible
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    status.textContent = "La reconnaissance vocale n'est pas prise en charge par ce navigateur.";
+                    showTextInputFallback();
+                    return;
+                }
+                
+                // Détecter le navigateur pour adapter les paramètres
+                const isChrome = navigator.userAgent.indexOf("Chrome") > -1;
+                const isSafari = navigator.userAgent.indexOf("Safari") > -1 && !isChrome;
+                const isFirefox = navigator.userAgent.indexOf("Firefox") > -1;
+                
+                // Demander l'accès au microphone
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        audioStream = stream;
+                        
+                        // Configurer l'analyse audio
+                        setupAudioAnalysis(stream);
+                        
+                        // Créer et configurer l'objet de reconnaissance vocale
+                        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                        recognition = new SpeechRecognition();
+                        
+                        // Configurer la langue en fonction de la sélection
+                        const selectedLang = langSelect.value;
+                        if (selectedLang !== 'auto') {
+                            switch(selectedLang) {
+                                case 'en': recognition.lang = 'en-US'; break;
+                                case 'es': recognition.lang = 'es-ES'; break;
+                                case 'de': recognition.lang = 'de-DE'; break;
+                                case 'it': recognition.lang = 'it-IT'; break;
+                                case 'pt': recognition.lang = 'pt-PT'; break;
+                                case 'ru': recognition.lang = 'ru-RU'; break;
+                                case 'zh-CN': recognition.lang = 'zh-CN'; break;
+                                case 'ja': recognition.lang = 'ja-JP'; break;
+                                case 'ar': recognition.lang = 'ar-SA'; break;
+                                case 'uk': recognition.lang = 'uk-UA'; break;
+                                case 'fa': recognition.lang = 'fa-IR'; break;
+                                case 'hi': recognition.lang = 'hi-IN'; break;
+                                case 'bn': recognition.lang = 'bn-IN'; break;
+                                case 'te': recognition.lang = 'te-IN'; break;
+                                case 'mr': recognition.lang = 'mr-IN'; break;
+                                default: recognition.lang = 'en-US';
+                            }
+                        } else {
+                            // Si auto, on commence avec l'anglais par défaut
+                            recognition.lang = 'en-US';
+                        }
+                        
+                        // Configuration optimisée pour la fiabilité
+                        recognition.continuous = true; // Changé à true pour une écoute continue
+                        recognition.interimResults = true; // Changé à true pour voir les résultats en temps réel
+                        
+                        // Paramètres spécifiques selon le navigateur
+                        if (isSafari) {
+                            // Safari a des problèmes avec certains paramètres
+                            recognition.maxAlternatives = 1;
+                            status.innerHTML = "Mode Safari détecté - <small>Les fonctionnalités peuvent être limitées</small>";
+                        } else {
+                            recognition.maxAlternatives = 3; // Plus de flexibilité pour les autres navigateurs
+                        }
+                        
+                        // Réinitialiser le compteur de tentatives quand la reconnaissance démarre
+                        recognition.onstart = function() {
+                            reconnectAttempts = 0;
+                            status.textContent = "Écoute en cours... Parlez maintenant !";
+                            isListening = true; // Marquer comme actif dès le démarrage
+                            updateSpeechUI(true);
+                            updateDebugInfo();
+                        };
+                        
+                        // Résultats de la reconnaissance
+                        recognition.onresult = function(event) {
+                            // Récupérer le dernier résultat
+                            const lastResultIndex = event.results.length - 1;
+                            const transcript = event.results[lastResultIndex][0].transcript;
+                            
+                            // Afficher le texte reconnu
+                            originalText.textContent = transcript;
+                            
+                            // Si c'est un résultat final, traduire
+                            if (event.results[lastResultIndex].isFinal) {
+                                status.textContent = "Texte reconnu, traduction en cours...";
+                                console.log("Texte reconnu:", transcript);
+                                
+                                // Traduire vers le français
+                                translateToFrench(transcript, selectedLang);
+                            } else {
+                                status.textContent = "Écoute en cours... " + transcript;
+                            }
+                        };
+                        
+                        // Gestion améliorée des erreurs
+                        recognition.onerror = function(event) {
+                            console.error("Erreur de reconnaissance vocale:", event.error);
+                            
+                            if (event.error === 'network') {
+                                // Stratégie 1: Tentatives de reconnexion
+                                if (reconnectAttempts < maxReconnectAttempts) {
+                                    reconnectAttempts++;
+                                    status.textContent = `Problème réseau. Tentative de reconnexion ${reconnectAttempts}/${maxReconnectAttempts}...`;
+                                    
+                                    // Stratégie 2: Essayer un autre serveur de reconnaissance
+                                    currentServerIndex = (currentServerIndex + 1) % recognitionServers.length;
+                                    recognition.lang = recognitionServers[currentServerIndex];
+                                    
+                                    // Attendre progressivement plus longtemps entre les tentatives
+                                    setTimeout(() => {
+                                        try {
+                                            recognition.start();
+                                            status.textContent = `Reconnexion en cours via autre serveur...`;
+                                        } catch (e) {
+                                            console.error("Erreur lors de la tentative de reconnexion:", e);
+                                            showTextInputFallback();
+                                        }
+                                    }, reconnectAttempts * 1000);
+                                } else {
+                                    status.textContent = "Impossible de se connecter au service de reconnaissance vocale.";
+                                    isListening = false;
+                                    updateSpeechUI(false);
+                                    showTextInputFallback();
+                                }
+                            } else if (event.error === 'no-speech') {
+                                status.textContent = "Aucune parole détectée. Veuillez parler.";
+                            } else if (event.error === 'audio-capture') {
+                                status.textContent = "Problème avec le microphone. Vérifiez vos paramètres.";
+                                isListening = false;
+                                updateSpeechUI(false);
+                            } else if (event.error === 'not-allowed') {
+                                status.textContent = "Accès au microphone refusé.";
+                                isListening = false;
+                                updateSpeechUI(false);
+                                showTextInputFallback();
+                            } else {
+                                status.textContent = "Erreur de reconnaissance: " + event.error;
+                                isListening = false;
+                                updateSpeechUI(false);
+                                // Pour les autres erreurs, afficher la zone de saisie de texte
+                                showTextInputFallback();
+                            }
+                            
+                            updateDebugInfo();
+                        };
+                        
+                        // Quand la reconnaissance s'arrête normalement
+                        recognition.onend = function() {
+                            console.log("Reconnaissance terminée");
+                            
+                            // Si toujours en mode écoute, relancer sauf erreur
+                            if (isListening && reconnectAttempts < maxReconnectAttempts) {
+                                try {
+                                    // Petite pause avant de redémarrer
+                                    setTimeout(() => {
+                                        recognition.start();
+                                        console.log("Reconnaissance redémarrée");
+                                    }, 500);
+                                } catch (e) {
+                                    console.error("Erreur lors du redémarrage:", e);
+                                    isListening = false;
+                                    updateSpeechUI(false);
+                                    showTextInputFallback();
+                                }
+                            } else if (reconnectAttempts >= maxReconnectAttempts) {
+                                // Trop de tentatives, abandonner
+                                isListening = false;
+                                updateSpeechUI(false);
+                                showTextInputFallback();
+                            }
+                        };
+                        
+                        // Démarrer la reconnaissance
+                        try {
+                            recognition.start();
+                            isListening = true;
+                            updateSpeechUI(true);
+                            status.textContent = "Écoute en cours... Parlez maintenant !";
+                            updateDebugInfo();
+                        } catch (error) {
+                            console.error("Erreur au démarrage de la reconnaissance:", error);
+                            status.textContent = "Impossible de démarrer la reconnaissance vocale.";
+                            showTextInputFallback();
+                            updateDebugInfo();
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Erreur d'accès au microphone:", error);
+                        status.textContent = "Veuillez autoriser l'accès au microphone.";
+                        isListening = false;
+                        updateSpeechUI(false);
+                        showTextInputFallback();
+                        updateDebugInfo();
+                    });
+            }
+
+            // Fonction pour arrêter la reconnaissance vocale
+            function stopSpeechRecognition() {
+                if (recognition) {
+                    try {
+                        recognition.stop();
+                    } catch (e) {
+                        console.error("Erreur lors de l'arrêt de la reconnaissance:", e);
+                    }
+                }
+                
+                isListening = false;
+                updateSpeechUI(false);
+                
+                // Arrêter le stream audio
+                if (audioStream) {
+                    audioStream.getTracks().forEach(track => track.stop());
+                    audioStream = null;
+                }
+                
+                // Nettoyer l'analyse audio
+                if (audioContext) {
+                    try {
+                        if (microphone) microphone.disconnect();
+                        if (analyser) analyser.disconnect();
+                        audioContext.close();
+                    } catch (e) {
+                        console.warn("Erreur lors du nettoyage audio:", e);
+                    }
+                }
+                
+                micLevelIndicator.classList.remove('active');
+                status.textContent = "Cliquez sur le micro pour que l'interlocuteur parle";
+                
+                updateDebugInfo();
+            }
+
+            // Mettre à jour l'interface utilisateur en fonction de l'état d'écoute
+            function updateSpeechUI(listening) {
+                if (listening) {
+                    micButton.textContent = '🎤 Arrêter';
+                    micButton.classList.add('active');
+                    waveAnimation.classList.add('active');
+                    micLevelIndicator.classList.add('active');
+                    document.body.classList.add('listening-active');
+                } else {
+                    const langName = getLangNameFromCode(langSelect.value);
+                    micButton.innerHTML = `🎤 Parler en <span id="selected-language">${langName}</span>`;
+                    micButton.classList.remove('active');
+                    waveAnimation.classList.remove('active');
+                    micLevelIndicator.classList.remove('active');
+                    document.body.classList.remove('listening-active');
+                    
+                    // Mettre à jour la référence
+                    selectedLanguage = document.getElementById('selected-language');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

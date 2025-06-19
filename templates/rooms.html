@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradLive - Salles de traduction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+        }
+        
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            box-sizing: border-box;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: rgba(76, 175, 80, 0.8);
+        }
+        
+        .status.error {
+            background: rgba(244, 67, 54, 0.8);
+        }
+        
+        .status.info {
+            background: rgba(33, 150, 243, 0.8);
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+        
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .room-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 TradLive - Traduction Multi-utilisateurs</h1>
+        
+        <div class="instructions">
+            <h3>Comment ça marche ?</h3>
+            <ul>
+                <li><strong>Créez une salle</strong> et partagez le code avec vos participants</li>
+                <li><strong>Chacun choisit sa langue</strong> préférée</li>
+                <li><strong>Vous parlez en français</strong>, tout le monde reçoit la traduction</li>
+                <li><strong>Jusqu'à 10 personnes</strong> peuvent participer simultanément</li>
+            </ul>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('create')">Créer une salle</button>
+            <button class="tab" onclick="showTab('join')">Rejoindre une salle</button>
+        </div>
+        
+        <!-- Onglet Créer une salle -->
+        <div id="create-tab" class="tab-content active">
+            <form id="create-form">
+                <div class="form-group">
+                    <label for="create-nickname">Votre pseudo :</label>
+                    <input type="text" id="create-nickname" placeholder="Ex: Marie" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="create-language">Votre langue :</label>
+                    <select id="create-language" required>
+                        <option value="fr">Français</option>
+                        <option value="en">Anglais</option>
+                        <option value="es">Espagnol</option>
+                        <option value="de">Allemand</option>
+                        <option value="it">Italien</option>
+                        <option value="pt">Portugais</option>
+                        <option value="ru">Russe</option>
+                        <option value="zh-CN">Chinois</option>
+                        <option value="ja">Japonais</option>
+                        <option value="ar">Arabe</option>
+                        <option value="uk">Ukrainien</option>
+                        <option value="fa">Persan</option>
+                        <option value="hi">Hindi</option>
+                        <option value="bn">Bengali</option>
+                        <option value="te">Télougou</option>
+                        <option value="mr">Marathi</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="room-name">Nom de la salle :</label>
+                    <input type="text" id="room-name" placeholder="Ex: Réunion équipe, Cours d'anglais..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="room-password">Mot de passe (optionnel) :</label>
+                    <input type="password" id="room-password" placeholder="Laissez vide pour aucun mot de passe">
+                </div>
+                
+                <button type="submit" id="create-btn">🎉 Créer la salle</button>
+            </form>
+        </div>
+        
+        <!-- Onglet Rejoindre une salle -->
+        <div id="join-tab" class="tab-content">
+            <form id="join-form">
+                <div class="form-group">
+                    <label for="join-room-id">Code de la salle :</label>
+                    <input type="text" id="join-room-id" placeholder="Ex: 1234" required maxlength="4" pattern="[0-9]{4}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="join-nickname">Votre pseudo :</label>
+                    <input type="text" id="join-nickname" placeholder="Ex: Pierre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="join-language">Votre langue :</label>
+                    <select id="join-language" required>
+                        <option value="fr">Français</option>
+                        <option value="en">Anglais</option>
+                        <option value="es">Espagnol</option>
+                        <option value="de">Allemand</option>
+                        <option value="it">Italien</option>
+                        <option value="pt">Portugais</option>
+                        <option value="ru">Russe</option>
+                        <option value="zh-CN">Chinois</option>
+                        <option value="ja">Japonais</option>
+                        <option value="ar">Arabe</option>
+                        <option value="uk">Ukrainien</option>
+                        <option value="fa">Persan</option>
+                        <option value="hi">Hindi</option>
+                        <option value="bn">Bengali</option>
+                        <option value="te">Télougou</option>
+                        <option value="mr">Marathi</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="join-password">Mot de passe (si requis) :</label>
+                    <input type="password" id="join-password" placeholder="Laissez vide si aucun mot de passe">
+                </div>
+                
+                <button type="submit" id="join-btn">🚪 Rejoindre la salle</button>
+            </form>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+    
+    <script>
+        // Gestion des onglets
+        function showTab(tabName) {
+            // Cacher tous les contenus
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Désactiver tous les onglets
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activer l'onglet et le contenu sélectionnés
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Fonction pour afficher le statut
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+            
+            // Masquer après 5 secondes sauf pour les succès
+            if (type !== 'success') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Création de salle
+        document.getElementById('create-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('create-btn');
+            btn.disabled = true;
+            btn.textContent = 'Création en cours...';
+            
+            const data = {
+                nickname: document.getElementById('create-nickname').value.trim(),
+                language: document.getElementById('create-language').value,
+                room_name: document.getElementById('room-name').value.trim(),
+                password: document.getElementById('room-password').value.trim() || null
+            };
+            
+            fetch('/api/create-room', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus(`Salle créée ! Code : ${data.room_id}`, 'success');
+                    
+                    // Sauvegarder les informations dans le localStorage
+                    localStorage.setItem('tradlive_user', JSON.stringify({
+                        user_id: data.user_id,
+                        room_id: data.room_id,
+                        nickname: document.getElementById('create-nickname').value,
+                        language: document.getElementById('create-language').value
+                    }));
+                    
+                    // Rediriger vers la salle après 2 secondes
+                    setTimeout(() => {
+                        window.location.href = `/room/${data.room_id}`;
+                    }, 2000);
+                } else {
+                    showStatus(data.error, 'error');
+                    btn.disabled = false;
+                    btn.textContent = '🎉 Créer la salle';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showStatus('Erreur de connexion au serveur', 'error');
+                btn.disabled = false;
+                btn.textContent = '🎉 Créer la salle';
+            });
+        });
+        
+        // Rejoindre une salle
+        document.getElementById('join-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('join-btn');
+            btn.disabled = true;
+            btn.textContent = 'Connexion en cours...';
+            
+            const data = {
+                room_id: document.getElementById('join-room-id').value.trim(),
+                nickname: document.getElementById('join-nickname').value.trim(),
+                language: document.getElementById('join-language').value,
+                password: document.getElementById('join-password').value.trim() || null
+            };
+            
+            fetch('/api/join-room', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Connexion réussie !', 'success');
+                    
+                    // Sauvegarder les informations dans le localStorage
+                    localStorage.setItem('tradlive_user', JSON.stringify({
+                        user_id: data.user_id,
+                        room_id: data.room_id,
+                        nickname: document.getElementById('join-nickname').value,
+                        language: document.getElementById('join-language').value
+                    }));
+                    
+                    // Rediriger vers la salle après 1 seconde
+                    setTimeout(() => {
+                        window.location.href = `/room/${data.room_id}`;
+                    }, 1000);
+                } else {
+                    showStatus(data.error, 'error');
+                    btn.disabled = false;
+                    btn.textContent = '🚪 Rejoindre la salle';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showStatus('Erreur de connexion au serveur', 'error');
+                btn.disabled = false;
+                btn.textContent = '🚪 Rejoindre la salle';
+            });
+        });
+        
+        // Formater automatiquement le code de salle
+        document.getElementById('join-room-id').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Garder seulement les chiffres
+            if (value.length > 4) value = value.substring(0, 4);
+            e.target.value = value;
+        });
+    </script>
+</body>
+</html>
