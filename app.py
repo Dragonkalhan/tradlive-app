@@ -86,10 +86,6 @@ def create_self_signed_cert(cert_file="cert.pem", key_file="key.pem"):
 # VARIABLES GLOBALES
 # ============================================================
 
-# Verrou pour la synthèse vocale
-speech_lock = threading.Lock()
-# Variable pour indiquer si une synthèse vocale est en cours
-speaking_in_progress = False
 
 # Variables pour le heartbeat et le statut du client
 last_heartbeat = datetime.datetime.now()
@@ -147,8 +143,6 @@ def preload_templates():
 # Variable globale pour stocker la dernière traduction
 last_translation = {"original": "", "translated": "", "language": ""}
 
-# Configuration de pygame pour la lecture audio
-pygame.mixer.init()
 
 # Variable globale pour le port
 port = 443
@@ -1254,65 +1248,6 @@ translation_corrections = {
 # ============================================================
 # FONCTIONS DE SYNTHÈSE VOCALE
 # ============================================================
-
-# Fonction pour initialiser et configurer la voix pyttsx3 (pour langues limitées)
-def init_voice():
-    engine = pyttsx3.init()
-    voices = engine.getProperty('voices')
-    # Vérifier si nous avons au moins 2 voix avant d'essayer d'accéder à la voix d'index 1
-    if len(voices) > 1:
-        engine.setProperty('voice', voices[1].id)  # Voix féminine généralement
-    
-    # Obtenir la vitesse actuelle
-    rate = engine.getProperty('rate')
-    # Définir une vitesse plus lente
-    engine.setProperty('rate', rate-50)  # Réduire de 50 pour ralentir
-    
-    return engine
-
-# Mapper les codes de langue pour gTTS
-def map_lang_code_for_gtts(lang_code):
-    # Table de conversion des codes pour gTTS
-    code_map = {
-        'zh-CN': 'zh-cn',
-        'ja': 'ja',
-        'ar': 'ar',
-        'ru': 'ru',
-        'uk': 'uk',
-        'hi': 'hi',
-        'bn': 'bn',
-        'te': 'te',
-        'mr': 'mr',
-        'fa': 'fa',
-        'en': 'en',
-        'es': 'es',
-        'de': 'de',
-        'it': 'it',
-        'pt': 'pt',
-        # Ajouter d'autres mappages si nécessaire
-    }
-    return code_map.get(lang_code, 'en')  # Par défaut en anglais si non trouvé
-
-# Créer un dossier temporaire portable
-def get_temp_directory():
-    # Obtenir le répertoire de l'exécutable ou du script
-    if getattr(sys, 'frozen', False):
-        # Si exécuté en tant qu'exécutable
-        app_dir = os.path.dirname(sys.executable)
-    else:
-        # Si exécuté en tant que script
-        app_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Créer un dossier 'temp' dans le répertoire de l'application s'il n'existe pas
-    temp_dir = os.path.join(app_dir, 'temp')
-    if not os.path.exists(temp_dir):
-        try:
-            os.makedirs(temp_dir)
-        except:
-            # En cas d'échec, utiliser le dossier temporaire du système
-            return tempfile.gettempdir()
-    
-    return temp_dir
 
 # Fonction améliorée pour la synthèse vocale multilingue
 def speak(text, lang='en'):
