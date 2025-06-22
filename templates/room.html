@@ -15,7 +15,7 @@
         }
         
         .container {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -50,6 +50,32 @@
         .user-info {
             font-size: 14px;
             opacity: 0.9;
+        }
+        
+        .qrcode-container {
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            width: 120px;
+            display: none;
+        }
+        
+        .qrcode-container.show {
+            display: block;
+        }
+        
+        .qrcode-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        
+        .qrcode-caption {
+            font-size: 10px;
+            margin-top: 5px;
+            opacity: 0.8;
         }
         
         .status {
@@ -87,6 +113,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin: 10px;
+            min-width: 200px;
         }
         
         .mic-button:hover {
@@ -103,6 +130,17 @@
             0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
             100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+        }
+        
+        .text-mode-button {
+            padding: 10px 20px;
+            background: rgba(33, 150, 243, 0.8);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
         }
         
         .leave-button {
@@ -147,6 +185,41 @@
         .empty-translation {
             color: rgba(255, 255, 255, 0.6);
             font-style: italic;
+        }
+        
+        .text-input-fallback {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+        
+        .text-input-fallback.show {
+            display: block;
+        }
+        
+        .text-input-fallback textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            min-height: 80px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            resize: vertical;
+        }
+        
+        .text-input-fallback button {
+            margin-right: 10px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
         }
         
         .participants {
@@ -225,6 +298,27 @@
         .wave-bar:nth-child(4) { animation-delay: 0.4s; }
         .wave-bar:nth-child(5) { animation-delay: 0.3s; }
         
+        .mic-level-indicator {
+            width: 100%;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .mic-level-indicator.active {
+            display: block;
+        }
+        
+        .mic-level-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #FFD700;
+            transition: width 0.1s ease-out;
+        }
+        
         @media (max-width: 600px) {
             .container {
                 margin: 10px;
@@ -244,6 +338,10 @@
             .mic-button {
                 width: 100%;
                 margin: 5px 0;
+            }
+            
+            .qrcode-container {
+                margin: 10px auto;
             }
         }
         
@@ -272,6 +370,10 @@
                     <span id="user-nickname">Chargement...</span> 
                     (<span id="user-language">Chargement...</span>)
                 </div>
+                <div class="qrcode-container" id="qrcode-container">
+                    <img src="/qrcode" alt="QR Code" id="qr-code-image">
+                    <div class="qrcode-caption">Scannez pour rejoindre</div>
+                </div>
                 <button class="leave-button" onclick="leaveRoom()">🚪 Quitter</button>
             </div>
         </div>
@@ -281,6 +383,7 @@
         <div id="controls" class="controls" style="display: none;">
             <div id="host-controls" style="display: none;">
                 <button id="mic-button" class="mic-button">🎤 Parler en Français</button>
+                <button id="text-mode-button" class="text-mode-button">💬 Mode Texte</button>
                 
                 <div class="wave-animation" id="wave-animation">
                     <div class="wave-bar"></div>
@@ -289,11 +392,42 @@
                     <div class="wave-bar"></div>
                     <div class="wave-bar"></div>
                 </div>
+                
+                <div class="mic-level-indicator" id="mic-level">
+                    <div class="mic-level-bar" id="mic-level-bar"></div>
+                </div>
+                
+                <div class="text-input-fallback" id="text-input-fallback">
+                    <textarea id="fallback-text-input" placeholder="Tapez votre message en français ici..."></textarea>
+                    <button onclick="sendTextMessage()">Envoyer</button>
+                    <button onclick="hideTextMode()">🎤 Retour au micro</button>
+                </div>
             </div>
             
-            <div id="participant-info" style="display: none;">
-                <p style="text-align: center; font-style: italic;">
-                    Vous écoutez les traductions en temps réel
+            <div id="participant-controls" style="display: none;">
+                <button id="participant-mic-button" class="mic-button">🎤 Parler dans votre langue</button>
+                <button id="participant-text-mode-button" class="text-mode-button">💬 Mode Texte</button>
+                
+                <div class="wave-animation" id="participant-wave-animation">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+                
+                <div class="mic-level-indicator" id="participant-mic-level">
+                    <div class="mic-level-bar" id="participant-mic-level-bar"></div>
+                </div>
+                
+                <div class="text-input-fallback" id="participant-text-input-fallback">
+                    <textarea id="participant-fallback-text-input" placeholder="Tapez votre message dans votre langue ici..."></textarea>
+                    <button onclick="sendParticipantTextMessage()">Envoyer</button>
+                    <button onclick="hideParticipantTextMode()">🎤 Retour au micro</button>
+                </div>
+                
+                <p style="text-align: center; font-style: italic; margin-top: 20px;">
+                    Vous recevez les traductions en temps réel
                 </p>
             </div>
         </div>
@@ -328,19 +462,33 @@
         let isListening = false;
         let isHost = false;
         let updateInterval = null;
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
         
         // Éléments DOM
         const statusEl = document.getElementById('status');
         const controlsEl = document.getElementById('controls');
         const hostControlsEl = document.getElementById('host-controls');
-        const participantInfoEl = document.getElementById('participant-info');
+        const participantControlsEl = document.getElementById('participant-controls');
         const micButton = document.getElementById('mic-button');
+        const participantMicButton = document.getElementById('participant-mic-button');
+        const textModeButton = document.getElementById('text-mode-button');
+        const participantTextModeButton = document.getElementById('participant-text-mode-button');
         const waveAnimation = document.getElementById('wave-animation');
+        const participantWaveAnimation = document.getElementById('participant-wave-animation');
         const originalTextEl = document.getElementById('original-text');
         const translatedTextEl = document.getElementById('translated-text');
         const targetLanguageEl = document.getElementById('target-language');
         const participantsListEl = document.getElementById('participants-list');
         const participantCountEl = document.getElementById('participant-count');
+        const qrcodeContainer = document.getElementById('qrcode-container');
+        const textInputFallback = document.getElementById('text-input-fallback');
+        const participantTextInputFallback = document.getElementById('participant-text-input-fallback');
+        const micLevel = document.getElementById('mic-level');
+        const micLevelBar = document.getElementById('mic-level-bar');
+        const participantMicLevel = document.getElementById('participant-mic-level');
+        const participantMicLevelBar = document.getElementById('participant-mic-level-bar');
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -352,7 +500,7 @@
             const userDataStr = localStorage.getItem('tradlive_user');
             if (!userDataStr) {
                 showError('Données utilisateur manquantes. Retour à l\'accueil...');
-                setTimeout(() => window.location.href = '/', 2000);
+                setTimeout(() => window.location.href = '/rooms', 2000);
                 return;
             }
             
@@ -362,7 +510,7 @@
             const currentRoomId = window.location.pathname.split('/').pop();
             if (userData.room_id !== currentRoomId) {
                 showError('Incohérence de salle. Retour à l\'accueil...');
-                setTimeout(() => window.location.href = '/', 2000);
+                setTimeout(() => window.location.href = '/rooms', 2000);
                 return;
             }
             
@@ -376,7 +524,7 @@
             // Démarrer la mise à jour en temps réel
             startRealTimeUpdates();
             
-            // Configurer la reconnaissance vocale si c'est l'hôte
+            // Configurer la reconnaissance vocale si supportée
             if (window.webkitSpeechRecognition || window.SpeechRecognition) {
                 setupSpeechRecognition();
             }
@@ -397,10 +545,11 @@
                             // Afficher les contrôles appropriés
                             if (isHost) {
                                 hostControlsEl.style.display = 'block';
+                                qrcodeContainer.classList.add('show');
                                 statusEl.textContent = 'Vous êtes l\'hôte. Parlez en français pour traduire.';
                                 statusEl.className = 'status connected';
                             } else {
-                                participantInfoEl.style.display = 'block';
+                                participantControlsEl.style.display = 'block';
                                 statusEl.textContent = 'Connecté en tant que participant.';
                                 statusEl.className = 'status connected';
                                 targetLanguageEl.textContent = getLanguageName(userData.language);
@@ -492,58 +641,79 @@
         }
         
         function setupSpeechRecognition() {
-            if (!isHost) return; // Seul l'hôte peut parler
-            
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.lang = 'fr-FR';
-            recognition.continuous = true;
-            recognition.interimResults = true;
             
-            recognition.onresult = function(event) {
-                const lastResultIndex = event.results.length - 1;
-                const transcript = event.results[lastResultIndex][0].transcript;
-                
-                if (event.results[lastResultIndex].isFinal) {
-                    // Envoyer la traduction
-                    sendTranslation(transcript);
-                } else {
-                    // Afficher le texte en cours
-                    originalTextEl.textContent = transcript;
-                    originalTextEl.classList.remove('empty-translation');
-                }
-            };
-            
-            recognition.onerror = function(event) {
-                console.error('Erreur reconnaissance vocale:', event.error);
-                showError('Erreur de reconnaissance vocale: ' + event.error);
-                stopListening();
-            };
-            
-            recognition.onend = function() {
-                if (isListening) {
-                    try {
-                        recognition.start();
-                    } catch (e) {
-                        console.error('Erreur redémarrage reconnaissance:', e);
+            // Configuration pour l'hôte (français)
+            if (isHost && micButton) {
+                micButton.addEventListener('click', function() {
+                    if (isListening) {
                         stopListening();
+                    } else {
+                        startHostListening();
                     }
-                }
-            };
+                });
+                
+                textModeButton.addEventListener('click', function() {
+                    showTextMode();
+                });
+            }
             
-            // Configurer le bouton micro
-            micButton.addEventListener('click', function() {
-                if (isListening) {
-                    stopListening();
-                } else {
-                    startListening();
-                }
-            });
+            // Configuration pour le participant (sa langue)
+            if (!isHost && participantMicButton) {
+                participantMicButton.addEventListener('click', function() {
+                    if (isListening) {
+                        stopParticipantListening();
+                    } else {
+                        startParticipantListening();
+                    }
+                });
+                
+                participantTextModeButton.addEventListener('click', function() {
+                    showParticipantTextMode();
+                });
+            }
         }
         
-        function startListening() {
+        function startHostListening() {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
+                    setupAudioAnalysis(stream, micLevel, micLevelBar);
+                    
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    recognition = new SpeechRecognition();
+                    recognition.lang = 'fr-FR';
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    
+                    recognition.onresult = function(event) {
+                        const lastResultIndex = event.results.length - 1;
+                        const transcript = event.results[lastResultIndex][0].transcript;
+                        
+                        if (event.results[lastResultIndex].isFinal) {
+                            sendTranslation(transcript);
+                        } else {
+                            originalTextEl.textContent = transcript;
+                            originalTextEl.classList.remove('empty-translation');
+                        }
+                    };
+                    
+                    recognition.onerror = function(event) {
+                        console.error('Erreur reconnaissance vocale:', event.error);
+                        showError('Erreur de reconnaissance vocale: ' + event.error);
+                        stopListening();
+                    };
+                    
+                    recognition.onend = function() {
+                        if (isListening) {
+                            try {
+                                recognition.start();
+                            } catch (e) {
+                                console.error('Erreur redémarrage reconnaissance:', e);
+                                stopListening();
+                            }
+                        }
+                    };
+                    
                     recognition.start();
                     isListening = true;
                     micButton.textContent = '🎤 Arrêter';
@@ -555,6 +725,82 @@
                 .catch(err => {
                     console.error('Erreur accès micro:', err);
                     showError('Impossible d\'accéder au microphone');
+                    showTextMode();
+                });
+        }
+        
+        function startParticipantListening() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    setupAudioAnalysis(stream, participantMicLevel, participantMicLevelBar);
+                    
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    recognition = new SpeechRecognition();
+                    
+                    // Configurer la langue du participant
+                    switch(userData.language) {
+                        case 'en': recognition.lang = 'en-US'; break;
+                        case 'es': recognition.lang = 'es-ES'; break;
+                        case 'de': recognition.lang = 'de-DE'; break;
+                        case 'it': recognition.lang = 'it-IT'; break;
+                        case 'pt': recognition.lang = 'pt-PT'; break;
+                        case 'ru': recognition.lang = 'ru-RU'; break;
+                        case 'zh-CN': recognition.lang = 'zh-CN'; break;
+                        case 'ja': recognition.lang = 'ja-JP'; break;
+                        case 'ar': recognition.lang = 'ar-SA'; break;
+                        case 'uk': recognition.lang = 'uk-UA'; break;
+                        case 'fa': recognition.lang = 'fa-IR'; break;
+                        case 'hi': recognition.lang = 'hi-IN'; break;
+                        case 'bn': recognition.lang = 'bn-IN'; break;
+                        case 'te': recognition.lang = 'te-IN'; break;
+                        case 'mr': recognition.lang = 'mr-IN'; break;
+                        default: recognition.lang = 'en-US';
+                    }
+                    
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    
+                    recognition.onresult = function(event) {
+                        const lastResultIndex = event.results.length - 1;
+                        const transcript = event.results[lastResultIndex][0].transcript;
+                        
+                        if (event.results[lastResultIndex].isFinal) {
+                            sendParticipantTranslation(transcript);
+                        } else {
+                            originalTextEl.textContent = transcript;
+                            originalTextEl.classList.remove('empty-translation');
+                        }
+                    };
+                    
+                    recognition.onerror = function(event) {
+                        console.error('Erreur reconnaissance vocale:', event.error);
+                        showError('Erreur de reconnaissance vocale: ' + event.error);
+                        stopParticipantListening();
+                    };
+                    
+                    recognition.onend = function() {
+                        if (isListening) {
+                            try {
+                                recognition.start();
+                            } catch (e) {
+                                console.error('Erreur redémarrage reconnaissance:', e);
+                                stopParticipantListening();
+                            }
+                        }
+                    };
+                    
+                    recognition.start();
+                    isListening = true;
+                    participantMicButton.textContent = '🎤 Arrêter';
+                    participantMicButton.classList.add('active');
+                    participantWaveAnimation.classList.add('active');
+                    statusEl.textContent = `En écoute... Parlez en ${getLanguageName(userData.language)}.`;
+                    statusEl.className = 'status info';
+                })
+                .catch(err => {
+                    console.error('Erreur accès micro:', err);
+                    showError('Impossible d\'accéder au microphone');
+                    showParticipantTextMode();
                 });
         }
         
@@ -566,8 +812,83 @@
             micButton.textContent = '🎤 Parler en Français';
             micButton.classList.remove('active');
             waveAnimation.classList.remove('active');
+            micLevel.classList.remove('active');
             statusEl.textContent = 'Cliquez sur le micro pour parler.';
             statusEl.className = 'status connected';
+            
+            if (audioContext) {
+                try {
+                    if (microphone) microphone.disconnect();
+                    if (analyser) analyser.disconnect();
+                } catch (e) {}
+            }
+        }
+        
+        function stopParticipantListening() {
+            if (recognition) {
+                recognition.stop();
+            }
+            isListening = false;
+            participantMicButton.textContent = `🎤 Parler en ${getLanguageName(userData.language)}`;
+            participantMicButton.classList.remove('active');
+            participantWaveAnimation.classList.remove('active');
+            participantMicLevel.classList.remove('active');
+            statusEl.textContent = 'Cliquez sur le micro pour parler.';
+            statusEl.className = 'status connected';
+            
+            if (audioContext) {
+                try {
+                    if (microphone) microphone.disconnect();
+                    if (analyser) analyser.disconnect();
+                } catch (e) {}
+            }
+        }
+        
+        function setupAudioAnalysis(stream, levelElement, barElement) {
+            try {
+                if (audioContext) {
+                    audioContext.close();
+                }
+                
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(stream);
+                
+                analyser.smoothingTimeConstant = 0.8;
+                analyser.fftSize = 1024;
+                
+                microphone.connect(analyser);
+                
+                levelElement.classList.add('active');
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                const checkAudioLevel = () => {
+                    if (!isListening) {
+                        levelElement.classList.remove('active');
+                        return;
+                    }
+                    
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    let sum = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        sum += dataArray[i];
+                    }
+                    const average = sum / bufferLength;
+                    
+                    const levelPercent = Math.min(average * 2, 100);
+                    barElement.style.width = levelPercent + '%';
+                    
+                    requestAnimationFrame(checkAudioLevel);
+                };
+                
+                requestAnimationFrame(checkAudioLevel);
+                
+            } catch (e) {
+                console.warn("Impossible de configurer l'analyse audio:", e);
+            }
         }
         
         function sendTranslation(text) {
@@ -597,6 +918,88 @@
             });
         }
         
+        function sendParticipantTranslation(text) {
+            // Pour les participants, on envoie à l'API de traduction vers français
+            fetch('/translate-to-french', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: text,
+                    source_lang: userData.language,
+                    disable_speech: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Afficher la traduction localement
+                translatedTextEl.textContent = data.translated;
+                translatedTextEl.classList.remove('empty-translation');
+                
+                // Mettre à jour pour l'hôte
+                return fetch('/update-last-translation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        original: text,
+                        translated: data.translated,
+                        language: 'fr',
+                        source_language: userData.language
+                    })
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
+                statusEl.textContent = 'Message envoyé à l\'hôte !';
+                statusEl.className = 'status connected';
+            })
+            .catch(error => {
+                console.error('Erreur envoi message:', error);
+                showError('Erreur de connexion');
+            });
+        }
+        
+        function showTextMode() {
+            if (isListening) stopListening();
+            textInputFallback.classList.add('show');
+            document.getElementById('fallback-text-input').focus();
+        }
+        
+        function hideTextMode() {
+            textInputFallback.classList.remove('show');
+        }
+        
+        function showParticipantTextMode() {
+            if (isListening) stopParticipantListening();
+            participantTextInputFallback.classList.add('show');
+            document.getElementById('participant-fallback-text-input').focus();
+        }
+        
+        function hideParticipantTextMode() {
+            participantTextInputFallback.classList.remove('show');
+        }
+        
+        function sendTextMessage() {
+            const text = document.getElementById('fallback-text-input').value.trim();
+            if (text) {
+                sendTranslation(text);
+                document.getElementById('fallback-text-input').value = '';
+                hideTextMode();
+            }
+        }
+        
+        function sendParticipantTextMessage() {
+            const text = document.getElementById('participant-fallback-text-input').value.trim();
+            if (text) {
+                sendParticipantTranslation(text);
+                document.getElementById('participant-fallback-text-input').value = '';
+                hideParticipantTextMode();
+            }
+        }
+        
         function leaveRoom() {
             if (confirm('Êtes-vous sûr de vouloir quitter la salle ?')) {
                 fetch(`/api/room/${userData.room_id}/leave`, {
@@ -614,7 +1017,6 @@
                 })
                 .catch(error => {
                     console.error('Erreur quitter salle:', error);
-                    // Rediriger quand même
                     localStorage.removeItem('tradlive_user');
                     window.location.href = '/rooms';
                 });
@@ -651,7 +1053,23 @@
         // Nettoyage à la fermeture
         window.addEventListener('beforeunload', function() {
             if (updateInterval) clearInterval(updateInterval);
-            if (isListening) stopListening();
+            if (isListening) {
+                if (isHost) stopListening();
+                else stopParticipantListening();
+            }
+        });
+        
+        // Support pour la touche Entrée dans les zones de texte
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.target.id === 'fallback-text-input') {
+                    e.preventDefault();
+                    sendTextMessage();
+                } else if (e.target.id === 'participant-fallback-text-input') {
+                    e.preventDefault();
+                    sendParticipantTextMessage();
+                }
+            }
         });
     </script>
 </body>
