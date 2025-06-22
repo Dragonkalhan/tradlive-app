@@ -17,9 +17,6 @@ import subprocess
 import requests
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
 from deep_translator import GoogleTranslator, MyMemoryTranslator
-import pyttsx3
-from gtts import gTTS
-import pygame
 from OpenSSL import crypto
 import qrcode
 from io import BytesIO
@@ -1320,64 +1317,11 @@ def get_temp_directory():
 # Fonction améliorée pour la synthèse vocale multilingue
 def speak(text, lang='en'):
     """
-    Fonction pour lire le texte à haute voix dans la langue spécifiée
-    Utilise gTTS pour toutes les langues et pygame pour la lecture
-    Implémente un verrou pour éviter les lectures simultanées
+    Version serveur : pas de synthèse vocale côté serveur
+    L'audio est géré côté client dans le navigateur
     """
-    global speaking_in_progress
-    
-    if not text:
-        return
-    
-    # Acquérir le verrou pour éviter les lectures simultanées
-    with speech_lock:
-        # Si une lecture est déjà en cours, ne pas la démarrer
-        if speaking_in_progress:
-            print("Une synthèse vocale est déjà en cours, annulation de la nouvelle demande")
-            return
-            
-        speaking_in_progress = True
-    
-    try:
-        # Obtenir un nom de fichier temporaire unique
-        temp_dir = get_temp_directory()
-        temp_filename = os.path.join(temp_dir, f"speech_{time.time()}.mp3")
-        
-        # Créer un objet GTTS et sauvegarder l'audio en MP3
-        gtts_lang = map_lang_code_for_gtts(lang)
-        tts = gTTS(text=text, lang=gtts_lang, slow=False)
-        tts.save(temp_filename)
-        
-        # S'assurer que toute lecture précédente est terminée
-        pygame.mixer.music.stop()
-        pygame.mixer.music.unload()
-        
-        # Charger et jouer avec pygame
-        pygame.mixer.music.load(temp_filename)
-        pygame.mixer.music.play()
-        
-        # Attendre que l'audio se termine
-        while pygame.mixer.music.get_busy():
-            pygame.time.Clock().tick(10)
-        
-        # Nettoyer le fichier mais ne pas bloquer l'exécution
-        pygame.mixer.music.unload()
-        
-        # Supprimer le fichier après utilisation
-        try:
-            os.remove(temp_filename)
-        except:
-            # Si la suppression échoue, programmer une suppression différée
-            threading.Timer(5.0, lambda: os.remove(temp_filename) if os.path.exists(temp_filename) else None).start()
-            
-    except Exception as e:
-        print(f"Erreur de synthèse vocale: {str(e)}")
-        
-    finally:
-        # Relâcher le verrou dans tous les cas
-        with speech_lock:
-            speaking_in_progress = False
-
+    print(f"Synthèse vocale demandée pour: {text[:50]}... (langue: {lang})")
+    return  # Ne fait rien côté serveur
 # ============================================================
 # FONCTIONS DE TRADUCTION
 # ============================================================
