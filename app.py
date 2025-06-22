@@ -1767,10 +1767,15 @@ def create_room():
     
     try:
         data = request.json
-        host_nickname = data.get('nickname', '').strip()
+        
+        # Vérifier que les données JSON sont bien reçues
+        if not data:
+            return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+        
+        host_nickname = data.get('nickname', '').strip() if data.get('nickname') else ''
         host_language = data.get('language', 'fr')
-        room_name = data.get('room_name', '').strip()
-        password = data.get('password', '').strip() or None
+        room_name = data.get('room_name', '').strip() if data.get('room_name') else ''
+        password = data.get('password', '').strip() if data.get('password') else None
         
         # Validations
         if not host_nickname:
