@@ -215,15 +215,7 @@ def cleanup():
     if ngrok_mode:
         stop_ngrok()
     
-    # Arrêter pygame
-    try:
-        pygame.mixer.music.stop()
-        pygame.mixer.music.unload()
-        pygame.mixer.quit()
-        pygame.quit()
-    except:
-        pass
-    
+   
     # Réactiver le garbage collector
     gc.enable()
     
@@ -1599,10 +1591,6 @@ def translate():
     if not text:
         return jsonify({'error': 'No text provided'}), 400
     
-    # Annuler toute synthèse vocale en cours
-    with speech_lock:
-        pygame.mixer.music.stop()
-        pygame.mixer.music.unload()
     
     translated = translate_text(text, lang)
     
@@ -2012,12 +2000,6 @@ def admin_stats():
     
     return jsonify(room_manager.get_stats())
 
-# Modifier la route principale pour rediriger vers la page des salles
-@app.route("/")
-def index():
-    """Route principale - redirige vers la sélection de salle"""
-    update_heartbeat()
-    return redirect(url_for('rooms_page'))
 # ============================================================
 # FONCTIONS DE GESTION DU HEARTBEAT
 # ============================================================
