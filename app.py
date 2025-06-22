@@ -1809,10 +1809,15 @@ def join_room():
     
     try:
         data = request.json
-        room_id = data.get('room_id', '').strip()
-        nickname = data.get('nickname', '').strip()
+        
+        # Vérifier que les données JSON sont bien reçues
+        if not data:
+            return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+        
+        room_id = data.get('room_id', '').strip() if data.get('room_id') else ''
+        nickname = data.get('nickname', '').strip() if data.get('nickname') else ''
         language = data.get('language', 'fr')
-        password = data.get('password', '').strip() or None
+        password = data.get('password', '').strip() if data.get('password') else None
         
         # Validations
         if not room_id:
