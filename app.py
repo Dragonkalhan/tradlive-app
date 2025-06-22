@@ -1542,40 +1542,9 @@ def desktop_interface():
 # Route d'accueil optimisée pour une redirection plus rapide
 @app.route("/", methods=["GET", "POST"])
 def index():
-    # Mettre à jour le heartbeat
+    """Route principale - redirige vers la sélection de salle"""
     update_heartbeat()
-    
-    # Pour une requête POST, traiter comme avant
-    if request.method == "POST":
-        lang = "en"  # Langue par défaut (anglais)
-        translated_text = ""  # Texte traduit, vide par défaut
-        original_text = ""  # Texte original
-        
-        if "text" in request.form:  # Si un texte est soumis manuellement
-            text = request.form["text"].strip()
-            lang = request.form["lang"]
-            original_text = text
-            
-            if text:
-                translated_text = translate_text(text, lang)
-                # Lancer la synthèse vocale dans un thread séparé avec la langue cible
-                threading.Thread(target=speak, args=(translated_text, lang)).start()
-        
-        # Retourner le template standard pour les requêtes POST
-        return render_template("index.html", 
-                            translated=translated_text, 
-                            original=original_text,
-                            lang=lang)
-    
-    # Optimisation: redirection plus directe pour GET
-    user_agent = request.headers.get('User-Agent', '').lower()
-    is_mobile = any(device in user_agent for device in ['mobile', 'android', 'iphone', 'ipad'])
-    
-    # Redirection directe selon le type d'appareil
-    if is_mobile:
-        return redirect(url_for('phone_interface'))
-    else:
-        return redirect(url_for('desktop_interface'))
+    return redirect(url_for('rooms_page'))
 
 # Route API pour la traduction depuis JavaScript
 @app.route('/translate', methods=['POST'])
