@@ -543,17 +543,6 @@
         });
         
         function initializeRoom() {
-            // Vérifier si c'est un auto-join via QR code
-            const urlParams = new URLSearchParams(window.location.search);
-            const isAutoJoin = urlParams.get('auto_join') === 'true';
-            
-            if (isAutoJoin) {
-                // Rediriger vers la page de création/rejoindre avec le room_id
-                const currentRoomId = window.location.pathname.split('/').pop();
-                window.location.href = `/rooms?join=${currentRoomId}`;
-                return;
-            }
-            
             // Récupérer les données utilisateur du localStorage
             const userDataStr = localStorage.getItem('tradlive_user');
             if (!userDataStr) {
@@ -576,10 +565,6 @@
             document.getElementById('user-nickname').textContent = userData.nickname;
             document.getElementById('user-language').textContent = getLanguageName(userData.language);
             document.getElementById('qr-room-code').textContent = userData.room_id;
-            
-            // Construire l'URL de la salle pour le QR code et le partage
-            const baseUrl = window.location.origin;
-            document.getElementById('room-url').textContent = "Les participants scannent pour rejoindre automatiquement";
             
             // Charger les informations de la salle
             loadRoomInfo();
