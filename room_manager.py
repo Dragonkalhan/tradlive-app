@@ -38,7 +38,9 @@ class Room:
         self.last_translation = {
             'original': '',
             'translated': {},  # {language: translation}
-            'timestamp': datetime.now()
+            'timestamp': datetime.now(),
+            'source_language': 'fr',  # Langue source du message
+            'enable_speech': False    # Si la synthèse vocale doit être activée
         }
     
     def add_user(self, user: User) -> bool:
@@ -61,17 +63,25 @@ class Room:
         """Récupère un utilisateur par son ID"""
         return self.users.get(user_id)
     
-    def update_translation(self, original_text: str, translations: Dict[str, str]):
+    def update_translation(self, original_text: str, translations: Dict[str, str], source_language: str = 'fr', enable_speech: bool = False):
         """Met à jour la dernière traduction pour toute la salle"""
         self.last_translation = {
             'original': original_text,
             'translated': translations,
-            'timestamp': datetime.now()
+            'timestamp': datetime.now(),
+            'source_language': source_language,
+            'enable_speech': enable_speech
         }
+        
+        print(f"📝 Nouvelle traduction dans {self.room_name}: '{original_text[:50]}...' -> {len(translations)} langues")
     
     def get_active_languages(self) -> List[str]:
         """Retourne la liste des langues utilisées dans la salle"""
         return list(set(user.language for user in self.users.values()))
+    
+    def get_participant_languages(self) -> List[str]:
+        """Retourne la liste des langues des participants (non-hôtes)"""
+        return list(set(user.language for user in self.users.values() if not user.is_host))
     
     def cleanup_inactive_users(self, timeout_minutes: int = 30):
         """Supprime les utilisateurs inactifs"""
@@ -95,7 +105,8 @@ class Room:
             'last_translation': {
                 'original': self.last_translation['original'],
                 'translated': self.last_translation['translated'],
-                'timestamp': self.last_translation['timestamp'].isoformat()
+                'timestamp': self.last_translation['timestamp'].isoformat(),
+                'source_language': self.last_translation['source_language']
             }
         }
 
@@ -198,8 +209,13 @@ class RoomManager:
             if user:
                 user.update_activity()
     
-    def broadcast_translation(self, room_id: str, original_text: str, source_language: str):
-        """Diffuse une traduction à tous les utilisateurs d'une salle"""
+    def broadcast_translation(self, room_id: str, original_text: str, source_language: str, enable_speech: bool = False):
+        """
+        Diffuse une traduction à tous les utilisateurs d'une salle
+        Flux adapté selon les spécifications :
+        - Hôte parle français -> traduit vers toutes les langues des participants + synthèse vocale
+        - Participant parle sa langue -> traduit vers français seulement
+        """
         room = self.get_room(room_id)
         if not room:
             return False
@@ -207,24 +223,39 @@ class RoomManager:
         # Importer ici pour éviter les imports circulaires
         from translation_manager import translation_manager
         
-        # Obtenir toutes les langues nécessaires
-        target_languages = room.get_active_languages()
-        if source_language in target_languages:
-            target_languages.remove(source_language)  # Pas besoin de traduire vers la langue source
-        
-        # Traduire vers chaque langue
         translations = {}
-        for target_lang in target_languages:
+        
+        if source_language == 'fr':  # L'hôte parle français
+            # Traduire vers toutes les langues des participants
+            participant_languages = room.get_participant_languages()
+            
+            for target_lang in participant_languages:
+                try:
+                    translated = translation_manager.translate(original_text, source_language, target_lang)
+                    translations[target_lang] = translated
+                    print(f"🌍 Hôte -> {target_lang}: {translated[:50]}...")
+                except Exception as e:
+                    print(f"❌ Erreur traduction vers {target_lang}: {str(e)}")
+                    translations[target_lang] = f"Erreur de traduction"
+            
+            # Activer la synthèse vocale pour les participants
+            enable_speech = True
+            
+        else:  # Un participant parle dans sa langue
+            # Traduire seulement vers le français pour l'hôte
             try:
-                translated = translation_manager.translate(original_text, source_language, target_lang)
-                translations[target_lang] = translated
-                print(f"🌍 Traduit vers {target_lang}: {translated[:50]}...")
+                translated = translation_manager.translate(original_text, source_language, 'fr')
+                translations['fr'] = translated
+                print(f"🌍 Participant ({source_language}) -> français: {translated[:50]}...")
             except Exception as e:
-                print(f"❌ Erreur traduction vers {target_lang}: {str(e)}")
-                translations[target_lang] = f"Erreur de traduction"
+                print(f"❌ Erreur traduction vers français: {str(e)}")
+                translations['fr'] = f"Erreur de traduction"
+            
+            # Pas de synthèse vocale pour l'hôte
+            enable_speech = False
         
         # Mettre à jour la salle
-        room.update_translation(original_text, translations)
+        room.update_translation(original_text, translations, source_language, enable_speech)
         
         return True
     
