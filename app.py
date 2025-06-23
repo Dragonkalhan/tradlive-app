@@ -228,6 +228,12 @@ def room_interface(room_id):
     if not room:
         return redirect(url_for('rooms_page'))
     
+    # Vérifier si c'est un auto-join via QR code
+    auto_join = request.args.get('auto_join')
+    if auto_join == 'true':
+        # Rediriger vers la page de rejoindre avec le room_id pré-rempli
+        return redirect(url_for('rooms_page') + f'?join={room_id}')
+    
     return render_template('room.html', room_id=room_id)
 
 @app.route('/api/room/<room_id>/info')
