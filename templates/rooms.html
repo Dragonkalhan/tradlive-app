@@ -179,11 +179,25 @@
                 flex-direction: column;
             }
         }
+        
+        .auto-join-notice {
+            background: rgba(76, 175, 80, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🌍 TradLive - Traduction Multi-utilisateurs</h1>
+        
+        <!-- Notice pour auto-join depuis QR code -->
+        <div id="auto-join-notice" class="auto-join-notice" style="display: none;">
+            ✅ Code de salle détecté ! Remplissez vos informations pour rejoindre automatiquement.
+        </div>
         
         <div class="instructions">
             <h3>Comment ça marche ?</h3>
@@ -323,6 +337,31 @@
                 }, 5000);
             }
         }
+        
+        // Initialisation au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier s'il y a un paramètre join dans l'URL (depuis QR code)
+            const urlParams = new URLSearchParams(window.location.search);
+            const joinRoomId = urlParams.get('join');
+            
+            if (joinRoomId) {
+                // Afficher la notice d'auto-join
+                document.getElementById('auto-join-notice').style.display = 'block';
+                
+                // Pré-remplir le code de salle et basculer sur l'onglet "Rejoindre"
+                document.getElementById('join-room-id').value = joinRoomId;
+                showTab('join');
+                
+                // Mettre l'onglet rejoindre comme actif
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelector('.tab[onclick*="join"]').classList.add('active');
+                
+                // Mettre le focus sur le champ pseudo
+                setTimeout(() => {
+                    document.getElementById('join-nickname').focus();
+                }, 100);
+            }
+        });
         
         // Création de salle
         document.getElementById('create-form').addEventListener('submit', function(e) {
