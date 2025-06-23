@@ -371,13 +371,13 @@
         <!-- QR Code pour l'hôte -->
         <div id="qr-section" class="qr-section">
             <h3>🔗 Partage de la salle</h3>
-            <p>Scannez ce QR code ou partagez le lien :</p>
+            <p>Scannez ce QR code pour rejoindre directement la salle :</p>
             <div class="qrcode-container">
                 <img src="/qrcode" alt="QR Code" id="qr-code-image">
             </div>
             <div class="qr-caption">
                 Code salle : <strong id="qr-room-code">{{ room_id }}</strong><br>
-                <span id="room-url">Chargement...</span>
+                <span id="room-url">Les participants scannent pour rejoindre automatiquement</span>
             </div>
         </div>
         
@@ -543,6 +543,17 @@
         });
         
         function initializeRoom() {
+            // Vérifier si c'est un auto-join via QR code
+            const urlParams = new URLSearchParams(window.location.search);
+            const isAutoJoin = urlParams.get('auto_join') === 'true';
+            
+            if (isAutoJoin) {
+                // Rediriger vers la page de création/rejoindre avec le room_id
+                const currentRoomId = window.location.pathname.split('/').pop();
+                window.location.href = `/rooms?join=${currentRoomId}`;
+                return;
+            }
+            
             // Récupérer les données utilisateur du localStorage
             const userDataStr = localStorage.getItem('tradlive_user');
             if (!userDataStr) {
@@ -568,8 +579,7 @@
             
             // Construire l'URL de la salle pour le QR code et le partage
             const baseUrl = window.location.origin;
-            const roomUrl = `${baseUrl}/rooms?join=${userData.room_id}`;
-            document.getElementById('room-url').textContent = roomUrl;
+            document.getElementById('room-url').textContent = "Les participants scannent pour rejoindre automatiquement";
             
             // Charger les informations de la salle
             loadRoomInfo();
@@ -590,7 +600,8 @@
         }
         
         function updateQRCode() {
-            const roomUrl = `${window.location.origin}/rooms?join=${userData.room_id}`;
+            // QR code mène directement à la salle pour rejoindre automatiquement
+            const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
             qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}&t=${Date.now()}`;
         }
         
@@ -616,13 +627,13 @@
                                 hostControlsEl.style.display = 'block';
                                 hostInterface.style.display = 'block';
                                 qrSection.classList.add('show');
-                                statusEl.textContent = 'Vous êtes l\'hôte. Parlez en français pour traduire vers toutes les langues.';
+                                statusEl.textContent = 'Vous êtes l\'hôte. Parlez en français, la traduction se fera automatiquement vers toutes les langues.';
                                 statusEl.className = 'status connected';
                             } else {
                                 participantControlsEl.style.display = 'block';
                                 participantInterface.style.display = 'block';
                                 participantTargetLanguage.textContent = getLanguageName(userData.language);
-                                statusEl.textContent = `Connecté en tant que participant. Parlez en ${getLanguageName(userData.language)}.`;
+                                statusEl.textContent = `Connecté en tant que participant. Vous recevez les traductions en ${getLanguageName(userData.language)}.`;
                                 statusEl.className = 'status connected';
                             }
                             
