@@ -161,6 +161,20 @@
             margin: 5px;
         }
         
+        .language-selector {
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .language-selector select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            background: white;
+            color: #333;
+        }
+        
         .translation-area {
             background: rgba(255, 255, 255, 0.15);
             border-radius: 15px;
@@ -358,7 +372,7 @@
         <div class="header">
             <h1>🌍 TradLive</h1>
             <div class="room-info">
-                <div class="room-code">Salle : <span id="room-id">{{ room_id }}</span></div>
+                <div class="room-code">Salle : <span id="room-id">Loading...</span></div>
                 <div class="user-info">
                     <span id="user-nickname">Chargement...</span> 
                     (<span id="user-language">Chargement...</span>)
@@ -371,21 +385,49 @@
         <!-- QR Code pour l'hôte -->
         <div id="qr-section" class="qr-section">
             <h3>🔗 Partage de la salle</h3>
-            <p>Scannez ce QR code ou partagez le lien :</p>
+            <p>Scannez ce QR code pour rejoindre :</p>
             <div class="qrcode-container">
                 <img src="/qrcode" alt="QR Code" id="qr-code-image">
             </div>
             <div class="qr-caption">
-                Code salle : <strong id="qr-room-code">{{ room_id }}</strong><br>
-                Lien : <span id="room-url">Chargement...</span>
+                Ou allez sur : <strong>tradlive-app.onrender.com</strong><br>
+                Code salle : <strong id="qr-room-code">Loading...</strong>
             </div>
         </div>
         
         <div id="status" class="status info">Connexion à la salle...</div>
         
+        <!-- Mode de fonctionnement -->
+        <div id="mode-selection" class="controls" style="display: none;">
+            <h3>🔄 Mode de fonctionnement :</h3>
+            <button id="host-mode-btn" class="mic-button">👑 Mode Hôte (Français → Autres langues)</button>
+            <button id="participant-mode-btn" class="mic-button">👥 Mode Participant (Votre langue → Français)</button>
+        </div>
+        
         <div id="controls" class="controls" style="display: none;">
             <!-- Contrôles pour l'hôte -->
             <div id="host-controls" style="display: none;">
+                <div class="language-selector">
+                    <label><strong>Langue de vos interlocuteurs :</strong></label>
+                    <select id="target-lang-select">
+                        <option value="en">Anglais</option>
+                        <option value="es">Espagnol</option>
+                        <option value="de">Allemand</option>
+                        <option value="it">Italien</option>
+                        <option value="pt">Portugais</option>
+                        <option value="ru">Russe</option>
+                        <option value="zh-CN">Chinois</option>
+                        <option value="ja">Japonais</option>
+                        <option value="ar">Arabe</option>
+                        <option value="uk">Ukrainien</option>
+                        <option value="fa">Persan</option>
+                        <option value="hi">Hindi</option>
+                        <option value="bn">Bengali</option>
+                        <option value="te">Télougou</option>
+                        <option value="mr">Marathi</option>
+                    </select>
+                </div>
+                
                 <button id="mic-button" class="mic-button">🎤 Parler en Français</button>
                 <button id="text-mode-button" class="text-mode-button">💬 Mode Texte</button>
                 
@@ -399,15 +441,36 @@
                 
                 <!-- Zone de saisie de texte en mode fallback -->
                 <div id="text-input-fallback" class="text-input-fallback">
-                    <h4>✍️ Saisie de texte</h4>
+                    <h4>✍️ Saisie de texte en français</h4>
                     <textarea id="text-input" placeholder="Écrivez votre message en français ici..."></textarea>
-                    <button onclick="sendTextTranslation()">📤 Envoyer la traduction</button>
+                    <button onclick="sendTextTranslation()">📤 Traduire et envoyer</button>
                     <button onclick="hideTextInput()">❌ Fermer</button>
                 </div>
             </div>
             
             <!-- Contrôles pour les participants -->
             <div id="participant-controls" style="display: none;">
+                <div class="language-selector">
+                    <label><strong>Votre langue :</strong></label>
+                    <select id="source-lang-select">
+                        <option value="en">Anglais</option>
+                        <option value="es">Espagnol</option>
+                        <option value="de">Allemand</option>
+                        <option value="it">Italien</option>
+                        <option value="pt">Portugais</option>
+                        <option value="ru">Russe</option>
+                        <option value="zh-CN">Chinois</option>
+                        <option value="ja">Japonais</option>
+                        <option value="ar">Arabe</option>
+                        <option value="uk">Ukrainien</option>
+                        <option value="fa">Persan</option>
+                        <option value="hi">Hindi</option>
+                        <option value="bn">Bengali</option>
+                        <option value="te">Télougou</option>
+                        <option value="mr">Marathi</option>
+                    </select>
+                </div>
+                
                 <button id="participant-mic-button" class="mic-button">🎤 Parler dans votre langue</button>
                 <button id="participant-text-button" class="text-mode-button">💬 Mode Texte</button>
                 
@@ -423,28 +486,22 @@
                 <div id="participant-text-input" class="text-input-fallback">
                     <h4>✍️ Écrire dans votre langue</h4>
                     <textarea id="participant-text" placeholder="Écrivez votre message dans votre langue..."></textarea>
-                    <button onclick="sendParticipantText()">📤 Envoyer au français</button>
+                    <button onclick="sendParticipantText()">📤 Traduire vers le français</button>
                     <button onclick="hideParticipantTextInput()">❌ Fermer</button>
                 </div>
-            </div>
-            
-            <div id="participant-info" style="display: none;">
-                <p style="text-align: center; font-style: italic;">
-                    Vous écoutez les traductions en temps réel
-                </p>
             </div>
         </div>
         
         <div class="translation-area">
             <div class="translation-section">
-                <div class="translation-label">📝 Message original (<span id="original-language">Français</span>)</div>
+                <div class="translation-label">📝 Message original (<span id="original-language">En attente...</span>)</div>
                 <div id="original-text" class="translation-text empty-translation">
                     En attente d'un message...
                 </div>
             </div>
             
             <div class="translation-section">
-                <div class="translation-label">🌍 Traduction (<span id="target-language">Votre langue</span>)</div>
+                <div class="translation-label">🌍 Traduction (<span id="target-language">En attente...</span>)</div>
                 <div id="translated-text" class="translation-text empty-translation">
                     En attente d'une traduction...
                 </div>
@@ -452,31 +509,37 @@
         </div>
         
         <div class="participants">
-            <h3>👥 Participants (<span id="participant-count">0</span>)</h3>
-            <div id="participants-list" class="loading">Chargement de la liste...</div>
+            <h3>👥 Participants dans cette session</h3>
+            <div id="participants-list">
+                <div class="participant">
+                    <div>
+                        <span class="participant-name">Vous</span>
+                        <span class="host-badge" id="user-role">USER</span>
+                    </div>
+                    <span class="participant-language" id="user-lang-display">Chargement...</span>
+                </div>
+            </div>
         </div>
     </div>
     
     <script>
         // Variables globales
-        let userData = null;
-        let roomData = null;
-        let recognition = null;
-        let participantRecognition = null;
-        let isListening = false;
-        let isParticipantListening = false;
         let isHost = false;
-        let updateInterval = null;
+        let isParticipant = false;
+        let recognition = null;
+        let isListening = false;
         let heartbeatInterval = null;
-        let reconnectAttempts = 0;
-        const maxReconnectAttempts = 5;
+        let pollingInterval = null;
+        let roomId = null;
+        let userLanguage = 'fr';
+        let userName = 'Utilisateur';
         
         // Éléments DOM
         const statusEl = document.getElementById('status');
         const controlsEl = document.getElementById('controls');
+        const modeSelectionEl = document.getElementById('mode-selection');
         const hostControlsEl = document.getElementById('host-controls');
         const participantControlsEl = document.getElementById('participant-controls');
-        const participantInfoEl = document.getElementById('participant-info');
         const micButton = document.getElementById('mic-button');
         const participantMicButton = document.getElementById('participant-mic-button');
         const textModeButton = document.getElementById('text-mode-button');
@@ -487,13 +550,15 @@
         const translatedTextEl = document.getElementById('translated-text');
         const targetLanguageEl = document.getElementById('target-language');
         const originalLanguageEl = document.getElementById('original-language');
-        const participantsListEl = document.getElementById('participants-list');
-        const participantCountEl = document.getElementById('participant-count');
         const qrSection = document.getElementById('qr-section');
         const qrCodeImage = document.getElementById('qr-code-image');
         const connectionStatus = document.getElementById('connection-status');
         const textInputFallback = document.getElementById('text-input-fallback');
         const participantTextInput = document.getElementById('participant-text-input');
+        const hostModeBtn = document.getElementById('host-mode-btn');
+        const participantModeBtn = document.getElementById('participant-mode-btn');
+        const targetLangSelect = document.getElementById('target-lang-select');
+        const sourceLangSelect = document.getElementById('source-lang-select');
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -501,310 +566,240 @@
         });
         
         function initializeRoom() {
-            // Récupérer les données utilisateur du localStorage
+            // Récupérer le room ID depuis l'URL
+            const urlPath = window.location.pathname;
+            roomId = urlPath.split('/').pop();
+            
+            if (!roomId || roomId === 'room') {
+                showError('ID de salle manquant. Retour à l\'accueil...');
+                setTimeout(() => window.location.href = '/rooms', 2000);
+                return;
+            }
+            
+            // Essayer de récupérer les données utilisateur du localStorage
             const userDataStr = localStorage.getItem('tradlive_user');
-            if (!userDataStr) {
-                showError('Données utilisateur manquantes. Retour à l\'accueil...');
-                setTimeout(() => window.location.href = '/rooms', 2000);
-                return;
+            if (userDataStr) {
+                const userData = JSON.parse(userDataStr);
+                userName = userData.nickname || 'Utilisateur';
+                userLanguage = userData.language || 'fr';
             }
             
-            userData = JSON.parse(userDataStr);
+            // Afficher les informations de base
+            document.getElementById('room-id').textContent = roomId;
+            document.getElementById('qr-room-code').textContent = roomId;
+            document.getElementById('user-nickname').textContent = userName;
+            document.getElementById('user-language').textContent = getLanguageName(userLanguage);
+            document.getElementById('user-lang-display').textContent = getLanguageName(userLanguage);
             
-            // Vérifier que nous sommes dans la bonne salle
-            const currentRoomId = window.location.pathname.split('/').pop();
-            if (userData.room_id !== currentRoomId) {
-                showError('Incohérence de salle. Retour à l\'accueil...');
-                setTimeout(() => window.location.href = '/rooms', 2000);
-                return;
-            }
-            
-            // Afficher les informations utilisateur
-            document.getElementById('user-nickname').textContent = userData.nickname;
-            document.getElementById('user-language').textContent = getLanguageName(userData.language);
-            document.getElementById('qr-room-code').textContent = userData.room_id;
-            document.getElementById('room-url').textContent = window.location.href;
-            
-            // Charger les informations de la salle
-            loadRoomInfo();
-            
-            // Démarrer la mise à jour en temps réel
-            startRealTimeUpdates();
-            startHeartbeat();
-            
-            // Configurer la reconnaissance vocale
-            if (window.webkitSpeechRecognition || window.SpeechRecognition) {
-                setupSpeechRecognition();
-            } else {
-                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
-            }
-            
-            // Mettre à jour le QR code
+            // Mettre à jour le QR code avec l'URL correcte
             updateQRCode();
+            
+            // Afficher la sélection de mode
+            statusEl.textContent = 'Sélectionnez votre mode de fonctionnement';
+            statusEl.className = 'status info';
+            modeSelectionEl.style.display = 'block';
+            
+            // Configurer les event listeners
+            setupEventListeners();
+            
+            // Démarrer les services
+            startHeartbeat();
+            startPolling();
         }
         
         function updateQRCode() {
-            // Construire l'URL de la salle pour le QR code
-            const roomUrl = `${window.location.origin}/rooms?join=${userData.room_id}`;
+            // Utiliser l'URL publique directement
+            const publicUrl = 'https://tradlive-app.onrender.com';
+            const roomUrl = `${publicUrl}/rooms?join=${roomId}`;
             qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}&t=${Date.now()}`;
         }
         
-        function loadRoomInfo() {
-            fetch(`/api/room/${userData.room_id}/info`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        roomData = data.room;
-                        reconnectAttempts = 0;
-                        updateConnectionStatus(true);
-                        
-                        // Vérifier si l'utilisateur est l'hôte
-                        const currentUser = roomData.users.find(u => u.user_id === userData.user_id);
-                        if (currentUser) {
-                            isHost = currentUser.is_host;
-                            
-                            // Afficher les contrôles appropriés
-                            if (isHost) {
-                                hostControlsEl.style.display = 'block';
-                                qrSection.classList.add('show');
-                                statusEl.textContent = 'Vous êtes l\'hôte. Parlez en français pour traduire vers toutes les langues.';
-                                statusEl.className = 'status connected';
-                                originalLanguageEl.textContent = 'Français';
-                                targetLanguageEl.textContent = 'Toutes les langues';
-                            } else {
-                                participantControlsEl.style.display = 'block';
-                                statusEl.textContent = `Connecté en tant que participant. Parlez en ${getLanguageName(userData.language)}.`;
-                                statusEl.className = 'status connected';
-                                targetLanguageEl.textContent = 'Français';
-                                originalLanguageEl.textContent = getLanguageName(userData.language);
-                            }
-                            
-                            controlsEl.style.display = 'block';
-                        } else {
-                            showError('Utilisateur non trouvé dans la salle');
-                            return;
-                        }
-                        
-                        // Mettre à jour la liste des participants
-                        updateParticipantsList();
-                        
-                        // Afficher la dernière traduction si disponible
-                        if (roomData.last_translation && roomData.last_translation.original) {
-                            updateTranslationDisplay(roomData.last_translation);
-                        }
-                    } else {
-                        throw new Error(data.error || 'Erreur inconnue');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur lors du chargement des infos de salle:', error);
-                    reconnectAttempts++;
-                    updateConnectionStatus(false);
-                    
-                    if (reconnectAttempts < maxReconnectAttempts) {
-                        setTimeout(() => loadRoomInfo(), reconnectAttempts * 1000);
-                    } else {
-                        showError('Impossible de se connecter à la salle');
-                    }
-                });
-        }
-        
-        function updateConnectionStatus(connected) {
-            if (connected) {
-                connectionStatus.textContent = 'Connecté ✅';
-                connectionStatus.style.color = '#4CAF50';
-            } else {
-                connectionStatus.textContent = `Reconnexion... (${reconnectAttempts}/${maxReconnectAttempts})`;
-                connectionStatus.style.color = '#f44336';
+        function setupEventListeners() {
+            // Mode hôte
+            hostModeBtn.addEventListener('click', function() {
+                setHostMode();
+            });
+            
+            // Mode participant
+            participantModeBtn.addEventListener('click', function() {
+                setParticipantMode();
+            });
+            
+            // Boutons micro
+            if (micButton) {
+                micButton.addEventListener('click', toggleHostListening);
             }
+            if (participantMicButton) {
+                participantMicButton.addEventListener('click', toggleParticipantListening);
+            }
+            
+            // Boutons mode texte
+            if (textModeButton) {
+                textModeButton.addEventListener('click', showTextInput);
+            }
+            if (participantTextButton) {
+                participantTextButton.addEventListener('click', showParticipantTextInput);
+            }
+            
+            // Gestion des touches Entrée
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    if (document.getElementById('text-input') === document.activeElement) {
+                        e.preventDefault();
+                        sendTextTranslation();
+                    } else if (document.getElementById('participant-text') === document.activeElement) {
+                        e.preventDefault();
+                        sendParticipantText();
+                    }
+                }
+            });
         }
         
-        function updateParticipantsList() {
-            if (!roomData || !roomData.users) return;
+        function setHostMode() {
+            isHost = true;
+            isParticipant = false;
             
-            participantCountEl.textContent = roomData.users.length;
+            modeSelectionEl.style.display = 'none';
+            controlsEl.style.display = 'block';
+            hostControlsEl.style.display = 'block';
+            participantControlsEl.style.display = 'none';
+            qrSection.classList.add('show');
             
-            if (roomData.users.length === 0) {
-                participantsListEl.innerHTML = '<div class="loading">Aucun participant</div>';
+            statusEl.textContent = 'Mode Hôte activé. Parlez en français pour traduire.';
+            statusEl.className = 'status connected';
+            
+            originalLanguageEl.textContent = 'Français';
+            targetLanguageEl.textContent = getLanguageName(targetLangSelect.value);
+            
+            document.getElementById('user-role').textContent = 'HÔTE';
+            
+            // Configurer la reconnaissance vocale français
+            setupHostSpeechRecognition();
+            
+            connectionStatus.textContent = 'Connecté en mode Hôte ✅';
+        }
+        
+        function setParticipantMode() {
+            isHost = false;
+            isParticipant = true;
+            
+            modeSelectionEl.style.display = 'none';
+            controlsEl.style.display = 'block';
+            hostControlsEl.style.display = 'none';
+            participantControlsEl.style.display = 'block';
+            
+            statusEl.textContent = `Mode Participant activé. Parlez en ${getLanguageName(sourceLangSelect.value)}.`;
+            statusEl.className = 'status connected';
+            
+            originalLanguageEl.textContent = getLanguageName(sourceLangSelect.value);
+            targetLanguageEl.textContent = 'Français';
+            
+            document.getElementById('user-role').textContent = 'PARTICIPANT';
+            
+            // Configurer la reconnaissance vocale dans la langue sélectionnée
+            setupParticipantSpeechRecognition();
+            
+            connectionStatus.textContent = 'Connecté en mode Participant ✅';
+        }
+        
+        function setupHostSpeechRecognition() {
+            if (!window.webkitSpeechRecognition && !window.SpeechRecognition) {
+                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
                 return;
             }
             
-            participantsListEl.innerHTML = roomData.users.map(user => `
-                <div class="participant">
-                    <div>
-                        <span class="participant-name">${user.nickname}</span>
-                        ${user.is_host ? '<span class="host-badge">HÔTE</span>' : ''}
-                    </div>
-                    <span class="participant-language">${getLanguageName(user.language)}</span>
-                </div>
-            `).join('');
-        }
-        
-        function startRealTimeUpdates() {
-            updateInterval = setInterval(() => {
-                fetch(`/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            reconnectAttempts = 0;
-                            updateConnectionStatus(true);
-                            
-                            // Mettre à jour la traduction si nouvelle
-                            if (data.original && (originalTextEl.classList.contains('empty-translation') || 
-                                originalTextEl.textContent !== data.original)) {
-                                
-                                let translationData;
-                                if (isHost) {
-                                    // Pour l'hôte, afficher les réponses des participants
-                                    translationData = {
-                                        original: data.original,
-                                        translated: { 'fr': data.translated }
-                                    };
-                                } else {
-                                    // Pour les participants, afficher selon leur langue
-                                    translationData = {
-                                        original: data.original,
-                                        translated: { [userData.language]: data.translated }
-                                    };
-                                }
-                                
-                                updateTranslationDisplay(translationData);
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erreur mise à jour:', error);
-                        reconnectAttempts++;
-                        updateConnectionStatus(false);
-                    });
-                
-                // Recharger les infos de salle moins souvent
-                if (Date.now() % 20000 < 3000) {
-                    loadRoomInfo();
-                }
-            }, 3000);
-        }
-        
-        function startHeartbeat() {
-            heartbeatInterval = setInterval(() => {
-                fetch(`/api/room/${userData.room_id}/heartbeat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.user_id })
-                }).catch(() => {
-                    reconnectAttempts++;
-                    updateConnectionStatus(false);
-                });
-            }, 10000);
-        }
-        
-        function updateTranslationDisplay(translationData) {
-            if (translationData.original) {
-                originalTextEl.textContent = translationData.original;
-                originalTextEl.classList.remove('empty-translation');
-            }
-            
-            let userTranslation;
-            if (isHost) {
-                userTranslation = translationData.translated['fr'] || translationData.translated[Object.keys(translationData.translated)[0]];
-            } else {
-                userTranslation = translationData.translated[userData.language] || translationData.translated['fr'];
-            }
-            
-            if (userTranslation) {
-                translatedTextEl.textContent = userTranslation;
-                translatedTextEl.classList.remove('empty-translation');
-            }
-        }
-        
-        function setupSpeechRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'fr-FR';
+            recognition.continuous = true;
+            recognition.interimResults = true;
             
-            if (isHost) {
-                // Configuration pour l'hôte (français)
-                recognition = new SpeechRecognition();
-                recognition.lang = 'fr-FR';
-                recognition.continuous = true;
-                recognition.interimResults = true;
+            recognition.onresult = function(event) {
+                const lastResultIndex = event.results.length - 1;
+                const transcript = event.results[lastResultIndex][0].transcript;
                 
-                recognition.onresult = function(event) {
-                    const lastResultIndex = event.results.length - 1;
-                    const transcript = event.results[lastResultIndex][0].transcript;
-                    
-                    if (event.results[lastResultIndex].isFinal) {
-                        sendHostTranslation(transcript);
-                    } else {
-                        originalTextEl.textContent = transcript;
-                        originalTextEl.classList.remove('empty-translation');
-                    }
-                };
-                
-                recognition.onerror = function(event) {
-                    console.error('Erreur reconnaissance hôte:', event.error);
-                    if (event.error !== 'no-speech') {
-                        showError('Erreur de reconnaissance vocale: ' + event.error);
+                if (event.results[lastResultIndex].isFinal) {
+                    sendHostTranslation(transcript);
+                } else {
+                    originalTextEl.textContent = transcript;
+                    originalTextEl.classList.remove('empty-translation');
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Erreur reconnaissance hôte:', event.error);
+                if (event.error !== 'no-speech') {
+                    showError('Erreur de reconnaissance vocale. Essayez le mode texte.');
+                    stopHostListening();
+                }
+            };
+            
+            recognition.onend = function() {
+                if (isListening) {
+                    try {
+                        setTimeout(() => recognition.start(), 100);
+                    } catch (e) {
                         stopHostListening();
                     }
-                };
+                }
+            };
+        }
+        
+        function setupParticipantSpeechRecognition() {
+            if (!window.webkitSpeechRecognition && !window.SpeechRecognition) {
+                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = getRecognitionLanguageCode(sourceLangSelect.value);
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            recognition.onresult = function(event) {
+                const lastResultIndex = event.results.length - 1;
+                const transcript = event.results[lastResultIndex][0].transcript;
                 
-                recognition.onend = function() {
-                    if (isListening) {
-                        try {
-                            recognition.start();
-                        } catch (e) {
-                            stopHostListening();
-                        }
-                    }
-                };
-                
-                micButton.addEventListener('click', toggleHostListening);
-                textModeButton.addEventListener('click', showTextInput);
-            } else {
-                // Configuration pour les participants (leur langue)
-                participantRecognition = new SpeechRecognition();
-                participantRecognition.lang = getRecognitionLanguageCode(userData.language);
-                participantRecognition.continuous = true;
-                participantRecognition.interimResults = true;
-                
-                participantRecognition.onresult = function(event) {
-                    const lastResultIndex = event.results.length - 1;
-                    const transcript = event.results[lastResultIndex][0].transcript;
-                    
-                    if (event.results[lastResultIndex].isFinal) {
-                        sendParticipantTranslation(transcript);
-                    } else {
-                        originalTextEl.textContent = transcript;
-                        originalTextEl.classList.remove('empty-translation');
-                    }
-                };
-                
-                participantRecognition.onerror = function(event) {
-                    console.error('Erreur reconnaissance participant:', event.error);
-                    if (event.error !== 'no-speech') {
-                        showError('Erreur de reconnaissance vocale: ' + event.error);
+                if (event.results[lastResultIndex].isFinal) {
+                    sendParticipantTranslation(transcript);
+                } else {
+                    originalTextEl.textContent = transcript;
+                    originalTextEl.classList.remove('empty-translation');
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Erreur reconnaissance participant:', event.error);
+                if (event.error !== 'no-speech') {
+                    showError('Erreur de reconnaissance vocale. Essayez le mode texte.');
+                    stopParticipantListening();
+                }
+            };
+            
+            recognition.onend = function() {
+                if (isListening) {
+                    try {
+                        setTimeout(() => recognition.start(), 100);
+                    } catch (e) {
                         stopParticipantListening();
                     }
-                };
+                }
+            };
+            
+            // Mettre à jour quand on change de langue
+            sourceLangSelect.addEventListener('change', function() {
+                if (recognition) {
+                    recognition.lang = getRecognitionLanguageCode(sourceLangSelect.value);
+                }
+                originalLanguageEl.textContent = getLanguageName(sourceLangSelect.value);
+                statusEl.textContent = `Mode Participant. Parlez en ${getLanguageName(sourceLangSelect.value)}.`;
                 
-                participantRecognition.onend = function() {
-                    if (isParticipantListening) {
-                        try {
-                            participantRecognition.start();
-                        } catch (e) {
-                            stopParticipantListening();
-                        }
-                    }
-                };
-                
-                participantMicButton.addEventListener('click', toggleParticipantListening);
-                participantTextButton.addEventListener('click', showParticipantTextInput);
-            }
+                if (isListening) {
+                    stopParticipantListening();
+                    setTimeout(startParticipantListening, 500);
+                }
+            });
         }
         
         function toggleHostListening() {
@@ -818,6 +813,10 @@
         function startHostListening() {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
+                    if (!recognition) {
+                        setupHostSpeechRecognition();
+                    }
+                    
                     recognition.start();
                     isListening = true;
                     micButton.textContent = '🎤 Arrêter';
@@ -838,12 +837,12 @@
             micButton.textContent = '🎤 Parler en Français';
             micButton.classList.remove('active');
             waveAnimation.classList.remove('active');
-            statusEl.textContent = 'Cliquez sur le micro pour parler.';
+            statusEl.textContent = 'Cliquez sur le micro pour parler en français.';
             statusEl.className = 'status connected';
         }
         
         function toggleParticipantListening() {
-            if (isParticipantListening) {
+            if (isListening) {
                 stopParticipantListening();
             } else {
                 startParticipantListening();
@@ -853,12 +852,16 @@
         function startParticipantListening() {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    participantRecognition.start();
-                    isParticipantListening = true;
+                    if (!recognition) {
+                        setupParticipantSpeechRecognition();
+                    }
+                    
+                    recognition.start();
+                    isListening = true;
                     participantMicButton.textContent = '🎤 Arrêter';
                     participantMicButton.classList.add('active');
                     participantWave.classList.add('active');
-                    statusEl.textContent = `En écoute... Parlez en ${getLanguageName(userData.language)}.`;
+                    statusEl.textContent = `En écoute... Parlez en ${getLanguageName(sourceLangSelect.value)}.`;
                     statusEl.className = 'status info';
                 })
                 .catch(err => {
@@ -868,9 +871,9 @@
         }
         
         function stopParticipantListening() {
-            if (participantRecognition) participantRecognition.stop();
-            isParticipantListening = false;
-            participantMicButton.textContent = `🎤 Parler en ${getLanguageName(userData.language)}`;
+            if (recognition) recognition.stop();
+            isListening = false;
+            participantMicButton.textContent = `🎤 Parler en ${getLanguageName(sourceLangSelect.value)}`;
             participantMicButton.classList.remove('active');
             participantWave.classList.remove('active');
             statusEl.textContent = 'Cliquez sur le micro pour parler.';
@@ -883,13 +886,12 @@
             statusEl.textContent = 'Traduction en cours...';
             statusEl.className = 'status info';
             
-            fetch(`/api/room/${userData.room_id}/translate`, {
+            fetch('/translate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    user_id: userData.user_id,
                     text: text,
-                    source_language: 'fr'
+                    lang: targetLangSelect.value
                 })
             })
             .then(response => {
@@ -897,20 +899,17 @@
                 return response.json();
             })
             .then(data => {
-                if (data.success) {
-                    statusEl.textContent = 'Traduction envoyée à tous les participants !';
-                    statusEl.className = 'status connected';
-                    
-                    // Mettre à jour l'affichage local
-                    originalTextEl.textContent = text;
-                    originalTextEl.classList.remove('empty-translation');
-                } else {
-                    throw new Error(data.error || 'Erreur de traduction');
-                }
+                statusEl.textContent = 'Traduction envoyée !';
+                statusEl.className = 'status connected';
+                
+                originalTextEl.textContent = data.original;
+                translatedTextEl.textContent = data.translated;
+                originalTextEl.classList.remove('empty-translation');
+                translatedTextEl.classList.remove('empty-translation');
             })
             .catch(error => {
                 console.error('Erreur envoi traduction hôte:', error);
-                showError('Erreur envoi traduction: ' + error.message);
+                showError('Erreur de traduction: ' + error.message);
             });
         }
         
@@ -920,14 +919,13 @@
             statusEl.textContent = 'Traduction vers le français...';
             statusEl.className = 'status info';
             
-            fetch(`/api/room/${userData.room_id}/translate`, {
+            fetch('/translate-to-french', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    user_id: userData.user_id,
                     text: text,
-                    source_language: userData.language,
-                    target_language: 'fr'
+                    source_lang: sourceLangSelect.value,
+                    disable_speech: true
                 })
             })
             .then(response => {
@@ -935,20 +933,17 @@
                 return response.json();
             })
             .then(data => {
-                if (data.success) {
-                    statusEl.textContent = 'Réponse envoyée à l\'hôte !';
-                    statusEl.className = 'status connected';
-                    
-                    // Mettre à jour l'affichage local
-                    originalTextEl.textContent = text;
-                    originalTextEl.classList.remove('empty-translation');
-                } else {
-                    throw new Error(data.error || 'Erreur de traduction');
-                }
+                statusEl.textContent = 'Traduction envoyée !';
+                statusEl.className = 'status connected';
+                
+                originalTextEl.textContent = text;
+                translatedTextEl.textContent = data.translated;
+                originalTextEl.classList.remove('empty-translation');
+                translatedTextEl.classList.remove('empty-translation');
             })
             .catch(error => {
                 console.error('Erreur envoi traduction participant:', error);
-                showError('Erreur envoi traduction: ' + error.message);
+                showError('Erreur de traduction: ' + error.message);
             });
         }
         
@@ -989,36 +984,72 @@
             }
         }
         
-        // Gestion des touches Entrée
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                if (document.getElementById('text-input') === document.activeElement) {
-                    e.preventDefault();
-                    sendTextTranslation();
-                } else if (document.getElementById('participant-text') === document.activeElement) {
-                    e.preventDefault();
-                    sendParticipantText();
-                }
-            }
-        });
+        function startPolling() {
+            pollingInterval = setInterval(() => {
+                fetch('/check-updates')
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.original && data.translated) {
+                            // Afficher les nouvelles traductions reçues
+                            if (originalTextEl.classList.contains('empty-translation') || 
+                                originalTextEl.textContent !== data.original) {
+                                
+                                originalTextEl.textContent = data.original;
+                                translatedTextEl.textContent = data.translated;
+                                originalTextEl.classList.remove('empty-translation');
+                                translatedTextEl.classList.remove('empty-translation');
+                                
+                                // Mettre à jour les labels de langue
+                                if (data.language) {
+                                    if (isParticipant) {
+                                        originalLanguageEl.textContent = 'Français';
+                                        targetLanguageEl.textContent = getLanguageName(sourceLangSelect.value);
+                                    } else {
+                                        targetLanguageEl.textContent = getLanguageName(data.language);
+                                    }
+                                }
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur polling:', error);
+                    });
+            }, 2000);
+        }
+        
+        function startHeartbeat() {
+            heartbeatInterval = setInterval(() => {
+                fetch('/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        status: 'active', 
+                        timestamp: Date.now(),
+                        room_id: roomId,
+                        user: userName
+                    })
+                })
+                .catch(error => {
+                    console.error('Erreur heartbeat:', error);
+                });
+            }, 10000);
+        }
         
         function leaveRoom() {
             if (confirm('Êtes-vous sûr de vouloir quitter la salle ?')) {
                 // Arrêter toutes les activités
-                if (updateInterval) clearInterval(updateInterval);
+                if (pollingInterval) clearInterval(pollingInterval);
                 if (heartbeatInterval) clearInterval(heartbeatInterval);
-                if (isListening) stopHostListening();
-                if (isParticipantListening) stopParticipantListening();
+                if (isListening) {
+                    if (isHost) stopHostListening();
+                    else stopParticipantListening();
+                }
                 
-                fetch(`/api/room/${userData.room_id}/leave`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.user_id })
-                })
-                .finally(() => {
-                    localStorage.removeItem('tradlive_user');
-                    window.location.href = '/rooms';
-                });
+                localStorage.removeItem('tradlive_user');
+                window.location.href = '/rooms';
             }
         }
         
@@ -1071,17 +1102,20 @@
             return mapping[code] || 'en-US';
         }
         
+        // Gestion des changements de langue pour l'hôte
+        if (targetLangSelect) {
+            targetLangSelect.addEventListener('change', function() {
+                targetLanguageEl.textContent = getLanguageName(targetLangSelect.value);
+            });
+        }
+        
         // Nettoyage à la fermeture
         window.addEventListener('beforeunload', function() {
-            if (updateInterval) clearInterval(updateInterval);
+            if (pollingInterval) clearInterval(pollingInterval);
             if (heartbeatInterval) clearInterval(heartbeatInterval);
-            if (isListening) stopHostListening();
-            if (isParticipantListening) stopParticipantListening();
-            
-            // Envoyer un signal de déconnexion
-            if (userData) {
-                navigator.sendBeacon(`/api/room/${userData.room_id}/leave`, 
-                    JSON.stringify({ user_id: userData.user_id }));
+            if (isListening) {
+                if (isHost) stopHostListening();
+                else stopParticipantListening();
             }
         });
     </script>
