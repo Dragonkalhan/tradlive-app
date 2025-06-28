@@ -617,12 +617,8 @@
                             
                             controlsEl.style.display = 'block';
                             
-                            // Configurer la reconnaissance vocale maintenant que le rôle est déterminé
-                            if (window.webkitSpeechRecognition || window.SpeechRecognition) {
-                                setupSpeechRecognition();
-                            } else {
-                                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
-                            }
+                            // CORRECTION: Configurer la reconnaissance vocale APRÈS avoir déterminé le rôle
+                            setupSpeechRecognition();
                         } else {
                             showError('Utilisateur non trouvé dans la salle');
                             return;
@@ -746,6 +742,12 @@
         }
         
         function setupSpeechRecognition() {
+            // Vérifier que la reconnaissance vocale est disponible
+            if (!window.webkitSpeechRecognition && !window.SpeechRecognition) {
+                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
+                return;
+            }
+            
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
             if (isHost) {
@@ -785,8 +787,13 @@
                     }
                 };
                 
-                micButton.addEventListener('click', toggleHostListening);
-                textModeButton.addEventListener('click', showTextInput);
+                // CORRECTION: Attacher les event listeners après la création
+                if (micButton) {
+                    micButton.addEventListener('click', toggleHostListening);
+                }
+                if (textModeButton) {
+                    textModeButton.addEventListener('click', showTextInput);
+                }
             } else {
                 // Configuration pour les participants (leur langue)
                 participantRecognition = new SpeechRecognition();
@@ -824,8 +831,13 @@
                     }
                 };
                 
-                participantMicButton.addEventListener('click', toggleParticipantListening);
-                participantTextButton.addEventListener('click', showParticipantTextInput);
+                // CORRECTION: Attacher les event listeners après la création
+                if (participantMicButton) {
+                    participantMicButton.addEventListener('click', toggleParticipantListening);
+                }
+                if (participantTextButton) {
+                    participantTextButton.addEventListener('click', showParticipantTextInput);
+                }
             }
         }
         
