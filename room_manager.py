@@ -1,4 +1,3 @@
-
 import uuid
 import time
 from datetime import datetime, timedelta
@@ -41,7 +40,8 @@ class Room:
             'translated': {},  # {language: translation}
             'timestamp': datetime.now(),
             'source_language': 'fr',  # Langue source du message
-            'enable_speech': False    # Si la synthèse vocale doit être activée
+            'enable_speech': False,    # Si la synthèse vocale doit être activée
+            'sender_id': None         # ID de l'utilisateur qui a envoyé le message
         }
     
     def add_user(self, user: User) -> bool:
@@ -64,14 +64,15 @@ class Room:
         """Récupère un utilisateur par son ID"""
         return self.users.get(user_id)
     
-    def update_translation(self, original_text: str, translations: Dict[str, str], source_language: str = 'fr', enable_speech: bool = False):
+    def update_translation(self, original_text: str, translations: Dict[str, str], source_language: str = 'fr', enable_speech: bool = False, sender_id: str = None):
         """Met à jour la dernière traduction pour toute la salle"""
         self.last_translation = {
             'original': original_text,
             'translated': translations,
             'timestamp': datetime.now(),
             'source_language': source_language,
-            'enable_speech': enable_speech
+            'enable_speech': enable_speech,
+            'sender_id': sender_id  # ID de l'utilisateur qui a envoyé le message
         }
         
         print(f"📝 Nouvelle traduction dans {self.room_name}: '{original_text[:50]}...' -> {len(translations)} langues")
@@ -107,7 +108,8 @@ class Room:
                 'original': self.last_translation['original'],
                 'translated': self.last_translation['translated'],
                 'timestamp': self.last_translation['timestamp'].isoformat(),
-                'source_language': self.last_translation['source_language']
+                'source_language': self.last_translation['source_language'],
+                'sender_id': self.last_translation.get('sender_id')
             }
         }
 
@@ -210,7 +212,7 @@ class RoomManager:
             if user:
                 user.update_activity()
     
-    def broadcast_translation(self, room_id: str, original_text: str, source_language: str, enable_speech: bool = False):
+    def broadcast_translation(self, room_id: str, original_text: str, source_language: str, sender_id: str = None, enable_speech: bool = False):
         """
         Diffuse une traduction à tous les utilisateurs d'une salle
         Flux adapté selon les spécifications :
@@ -255,8 +257,8 @@ class RoomManager:
             # Pas de synthèse vocale pour l'hôte
             enable_speech = False
         
-        # Mettre à jour la salle
-        room.update_translation(original_text, translations, source_language, enable_speech)
+        # Mettre à jour la salle avec l'ID de l'expéditeur
+        room.update_translation(original_text, translations, source_language, enable_speech, sender_id)
         
         return True
     
