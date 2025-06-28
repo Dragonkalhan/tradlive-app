@@ -1,267 +1,301 @@
-import os
-import json
-from datetime import datetime
-from deep_translator import GoogleTranslator, MyMemoryTranslator
+import uuid
+import time
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
 
-class TranslationManager:
-    def __init__(self):
-        # Limites mensuelles des caractères (approximatives)
-        self.limits = {
-            'google': 500000,    # 500K caractères/mois
-            'mymemory': 500000   # 500K caractères/mois
+class User:
+    def __init__(self, user_id: str, nickname: str, language: str, is_host: bool = False):
+        self.user_id = user_id
+        self.nickname = nickname
+        self.language = language
+        self.is_host = is_host
+        self.joined_at = datetime.now()
+        self.last_activity = datetime.now()
+    
+    def update_activity(self):
+        """Met à jour l'activité de l'utilisateur"""
+        self.last_activity = datetime.now()
+    
+    def to_dict(self):
+        """Convertit l'utilisateur en dictionnaire pour JSON"""
+        return {
+            'user_id': self.user_id,
+            'nickname': self.nickname,
+            'language': self.language,
+            'is_host': self.is_host,
+            'joined_at': self.joined_at.isoformat(),
+            'last_activity': self.last_activity.isoformat()
+        }
+
+class Room:
+    def __init__(self, room_id: str, host_id: str, room_name: str, password: str = None):
+        self.room_id = room_id
+        self.host_id = host_id
+        self.room_name = room_name
+        self.password = password
+        self.created_at = datetime.now()
+        self.users: Dict[str, User] = {}
+        self.last_translation = {
+            'original': '',
+            'translated': {},  # {language: translation}
+            'timestamp': datetime.now(),
+            'source_language': 'fr',  # Langue source du message
+            'enable_speech': False,    # Si la synthèse vocale doit être activée
+            'sender_id': None         # ID de l'utilisateur qui a envoyé le message
+        }
+    
+    def add_user(self, user: User) -> bool:
+        """Ajoute un utilisateur à la salle"""
+        if len(self.users) >= 10:  # Limite de 10 utilisateurs par salle
+            return False
+        
+        self.users[user.user_id] = user
+        print(f"👤 {user.nickname} ({user.language}) a rejoint la salle {self.room_name}")
+        return True
+    
+    def remove_user(self, user_id: str) -> Optional[User]:
+        """Supprime un utilisateur de la salle"""
+        user = self.users.pop(user_id, None)
+        if user:
+            print(f"👋 {user.nickname} a quitté la salle {self.room_name}")
+        return user
+    
+    def get_user(self, user_id: str) -> Optional[User]:
+        """Récupère un utilisateur par son ID"""
+        return self.users.get(user_id)
+    
+    def update_translation(self, original_text: str, translations: Dict[str, str], source_language: str = 'fr', enable_speech: bool = False, sender_id: str = None):
+        """Met à jour la dernière traduction pour toute la salle"""
+        self.last_translation = {
+            'original': original_text,
+            'translated': translations,
+            'timestamp': datetime.now(),
+            'source_language': source_language,
+            'enable_speech': enable_speech,
+            'sender_id': sender_id  # ID de l'utilisateur qui a envoyé le message
         }
         
-        # Cache des traductions récentes (pour accélérer)
-        self.translation_cache = {}
-        self.max_cache_size = 100
-        
-        # Langue préférée à utiliser quand 'auto' est spécifié avec MyMemory
-        self.preferred_lang = 'en'  # Anglais par défaut
-        
-        # Dictionnaire de mappage pour MyMemory (codes spécifiques pour toutes les langues de l'application)
-        self.mymemory_lang_map = {
-            # Langues qui ne suivent pas le modèle standard XX-XX ou qui nécessitent une variante spécifique
-            'zh-CN': 'zh-CN',  # Chinois simplifié - format spécial
-            'en': 'en-GB',     # Anglais - préférence pour britannique 
-            'es': 'es-ES',     # Espagnol - variante européenne
-            'de': 'de-DE',     # Allemand - Allemagne
-            'it': 'it-IT',     # Italien - Italie
-            'pt': 'pt-PT',     # Portugais européen
-            'ru': 'ru-RU',     # Russe
-            'ja': 'ja-JP',     # Japonais
-            'ar': 'ar-SA',     # Arabe - Arabie Saoudite
-            'uk': 'uk-UA',     # Ukrainien
-            'fa': 'fa-IR',     # Persan/Farsi - Iran
-            'hi': 'hi-IN',     # Hindi - Inde
-            'bn': 'bn-IN',     # Bengali - Inde
-            'te': 'te-IN',     # Télougou - Inde
-            'mr': 'mr-IN',     # Marathi - Inde
-            'fr': 'fr-FR'      # Français - France
-        }
-        
-        # Initialiser les compteurs
-        self.init_counters()
+        print(f"📝 Nouvelle traduction dans {self.room_name}: '{original_text[:50]}...' -> {len(translations)} langues")
     
-    def set_preferred_language(self, lang):
-        """Définit la langue préférée à utiliser lorsque 'auto' est spécifié avec MyMemory"""
-        if lang != 'auto':
-            self.preferred_lang = lang
-        print(f"Langue préférée définie sur: {self.preferred_lang}")
+    def get_active_languages(self) -> List[str]:
+        """Retourne la liste des langues utilisées dans la salle"""
+        return list(set(user.language for user in self.users.values()))
     
-    def init_counters(self):
-        """Initialise ou récupère les compteurs d'utilisation"""
-        now = datetime.now()
-        current_month = f"{now.year}-{now.month}"
-        
-        # Chemin vers le fichier de compteurs
-        counter_file = "translation_counters.json"
-        
-        # Valeurs par défaut
-        self.counters = {'google': 0, 'mymemory': 0}
-        self.month = current_month
-        
-        # Charger les compteurs existants si disponibles
-        if os.path.exists(counter_file):
-            try:
-                with open(counter_file, 'r') as f:
-                    data = json.load(f)
-                    
-                # Vérifier si nous sommes dans un nouveau mois
-                if data.get('month') != current_month:
-                    # Nouveau mois: réinitialiser les compteurs
-                    print(f"Nouveau mois détecté: réinitialisation des compteurs")
-                else:
-                    # Même mois: utiliser les compteurs existants
-                    self.counters = data.get('counters', self.counters)
-                    self.month = data.get('month')
-            except Exception as e:
-                print(f"Erreur lors du chargement des compteurs: {e}")
-        
-        # Sauvegarder l'état initial
-        self.save_counters()
+    def get_participant_languages(self) -> List[str]:
+        """Retourne la liste des langues des participants (non-hôtes)"""
+        return list(set(user.language for user in self.users.values() if not user.is_host))
     
-    def save_counters(self):
-        """Sauvegarde les compteurs dans un fichier"""
-        try:
-            with open("translation_counters.json", 'w') as f:
-                json.dump({
-                    'month': self.month,
-                    'counters': self.counters
-                }, f)
-        except Exception as e:
-            print(f"Erreur lors de la sauvegarde des compteurs: {e}")
+    def cleanup_inactive_users(self, timeout_minutes: int = 30):
+        """Supprime les utilisateurs inactifs"""
+        cutoff_time = datetime.now() - timedelta(minutes=timeout_minutes)
+        inactive_users = [
+            user_id for user_id, user in self.users.items()
+            if user.last_activity < cutoff_time
+        ]
+        
+        for user_id in inactive_users:
+            self.remove_user(user_id)
     
-    def update_counter(self, service, char_count):
-        """Met à jour le compteur pour un service donné"""
-        self.counters[service] += char_count
-        self.save_counters()
-        
-        # Log pour suivre l'utilisation
-        usage_percent = (self.counters[service] / self.limits.get(service, 1000000)) * 100
-        print(f"Service {service}: {self.counters[service]}/{self.limits[service]} caractères ({usage_percent:.2f}%)")
-    
-    def get_best_service(self):
-        """Détermine le meilleur service à utiliser"""
-        # Vérifier quels services sont disponibles (n'ont pas atteint leur limite)
-        available_services = []
-        for service, limit in self.limits.items():
-            if self.counters.get(service, 0) < limit:
-                available_services.append(service)
-        
-        if not available_services:
-            print("ATTENTION: Tous les services ont atteint leur limite!")
-            return 'google'  # Par défaut
-        
-        # Choisir celui qui a le taux d'utilisation le plus bas
-        best_service = min(
-            available_services, 
-            key=lambda s: self.counters.get(s, 0) / self.limits.get(s)
-        )
-        
-        return best_service
-    
-    def check_cache(self, text, source_lang, target_lang):
-        """Vérifie si une traduction est déjà en cache"""
-        cache_key = f"{text.lower()}|{source_lang}|{target_lang}"
-        return self.translation_cache.get(cache_key)
-    
-    def add_to_cache(self, text, source_lang, target_lang, translation):
-        """Ajoute une traduction au cache"""
-        cache_key = f"{text.lower()}|{source_lang}|{target_lang}"
-        
-        # Limiter la taille du cache
-        if len(self.translation_cache) >= self.max_cache_size:
-            # Supprimer une entrée aléatoire
-            self.translation_cache.pop(next(iter(self.translation_cache)))
-        
-        self.translation_cache[cache_key] = translation
-    
-    def map_lang_code(self, lang_code, for_mymemory=False):
-        """Convertit les codes de langue au format approprié pour MyMemory si nécessaire"""
-        # Si ce n'est pas pour MyMemory, renvoyer tel quel
-        if not for_mymemory:
-            return lang_code
-            
-        # IMPORTANT: MyMemory ne supporte pas 'auto' comme code de langue
-        # Si 'auto' est spécifié, utiliser la langue préférée à la place
-        if lang_code == 'auto':
-            preferred = self.preferred_lang
-            # Obtenir le code formaté pour la langue préférée
-            if preferred in self.mymemory_lang_map:
-                mapped_code = self.mymemory_lang_map[preferred]
-            else:
-                mapped_code = f"{preferred}-{preferred.upper()}" if len(preferred) == 2 else preferred
-            
-            print(f"ATTENTION: 'auto' n'est pas supporté par MyMemory, utilisation de '{mapped_code}' à la place")
-            return mapped_code
-        
-        # Pour MyMemory, utiliser le mapping spécifique
-        if lang_code in self.mymemory_lang_map:
-            return self.mymemory_lang_map[lang_code]
-        
-        # Si le code n'est pas dans notre mapping, essayer d'ajouter un suffixe de région
-        if len(lang_code) == 2:
-            # Si simple code à 2 lettres, essayer d'ajouter un suffixe de région standard
-            return f"{lang_code}-{lang_code.upper()}"
-        
-        # Fallback - retourner tel quel
-        return lang_code
-    
-    def post_process_translation(self, translation, target_lang):
-        """Applique des corrections post-traduction"""
-        corrections = {
-            'en': {
-                'comment ça va tu': 'how are you',
-                'comment vas-tu': 'how are you',
-                'le le': 'the',
-                'la la': 'the'
-            },
-            'es': {
-                'el el': 'el',
-                'la la': 'la',
-                'como estas tu': 'cómo estás'
-            },
-            'de': {
-                'wie geht es du': 'wie geht es dir',
-                'der der': 'der',
-                'die die': 'die'
+    def to_dict(self):
+        """Convertit la salle en dictionnaire pour JSON"""
+        return {
+            'room_id': self.room_id,
+            'room_name': self.room_name,
+            'created_at': self.created_at.isoformat(),
+            'users_count': len(self.users),
+            'users': [user.to_dict() for user in self.users.values()],
+            'last_translation': {
+                'original': self.last_translation['original'],
+                'translated': self.last_translation['translated'],
+                'timestamp': self.last_translation['timestamp'].isoformat(),
+                'source_language': self.last_translation['source_language'],
+                'sender_id': self.last_translation.get('sender_id')
             }
-            # Ajoutez d'autres langues au besoin
         }
-        
-        # Appliquer les corrections pour la langue cible
-        if target_lang in corrections:
-            for wrong, correct in corrections[target_lang].items():
-                translation = translation.replace(wrong, correct)
-        
-        return translation
+
+class RoomManager:
+    def __init__(self):
+        self.rooms: Dict[str, Room] = {}
+        print("🏠 Gestionnaire de salles initialisé")
     
-    def translate(self, text, source_lang, target_lang='fr'):
-        """Traduit un texte en utilisant le meilleur service"""
-        if not text or text.strip() == "":
-            return ""
-        
-        # Si source_lang n'est pas 'auto', mettre à jour la langue préférée
-        if source_lang != 'auto':
-            self.set_preferred_language(source_lang)
-        
-        # 1. Vérifier d'abord dans le cache (très rapide)
-        cached_translation = self.check_cache(text, source_lang, target_lang)
-        if cached_translation:
-            print("Traduction trouvée dans le cache!")
-            return cached_translation
-        
-        # 2. Obtenir le meilleur service
-        service = self.get_best_service()
-        print(f"Traduction avec le service: {service}")
-        
+    def create_room(self, host_nickname: str, host_language: str, room_name: str, password: str = None) -> tuple:
+        """
+        Crée une nouvelle salle
+        Returns: (room_id, user_id, success)
+        """
         try:
-            if service == 'google':
-                # Utiliser Google Translate (supporte 'auto')
-                translator = GoogleTranslator(source=source_lang, target=target_lang)
-                translation = translator.translate(text)
-                self.update_counter('google', len(text))
+            # Générer un ID de salle simple (4 chiffres)
+            room_id = self._generate_room_id()
+            
+            # Créer l'hôte
+            host_id = str(uuid.uuid4())
+            host_user = User(host_id, host_nickname, host_language, is_host=True)
+            
+            # Créer la salle
+            room = Room(room_id, host_id, room_name, password)
+            room.add_user(host_user)
+            
+            # Stocker la salle
+            self.rooms[room_id] = room
+            
+            print(f"🎉 Salle créée : {room_name} (ID: {room_id}) par {host_nickname}")
+            return room_id, host_id, True
+            
+        except Exception as e:
+            print(f"❌ Erreur création salle : {str(e)}")
+            return None, None, False
+    
+    def join_room(self, room_id: str, nickname: str, language: str, password: str = None) -> tuple:
+        """
+        Rejoint une salle existante
+        Returns: (user_id, success, error_message)
+        """
+        try:
+            # Vérifier que la salle existe
+            if room_id not in self.rooms:
+                return None, False, "Salle introuvable"
+            
+            room = self.rooms[room_id]
+            
+            # Vérifier le mot de passe
+            if room.password and room.password != password:
+                return None, False, "Mot de passe incorrect"
+            
+            # Créer l'utilisateur
+            user_id = str(uuid.uuid4())
+            user = User(user_id, nickname, language)
+            
+            # Ajouter à la salle
+            if room.add_user(user):
+                return user_id, True, None
             else:
-                # Utiliser MyMemory avec les codes de langue appropriés
-                source = self.map_lang_code(source_lang, True)
-                target = self.map_lang_code(target_lang, True) 
-                
-                print(f"MyMemory utilise: source={source}, target={target}")
-                translator = MyMemoryTranslator(source=source, target=target)
-                translation = translator.translate(text)
-                self.update_counter('mymemory', len(text))
-            
-            # 3. Appliquer les corrections post-traduction
-            translation = self.post_process_translation(translation, target_lang)
-            
-            # 4. Ajouter au cache pour les futures utilisations
-            self.add_to_cache(text, source_lang, target_lang, translation)
-            
-            return translation
+                return None, False, "Salle pleine (maximum 10 utilisateurs)"
                 
         except Exception as e:
-            print(f"Erreur avec {service}: {str(e)}")
+            print(f"❌ Erreur rejoindre salle : {str(e)}")
+            return None, False, f"Erreur : {str(e)}"
+    
+    def leave_room(self, room_id: str, user_id: str) -> bool:
+        """Quitte une salle"""
+        try:
+            if room_id not in self.rooms:
+                return False
             
-            # Solution de secours: essayer l'autre service
+            room = self.rooms[room_id]
+            user = room.remove_user(user_id)
+            
+            # Si l'hôte quitte, supprimer la salle
+            if user and user.is_host:
+                self._delete_room(room_id)
+                print(f"🗑️ Salle {room.room_name} supprimée (hôte parti)")
+            
+            # Si plus personne, supprimer la salle
+            elif len(room.users) == 0:
+                self._delete_room(room_id)
+                print(f"🗑️ Salle {room.room_name} supprimée (vide)")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erreur quitter salle : {str(e)}")
+            return False
+    
+    def get_room(self, room_id: str) -> Optional[Room]:
+        """Récupère une salle par son ID"""
+        return self.rooms.get(room_id)
+    
+    def update_user_activity(self, room_id: str, user_id: str):
+        """Met à jour l'activité d'un utilisateur"""
+        room = self.get_room(room_id)
+        if room:
+            user = room.get_user(user_id)
+            if user:
+                user.update_activity()
+    
+    def broadcast_translation(self, room_id: str, original_text: str, source_language: str, sender_id: str = None, enable_speech: bool = False):
+        """
+        Diffuse une traduction à tous les utilisateurs d'une salle
+        Flux adapté selon les spécifications :
+        - Hôte parle français -> traduit vers toutes les langues des participants + synthèse vocale
+        - Participant parle sa langue -> traduit vers français seulement
+        """
+        room = self.get_room(room_id)
+        if not room:
+            return False
+        
+        # Importer ici pour éviter les imports circulaires
+        from translation_manager import translation_manager
+        
+        translations = {}
+        
+        if source_language == 'fr':  # L'hôte parle français
+            # Traduire vers toutes les langues des participants
+            participant_languages = room.get_participant_languages()
+            
+            for target_lang in participant_languages:
+                try:
+                    translated = translation_manager.translate(original_text, source_language, target_lang)
+                    translations[target_lang] = translated
+                    print(f"🌍 Hôte -> {target_lang}: {translated[:50]}...")
+                except Exception as e:
+                    print(f"❌ Erreur traduction vers {target_lang}: {str(e)}")
+                    translations[target_lang] = f"Erreur de traduction"
+            
+            # Activer la synthèse vocale pour les participants
+            enable_speech = True
+            
+        else:  # Un participant parle dans sa langue
+            # Traduire seulement vers le français pour l'hôte
             try:
-                if service == 'google':
-                    # En cas d'erreur avec Google, utiliser MyMemory
-                    source = self.map_lang_code(source_lang, True)
-                    target = self.map_lang_code(target_lang, True)
-                    
-                    print(f"MyMemory (secours) utilise: source={source}, target={target}")
-                    translator = MyMemoryTranslator(source=source, target=target)
-                else:
-                    # En cas d'erreur avec MyMemory, utiliser Google
-                    translator = GoogleTranslator(source=source_lang, target=target_lang)
-                    
-                translation = translator.translate(text)
-                translation = self.post_process_translation(translation, target_lang)
-                self.add_to_cache(text, source_lang, target_lang, translation)
-                return translation
-            except Exception as fallback_error:
-                print(f"Erreur de secours: {str(fallback_error)}")
-                return f"Erreur de traduction: {str(e)}"
+                translated = translation_manager.translate(original_text, source_language, 'fr')
+                translations['fr'] = translated
+                print(f"🌍 Participant ({source_language}) -> français: {translated[:50]}...")
+            except Exception as e:
+                print(f"❌ Erreur traduction vers français: {str(e)}")
+                translations['fr'] = f"Erreur de traduction"
+            
+            # Pas de synthèse vocale pour l'hôte
+            enable_speech = False
+        
+        # Mettre à jour la salle avec l'ID de l'expéditeur
+        room.update_translation(original_text, translations, source_language, enable_speech, sender_id)
+        
+        return True
+    
+    def _generate_room_id(self) -> str:
+        """Génère un ID de salle simple (4 chiffres)"""
+        import random
+        while True:
+            room_id = f"{random.randint(1000, 9999)}"
+            if room_id not in self.rooms:
+                return room_id
+    
+    def _delete_room(self, room_id: str):
+        """Supprime une salle"""
+        if room_id in self.rooms:
+            del self.rooms[room_id]
+    
+    def cleanup_rooms(self):
+        """Nettoie les salles vides et les utilisateurs inactifs"""
+        rooms_to_delete = []
+        
+        for room_id, room in self.rooms.items():
+            room.cleanup_inactive_users()
+            
+            if len(room.users) == 0:
+                rooms_to_delete.append(room_id)
+        
+        for room_id in rooms_to_delete:
+            self._delete_room(room_id)
+            print(f"🧹 Salle {room_id} supprimée (nettoyage)")
+    
+    def get_stats(self) -> dict:
+        """Retourne les statistiques des salles"""
+        return {
+            'total_rooms': len(self.rooms),
+            'total_users': sum(len(room.users) for room in self.rooms.values()),
+            'rooms': [room.to_dict() for room in self.rooms.values()]
+        }
 
-# Créer une instance globale
-translation_manager = TranslationManager()
+# Instance globale du gestionnaire de salles
+room_manager = RoomManager()
