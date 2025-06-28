@@ -367,6 +367,18 @@ def room_updates(room_id):
                     'show_translation': True,
                     'enable_speech': last_translation.get('enable_speech', False)
                 })
+            elif last_translation.get('source_language') == user_language:  # Son propre message
+                # Le participant voit sa propre traduction française
+                french_translation = last_translation['translated'].get('fr', '')
+                return jsonify({
+                    'success': True,
+                    'original': last_translation['original'],  # Son texte original
+                    'translated': french_translation,  # Traduction française
+                    'timestamp': last_translation['timestamp'].isoformat(),
+                    'is_host': False,
+                    'show_own_message': True,
+                    'show_translation': False
+                })
             else:  # Message d'un autre utilisateur
                 return jsonify({
                     'success': True,
