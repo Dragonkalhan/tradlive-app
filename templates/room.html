@@ -573,13 +573,6 @@
             startRealTimeUpdates();
             startHeartbeat();
             
-            // Configurer la reconnaissance vocale
-            if (window.webkitSpeechRecognition || window.SpeechRecognition) {
-                setupSpeechRecognition();
-            } else {
-                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
-            }
-            
             // Mettre à jour le QR code
             updateQRCode();
         }
@@ -623,6 +616,13 @@
                             }
                             
                             controlsEl.style.display = 'block';
+                            
+                            // Configurer la reconnaissance vocale maintenant que le rôle est déterminé
+                            if (window.webkitSpeechRecognition || window.SpeechRecognition) {
+                                setupSpeechRecognition();
+                            } else {
+                                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
+                            }
                         } else {
                             showError('Utilisateur non trouvé dans la salle');
                             return;
@@ -710,6 +710,11 @@
                                         participantTranslatedText.textContent = data.translated;
                                         participantTranslatedText.classList.remove('empty-translation');
                                     }
+                                } else if (data.show_own_message) {
+                                    // Son propre message + traduction française
+                                    participantOwnText.textContent = data.original;
+                                    participantFrenchText.textContent = data.translated;
+                                    participantMessageArea.style.display = 'block';
                                 }
                             }
                         }
@@ -959,11 +964,6 @@
                 if (data.success) {
                     statusEl.textContent = 'Réponse envoyée à l\'hôte !';
                     statusEl.className = 'status connected';
-                    
-                    // Simulation de la traduction française (sera remplacée par les updates)
-                    setTimeout(() => {
-                        participantFrenchText.textContent = "Traduction en cours...";
-                    }, 500);
                 } else {
                     throw new Error(data.error || 'Erreur de traduction');
                 }
