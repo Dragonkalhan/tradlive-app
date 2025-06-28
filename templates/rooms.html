@@ -1,15 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradLive - Salles de traduction</title>
+    <title>TradLive - Salle de traduction</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
+            margin: 0;
             padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -17,116 +15,96 @@
         }
         
         .container {
+            max-width: 800px;
+            margin: 0 auto;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 30px;
+            padding: 20px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
             border: 1px solid rgba(255, 255, 255, 0.18);
         }
         
-        h1 {
+        .header {
             text-align: center;
-            font-size: 28px;
             margin-bottom: 30px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .tabs {
+        .room-info {
             display: flex;
-            margin-bottom: 30px;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        .tab {
-            flex: 1;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            color: white;
-            transition: all 0.3s ease;
-        }
-        
-        .tab.active {
-            background: rgba(255, 255, 255, 0.3);
-            font-weight: bold;
-        }
-        
-        .tab:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .form-group {
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         
-        label {
-            display: block;
-            margin-bottom: 8px;
+        .room-code {
+            font-size: 24px;
             font-weight: bold;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .user-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .leave-button {
+            padding: 10px 20px;
+            background: rgba(244, 67, 54, 0.8);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
             font-size: 14px;
         }
         
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            background: rgba(255, 255, 255, 0.9);
-            box-sizing: border-box;
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
-        }
-        
-        button {
-            width: 100%;
+        /* QR Code pour l'hôte */
+        .qr-section {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
             padding: 15px;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
+        }
+        
+        .qr-section.show {
+            display: block;
+        }
+        
+        .qrcode-container {
+            display: inline-block;
+            background: white;
+            padding: 10px;
             border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        
+        .qrcode-container img {
+            width: 150px;
+            height: 150px;
+            display: block;
+        }
+        
+        .qr-caption {
+            font-size: 12px;
             margin-top: 10px;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+            opacity: 0.8;
         }
         
         .status {
-            margin-top: 20px;
+            text-align: center;
             padding: 15px;
             border-radius: 10px;
-            text-align: center;
+            margin-bottom: 20px;
             font-weight: bold;
         }
         
-        .status.success {
+        .status.connected {
             background: rgba(76, 175, 80, 0.8);
         }
         
@@ -138,343 +116,995 @@
             background: rgba(33, 150, 243, 0.8);
         }
         
-        .instructions {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
+        .controls {
+            text-align: center;
             margin-bottom: 30px;
         }
         
-        .instructions h3 {
+        .mic-button {
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            min-width: 250px;
+        }
+        
+        .mic-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .mic-button.active {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+        }
+        
+        .text-mode-button {
+            padding: 10px 20px;
+            background: rgba(33, 150, 243, 0.8);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        
+        .translation-area {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            min-height: 200px;
+        }
+        
+        .translation-section {
+            margin-bottom: 20px;
+        }
+        
+        .translation-label {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+        
+        .translation-text {
+            font-size: 18px;
+            line-height: 1.5;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 60px;
+            word-wrap: break-word;
+        }
+        
+        .empty-translation {
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+        
+        .participants {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .participants h3 {
             margin-top: 0;
             color: #FFD700;
         }
         
-        .instructions ul {
-            margin: 0;
-            padding-left: 20px;
+        .participant {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .instructions li {
-            margin-bottom: 8px;
+        .participant:last-child {
+            border-bottom: none;
         }
         
-        .room-code {
-            font-size: 24px;
+        .participant-name {
             font-weight: bold;
-            color: #FFD700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .participant-language {
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .host-badge {
+            background: #FFD700;
+            color: #333;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-left: 5px;
+        }
+        
+        .wave-animation {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            height: 40px;
+            margin: 10px 0;
+        }
+        
+        .wave-animation.active {
+            display: flex;
+        }
+        
+        .wave-bar {
+            display: inline-block;
+            width: 5px;
+            background-color: #FFD700;
+            margin: 0 3px;
+            border-radius: 2px;
+            animation: waveAnimation 0.5s infinite alternate;
+        }
+        
+        @keyframes waveAnimation {
+            0% { height: 10px; }
+            100% { height: 30px; }
+        }
+        
+        .wave-bar:nth-child(1) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.3s; }
+        
+        /* Mode texte fallback */
+        .text-input-fallback {
+            display: none;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        
+        .text-input-fallback.show {
+            display: block;
+        }
+        
+        .text-input-fallback textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            min-height: 80px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        
+        .text-input-fallback button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .connection-status {
+            font-size: 12px;
+            opacity: 0.8;
         }
         
         @media (max-width: 600px) {
             .container {
                 margin: 10px;
-                padding: 20px;
+                padding: 15px;
             }
             
-            h1 {
-                font-size: 24px;
-            }
-            
-            .tabs {
+            .room-info {
                 flex-direction: column;
+                text-align: center;
+            }
+            
+            .room-code {
+                font-size: 20px;
+                margin-bottom: 10px;
+            }
+            
+            .mic-button {
+                width: 100%;
+                margin: 5px 0;
+                min-width: auto;
+            }
+            
+            .qrcode-container img {
+                width: 120px;
+                height: 120px;
             }
         }
         
-        .auto-join-notice {
-            background: rgba(76, 175, 80, 0.8);
+        .error-message {
+            background: rgba(244, 67, 54, 0.8);
             padding: 15px;
             border-radius: 10px;
-            margin-bottom: 20px;
+            margin: 20px 0;
             text-align: center;
-            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            font-style: italic;
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌍 TradLive - Traduction Multi-utilisateurs</h1>
-        
-        <!-- Notice pour auto-join depuis QR code -->
-        <div id="auto-join-notice" class="auto-join-notice" style="display: none;">
-            ✅ Code de salle détecté ! Remplissez vos informations pour rejoindre automatiquement.
+        <div class="header">
+            <h1>🌍 TradLive</h1>
+            <div class="room-info">
+                <div class="room-code">Salle : <span id="room-id">{{ room_id }}</span></div>
+                <div class="user-info">
+                    <span id="user-nickname">Chargement...</span> 
+                    (<span id="user-language">Chargement...</span>)
+                    <div class="connection-status" id="connection-status">Connexion...</div>
+                </div>
+                <button class="leave-button" onclick="leaveRoom()">🚪 Quitter</button>
+            </div>
         </div>
         
-        <div class="instructions">
-            <h3>Comment ça marche ?</h3>
-            <ul>
-                <li><strong>Créez une salle</strong> et partagez le code avec vos participants</li>
-                <li><strong>Chacun choisit sa langue</strong> préférée</li>
-                <li><strong>Vous parlez en français</strong>, tout le monde reçoit la traduction</li>
-                <li><strong>Jusqu'à 10 personnes</strong> peuvent participer simultanément</li>
-            </ul>
+        <!-- QR Code pour l'hôte -->
+        <div id="qr-section" class="qr-section">
+            <h3>🔗 Partage de la salle</h3>
+            <p>Scannez ce QR code pour rejoindre directement la salle :</p>
+            <div class="qrcode-container">
+                <img src="/qrcode" alt="QR Code" id="qr-code-image">
+            </div>
+            <div class="qr-caption">
+                Code salle : <strong id="qr-room-code">{{ room_id }}</strong><br>
+                <span id="room-url">Les participants scannent pour rejoindre automatiquement</span>
+            </div>
         </div>
         
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('create')">Créer une salle</button>
-            <button class="tab" onclick="showTab('join')">Rejoindre une salle</button>
+        <div id="status" class="status info">Connexion à la salle...</div>
+        
+        <div id="controls" class="controls" style="display: none;">
+            <!-- Contrôles pour l'hôte -->
+            <div id="host-controls" style="display: none;">
+                <button id="mic-button" class="mic-button">🎤 Parler en Français</button>
+                <button id="text-mode-button" class="text-mode-button">💬 Mode Texte</button>
+                
+                <div class="wave-animation" id="wave-animation">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+                
+                <!-- Zone de saisie de texte en mode fallback -->
+                <div id="text-input-fallback" class="text-input-fallback">
+                    <h4>✍️ Saisie de texte en français</h4>
+                    <textarea id="text-input" placeholder="Écrivez votre message en français ici..."></textarea>
+                    <button onclick="sendHostText()">📤 Envoyer la traduction</button>
+                    <button onclick="hideTextInput()">❌ Fermer</button>
+                </div>
+            </div>
+            
+            <!-- Contrôles pour les participants -->
+            <div id="participant-controls" style="display: none;">
+                <button id="participant-mic-button" class="mic-button">🎤 Parler dans votre langue</button>
+                <button id="participant-text-button" class="text-mode-button">💬 Mode Texte</button>
+                
+                <div class="wave-animation" id="participant-wave">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+                
+                <!-- Zone de saisie pour les participants -->
+                <div id="participant-text-input" class="text-input-fallback">
+                    <h4>✍️ Écrire dans votre langue</h4>
+                    <textarea id="participant-text" placeholder="Écrivez votre message dans votre langue..."></textarea>
+                    <button onclick="sendParticipantText()">📤 Envoyer au français</button>
+                    <button onclick="hideParticipantTextInput()">❌ Fermer</button>
+                </div>
+            </div>
         </div>
         
-        <!-- Onglet Créer une salle -->
-        <div id="create-tab" class="tab-content active">
-            <form id="create-form">
-                <div class="form-group">
-                    <label for="create-nickname">Votre pseudo :</label>
-                    <input type="text" id="create-nickname" placeholder="Ex: Marie" required>
+        <div class="translation-area">
+            <!-- Interface pour l'hôte -->
+            <div id="host-interface" style="display: none;">
+                <div class="translation-section">
+                    <div class="translation-label">📝 Ce que vous dites (Français)</div>
+                    <div id="host-original-text" class="translation-text empty-translation">
+                        En attente de votre message...
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="create-language">Votre langue :</label>
-                    <select id="create-language" required>
-                        <option value="fr">Français</option>
-                        <option value="en">Anglais</option>
-                        <option value="es">Espagnol</option>
-                        <option value="de">Allemand</option>
-                        <option value="it">Italien</option>
-                        <option value="pt">Portugais</option>
-                        <option value="ru">Russe</option>
-                        <option value="zh-CN">Chinois</option>
-                        <option value="ja">Japonais</option>
-                        <option value="ar">Arabe</option>
-                        <option value="uk">Ukrainien</option>
-                        <option value="fa">Persan</option>
-                        <option value="hi">Hindi</option>
-                        <option value="bn">Bengali</option>
-                        <option value="te">Télougou</option>
-                        <option value="mr">Marathi</option>
-                    </select>
+                <div class="translation-section">
+                    <div class="translation-label">💬 Réponses des participants (Français)</div>
+                    <div id="host-responses-text" class="translation-text empty-translation">
+                        En attente des réponses...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Interface pour les participants -->
+            <div id="participant-interface" style="display: none;">
+                <div class="translation-section">
+                    <div class="translation-label">📝 Message de l'hôte (Français)</div>
+                    <div id="participant-original-text" class="translation-text empty-translation">
+                        En attente d'un message de l'hôte...
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="room-name">Nom de la salle :</label>
-                    <input type="text" id="room-name" placeholder="Ex: Réunion équipe, Cours d'anglais..." required>
+                <div class="translation-section">
+                    <div class="translation-label">🌍 Traduction (<span id="participant-target-language">Votre langue</span>)</div>
+                    <div id="participant-translated-text" class="translation-text empty-translation">
+                        En attente d'une traduction...
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="room-password">Mot de passe (optionnel) :</label>
-                    <input type="password" id="room-password" placeholder="Laissez vide pour aucun mot de passe">
+                <div class="translation-section">
+                    <div class="translation-label">💬 Votre message</div>
+                    <div id="participant-message-area" style="display: none;">
+                        <div style="display: flex; gap: 15px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;">Dans votre langue :</div>
+                                <div id="participant-own-text" class="translation-text" style="min-height: 40px; font-size: 16px;"></div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;">Traduction française :</div>
+                                <div id="participant-french-text" class="translation-text" style="min-height: 40px; font-size: 16px;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <button type="submit" id="create-btn">🎉 Créer la salle</button>
-            </form>
+            </div>
         </div>
         
-        <!-- Onglet Rejoindre une salle -->
-        <div id="join-tab" class="tab-content">
-            <form id="join-form">
-                <div class="form-group">
-                    <label for="join-room-id">Code de la salle :</label>
-                    <input type="text" id="join-room-id" placeholder="Ex: 1234" required maxlength="4" pattern="[0-9]{4}">
-                </div>
-                
-                <div class="form-group">
-                    <label for="join-nickname">Votre pseudo :</label>
-                    <input type="text" id="join-nickname" placeholder="Ex: Pierre" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="join-language">Votre langue :</label>
-                    <select id="join-language" required>
-                        <option value="fr">Français</option>
-                        <option value="en">Anglais</option>
-                        <option value="es">Espagnol</option>
-                        <option value="de">Allemand</option>
-                        <option value="it">Italien</option>
-                        <option value="pt">Portugais</option>
-                        <option value="ru">Russe</option>
-                        <option value="zh-CN">Chinois</option>
-                        <option value="ja">Japonais</option>
-                        <option value="ar">Arabe</option>
-                        <option value="uk">Ukrainien</option>
-                        <option value="fa">Persan</option>
-                        <option value="hi">Hindi</option>
-                        <option value="bn">Bengali</option>
-                        <option value="te">Télougou</option>
-                        <option value="mr">Marathi</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="join-password">Mot de passe (si requis) :</label>
-                    <input type="password" id="join-password" placeholder="Laissez vide si aucun mot de passe">
-                </div>
-                
-                <button type="submit" id="join-btn">🚪 Rejoindre la salle</button>
-            </form>
+        <div class="participants">
+            <h3>👥 Participants (<span id="participant-count">0</span>)</h3>
+            <div id="participants-list" class="loading">Chargement de la liste...</div>
         </div>
-        
-        <div id="status" class="status" style="display: none;"></div>
     </div>
     
     <script>
-        // Gestion des onglets
-        function showTab(tabName) {
-            // Cacher tous les contenus
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Désactiver tous les onglets
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Activer l'onglet et le contenu sélectionnés
-            document.getElementById(tabName + '-tab').classList.add('active');
-            event.target.classList.add('active');
-        }
+        // Variables globales
+        let userData = null;
+        let roomData = null;
+        let recognition = null;
+        let participantRecognition = null;
+        let isListening = false;
+        let isParticipantListening = false;
+        let isHost = false;
+        let updateInterval = null;
+        let heartbeatInterval = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
         
-        // Fonction pour afficher le statut
-        function showStatus(message, type) {
-            const status = document.getElementById('status');
-            status.textContent = message;
-            status.className = 'status ' + type;
-            status.style.display = 'block';
-            
-            // Masquer après 5 secondes sauf pour les succès
-            if (type !== 'success') {
-                setTimeout(() => {
-                    status.style.display = 'none';
-                }, 5000);
-            }
-        }
+        // Éléments DOM
+        const statusEl = document.getElementById('status');
+        const controlsEl = document.getElementById('controls');
+        const hostControlsEl = document.getElementById('host-controls');
+        const participantControlsEl = document.getElementById('participant-controls');
+        const micButton = document.getElementById('mic-button');
+        const participantMicButton = document.getElementById('participant-mic-button');
+        const textModeButton = document.getElementById('text-mode-button');
+        const participantTextButton = document.getElementById('participant-text-button');
+        const waveAnimation = document.getElementById('wave-animation');
+        const participantWave = document.getElementById('participant-wave');
+        const qrSection = document.getElementById('qr-section');
+        const qrCodeImage = document.getElementById('qr-code-image');
+        const connectionStatus = document.getElementById('connection-status');
+        const textInputFallback = document.getElementById('text-input-fallback');
+        const participantTextInput = document.getElementById('participant-text-input');
         
-        // Initialisation au chargement de la page
+        // Interfaces
+        const hostInterface = document.getElementById('host-interface');
+        const participantInterface = document.getElementById('participant-interface');
+        
+        // Éléments de texte - Hôte
+        const hostOriginalText = document.getElementById('host-original-text');
+        const hostResponsesText = document.getElementById('host-responses-text');
+        
+        // Éléments de texte - Participant
+        const participantOriginalText = document.getElementById('participant-original-text');
+        const participantTranslatedText = document.getElementById('participant-translated-text');
+        const participantMessageArea = document.getElementById('participant-message-area');
+        const participantOwnText = document.getElementById('participant-own-text');
+        const participantFrenchText = document.getElementById('participant-french-text');
+        const participantTargetLanguage = document.getElementById('participant-target-language');
+        
+        const participantsListEl = document.getElementById('participants-list');
+        const participantCountEl = document.getElementById('participant-count');
+        
+        // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
-            // Vérifier s'il y a un paramètre join dans l'URL (depuis QR code)
-            const urlParams = new URLSearchParams(window.location.search);
-            const joinRoomId = urlParams.get('join');
+            initializeRoom();
+        });
+        
+        function initializeRoom() {
+            // Récupérer les données utilisateur du localStorage
+            const userDataStr = localStorage.getItem('tradlive_user');
+            if (!userDataStr) {
+                showError('Données utilisateur manquantes. Retour à l\'accueil...');
+                setTimeout(() => window.location.href = '/rooms', 2000);
+                return;
+            }
             
-            if (joinRoomId) {
-                // Afficher la notice d'auto-join
-                document.getElementById('auto-join-notice').style.display = 'block';
+            userData = JSON.parse(userDataStr);
+            
+            // Vérifier que nous sommes dans la bonne salle
+            const currentRoomId = window.location.pathname.split('/').pop();
+            if (userData.room_id !== currentRoomId) {
+                showError('Incohérence de salle. Retour à l\'accueil...');
+                setTimeout(() => window.location.href = '/rooms', 2000);
+                return;
+            }
+            
+            // Afficher les informations utilisateur
+            document.getElementById('user-nickname').textContent = userData.nickname;
+            document.getElementById('user-language').textContent = getLanguageName(userData.language);
+            document.getElementById('qr-room-code').textContent = userData.room_id;
+            
+            // Charger les informations de la salle
+            loadRoomInfo();
+            
+            // Démarrer la mise à jour en temps réel
+            startRealTimeUpdates();
+            startHeartbeat();
+            
+            // Mettre à jour le QR code
+            updateQRCode();
+        }
+        
+        function updateQRCode() {
+            // QR code mène directement à la salle pour rejoindre automatiquement
+            const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
+            qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}&t=${Date.now()}`;
+        }
+        
+        function loadRoomInfo() {
+            fetch(`/api/room/${userData.room_id}/info`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        roomData = data.room;
+                        reconnectAttempts = 0;
+                        updateConnectionStatus(true);
+                        
+                        // Vérifier si l'utilisateur est l'hôte
+                        const currentUser = roomData.users.find(u => u.user_id === userData.user_id);
+                        if (currentUser) {
+                            isHost = currentUser.is_host;
+                            
+                            // Afficher l'interface appropriée
+                            if (isHost) {
+                                hostControlsEl.style.display = 'block';
+                                hostInterface.style.display = 'block';
+                                qrSection.classList.add('show');
+                                statusEl.textContent = 'Vous êtes l\'hôte. Parlez en français, la traduction se fera automatiquement vers toutes les langues.';
+                                statusEl.className = 'status connected';
+                            } else {
+                                participantControlsEl.style.display = 'block';
+                                participantInterface.style.display = 'block';
+                                participantTargetLanguage.textContent = getLanguageName(userData.language);
+                                statusEl.textContent = `Connecté en tant que participant. Vous recevez les traductions en ${getLanguageName(userData.language)}.`;
+                                statusEl.className = 'status connected';
+                            }
+                            
+                            controlsEl.style.display = 'block';
+                            
+                            // Configurer la reconnaissance vocale maintenant que le rôle est déterminé
+                            if (window.webkitSpeechRecognition || window.SpeechRecognition) {
+                                setupSpeechRecognition();
+                            } else {
+                                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
+                            }
+                        } else {
+                            showError('Utilisateur non trouvé dans la salle');
+                            return;
+                        }
+                        
+                        // Mettre à jour la liste des participants
+                        updateParticipantsList();
+                        
+                    } else {
+                        throw new Error(data.error || 'Erreur inconnue');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des infos de salle:', error);
+                    reconnectAttempts++;
+                    updateConnectionStatus(false);
+                    
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        setTimeout(() => loadRoomInfo(), reconnectAttempts * 1000);
+                    } else {
+                        showError('Impossible de se connecter à la salle');
+                    }
+                });
+        }
+        
+        function updateConnectionStatus(connected) {
+            if (connected) {
+                connectionStatus.textContent = 'Connecté ✅';
+                connectionStatus.style.color = '#4CAF50';
+            } else {
+                connectionStatus.textContent = `Reconnexion... (${reconnectAttempts}/${maxReconnectAttempts})`;
+                connectionStatus.style.color = '#f44336';
+            }
+        }
+        
+        function updateParticipantsList() {
+            if (!roomData || !roomData.users) return;
+            
+            participantCountEl.textContent = roomData.users.length;
+            
+            if (roomData.users.length === 0) {
+                participantsListEl.innerHTML = '<div class="loading">Aucun participant</div>';
+                return;
+            }
+            
+            participantsListEl.innerHTML = roomData.users.map(user => `
+                <div class="participant">
+                    <div>
+                        <span class="participant-name">${user.nickname}</span>
+                        ${user.is_host ? '<span class="host-badge">HÔTE</span>' : ''}
+                    </div>
+                    <span class="participant-language">${getLanguageName(user.language)}</span>
+                </div>
+            `).join('');
+        }
+        
+        function startRealTimeUpdates() {
+            updateInterval = setInterval(() => {
+                fetch(`/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            reconnectAttempts = 0;
+                            updateConnectionStatus(true);
+                            
+                            // Mettre à jour l'affichage selon le rôle
+                            if (isHost) {
+                                // Interface hôte
+                                if (data.original && !data.show_translation) {
+                                    // C'est une réponse d'un participant traduite en français
+                                    hostResponsesText.textContent = data.original;
+                                    hostResponsesText.classList.remove('empty-translation');
+                                }
+                            } else {
+                                // Interface participant
+                                if (data.original && data.show_translation) {
+                                    // Message de l'hôte en français + traduction
+                                    participantOriginalText.textContent = data.original;
+                                    participantOriginalText.classList.remove('empty-translation');
+                                    
+                                    if (data.translated) {
+                                        participantTranslatedText.textContent = data.translated;
+                                        participantTranslatedText.classList.remove('empty-translation');
+                                    }
+                                } else if (data.show_own_message) {
+                                    // Son propre message + traduction française
+                                    participantOwnText.textContent = data.original;
+                                    participantFrenchText.textContent = data.translated;
+                                    participantMessageArea.style.display = 'block';
+                                }
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur mise à jour:', error);
+                        reconnectAttempts++;
+                        updateConnectionStatus(false);
+                    });
                 
-                // Pré-remplir le code de salle et basculer sur l'onglet "Rejoindre"
-                document.getElementById('join-room-id').value = joinRoomId;
-                showTab('join');
+                // Recharger les infos de salle moins souvent
+                if (Date.now() % 20000 < 3000) {
+                    loadRoomInfo();
+                }
+            }, 3000);
+        }
+        
+        function startHeartbeat() {
+            heartbeatInterval = setInterval(() => {
+                fetch(`/api/room/${userData.room_id}/heartbeat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.user_id })
+                }).catch(() => {
+                    reconnectAttempts++;
+                    updateConnectionStatus(false);
+                });
+            }, 10000);
+        }
+        
+        function setupSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (isHost) {
+                // Configuration pour l'hôte (français)
+                recognition = new SpeechRecognition();
+                recognition.lang = 'fr-FR';
+                recognition.continuous = true;
+                recognition.interimResults = true;
                 
-                // Mettre l'onglet rejoindre comme actif
-                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-                document.querySelector('.tab[onclick*="join"]').classList.add('active');
+                recognition.onresult = function(event) {
+                    const lastResultIndex = event.results.length - 1;
+                    const transcript = event.results[lastResultIndex][0].transcript;
+                    
+                    if (event.results[lastResultIndex].isFinal) {
+                        sendHostTranslation(transcript);
+                    } else {
+                        hostOriginalText.textContent = transcript;
+                        hostOriginalText.classList.remove('empty-translation');
+                    }
+                };
                 
-                // Mettre le focus sur le champ pseudo
-                setTimeout(() => {
-                    document.getElementById('join-nickname').focus();
-                }, 100);
+                recognition.onerror = function(event) {
+                    console.error('Erreur reconnaissance hôte:', event.error);
+                    if (event.error !== 'no-speech') {
+                        showError('Erreur de reconnaissance vocale: ' + event.error);
+                        stopHostListening();
+                    }
+                };
+                
+                recognition.onend = function() {
+                    if (isListening) {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            stopHostListening();
+                        }
+                    }
+                };
+                
+                micButton.addEventListener('click', toggleHostListening);
+                textModeButton.addEventListener('click', showTextInput);
+            } else {
+                // Configuration pour les participants (leur langue)
+                participantRecognition = new SpeechRecognition();
+                participantRecognition.lang = getRecognitionLanguageCode(userData.language);
+                participantRecognition.continuous = true;
+                participantRecognition.interimResults = true;
+                
+                participantRecognition.onresult = function(event) {
+                    const lastResultIndex = event.results.length - 1;
+                    const transcript = event.results[lastResultIndex][0].transcript;
+                    
+                    if (event.results[lastResultIndex].isFinal) {
+                        sendParticipantTranslation(transcript);
+                    } else {
+                        // Affichage temporaire pendant la reconnaissance
+                        statusEl.textContent = 'En cours: ' + transcript;
+                    }
+                };
+                
+                participantRecognition.onerror = function(event) {
+                    console.error('Erreur reconnaissance participant:', event.error);
+                    if (event.error !== 'no-speech') {
+                        showError('Erreur de reconnaissance vocale: ' + event.error);
+                        stopParticipantListening();
+                    }
+                };
+                
+                participantRecognition.onend = function() {
+                    if (isParticipantListening) {
+                        try {
+                            participantRecognition.start();
+                        } catch (e) {
+                            stopParticipantListening();
+                        }
+                    }
+                };
+                
+                participantMicButton.addEventListener('click', toggleParticipantListening);
+                participantTextButton.addEventListener('click', showParticipantTextInput);
+            }
+        }
+        
+        function toggleHostListening() {
+            if (isListening) {
+                stopHostListening();
+            } else {
+                startHostListening();
+            }
+        }
+        
+        function startHostListening() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    recognition.start();
+                    isListening = true;
+                    micButton.textContent = '🎤 Arrêter';
+                    micButton.classList.add('active');
+                    waveAnimation.classList.add('active');
+                    statusEl.textContent = 'En écoute... Parlez en français.';
+                    statusEl.className = 'status info';
+                })
+                .catch(err => {
+                    console.error('Erreur accès micro hôte:', err);
+                    showError('Impossible d\'accéder au microphone');
+                });
+        }
+        
+        function stopHostListening() {
+            if (recognition) recognition.stop();
+            isListening = false;
+            micButton.textContent = '🎤 Parler en Français';
+            micButton.classList.remove('active');
+            waveAnimation.classList.remove('active');
+            statusEl.textContent = 'Cliquez sur le micro pour parler.';
+            statusEl.className = 'status connected';
+        }
+        
+        function toggleParticipantListening() {
+            if (isParticipantListening) {
+                stopParticipantListening();
+            } else {
+                startParticipantListening();
+            }
+        }
+        
+        function startParticipantListening() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    participantRecognition.start();
+                    isParticipantListening = true;
+                    participantMicButton.textContent = '🎤 Arrêter';
+                    participantMicButton.classList.add('active');
+                    participantWave.classList.add('active');
+                    statusEl.textContent = `En écoute... Parlez en ${getLanguageName(userData.language)}.`;
+                    statusEl.className = 'status info';
+                })
+                .catch(err => {
+                    console.error('Erreur accès micro participant:', err);
+                    showError('Impossible d\'accéder au microphone');
+                });
+        }
+        
+        function stopParticipantListening() {
+            if (participantRecognition) participantRecognition.stop();
+            isParticipantListening = false;
+            participantMicButton.textContent = `🎤 Parler en ${getLanguageName(userData.language)}`;
+            participantMicButton.classList.remove('active');
+            participantWave.classList.remove('active');
+            statusEl.textContent = 'Cliquez sur le micro pour parler.';
+            statusEl.className = 'status connected';
+        }
+        
+        function sendHostTranslation(text) {
+            if (!text.trim()) return;
+            
+            statusEl.textContent = 'Diffusion de la traduction...';
+            statusEl.className = 'status info';
+            
+            // Afficher le texte de l'hôte
+            hostOriginalText.textContent = text;
+            hostOriginalText.classList.remove('empty-translation');
+            
+            fetch(`/api/room/${userData.room_id}/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: userData.user_id,
+                    text: text,
+                    source_language: 'fr'
+                })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    statusEl.textContent = 'Message diffusé avec synthèse vocale !';
+                    statusEl.className = 'status connected';
+                } else {
+                    throw new Error(data.error || 'Erreur de traduction');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur envoi traduction hôte:', error);
+                showError('Erreur envoi traduction: ' + error.message);
+            });
+        }
+        
+        function sendParticipantTranslation(text) {
+            if (!text.trim()) return;
+            
+            statusEl.textContent = 'Envoi de votre réponse...';
+            statusEl.className = 'status info';
+            
+            // Afficher le texte du participant
+            participantOwnText.textContent = text;
+            participantMessageArea.style.display = 'block';
+            
+            fetch(`/api/room/${userData.room_id}/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: userData.user_id,
+                    text: text,
+                    source_language: userData.language,
+                    target_language: 'fr'
+                })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    statusEl.textContent = 'Réponse envoyée à l\'hôte !';
+                    statusEl.className = 'status connected';
+                } else {
+                    throw new Error(data.error || 'Erreur de traduction');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur envoi traduction participant:', error);
+                showError('Erreur envoi traduction: ' + error.message);
+            });
+        }
+        
+        // Fonctions pour le mode texte
+        function showTextInput() {
+            textInputFallback.classList.add('show');
+            document.getElementById('text-input').focus();
+        }
+        
+        function hideTextInput() {
+            textInputFallback.classList.remove('show');
+        }
+        
+        function sendHostText() {
+            const text = document.getElementById('text-input').value.trim();
+            if (text) {
+                sendHostTranslation(text);
+                document.getElementById('text-input').value = '';
+                hideTextInput();
+            }
+        }
+        
+        function showParticipantTextInput() {
+            participantTextInput.classList.add('show');
+            document.getElementById('participant-text').focus();
+        }
+        
+        function hideParticipantTextInput() {
+            participantTextInput.classList.remove('show');
+        }
+        
+        function sendParticipantText() {
+            const text = document.getElementById('participant-text').value.trim();
+            if (text) {
+                sendParticipantTranslation(text);
+                document.getElementById('participant-text').value = '';
+                hideParticipantTextInput();
+            }
+        }
+        
+        // Gestion des touches Entrée
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                if (document.getElementById('text-input') === document.activeElement) {
+                    e.preventDefault();
+                    sendHostText();
+                } else if (document.getElementById('participant-text') === document.activeElement) {
+                    e.preventDefault();
+                    sendParticipantText();
+                }
             }
         });
         
-        // Création de salle
-        document.getElementById('create-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const btn = document.getElementById('create-btn');
-            btn.disabled = true;
-            btn.textContent = 'Création en cours...';
-            
-            const data = {
-                nickname: document.getElementById('create-nickname').value.trim(),
-                language: document.getElementById('create-language').value,
-                room_name: document.getElementById('room-name').value.trim(),
-                password: document.getElementById('room-password').value.trim() || null
-            };
-            
-            fetch('/api/create-room', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showStatus(`Salle créée ! Code : ${data.room_id}`, 'success');
-                    
-                    // Sauvegarder les informations dans le localStorage
-                    localStorage.setItem('tradlive_user', JSON.stringify({
-                        user_id: data.user_id,
-                        room_id: data.room_id,
-                        nickname: document.getElementById('create-nickname').value,
-                        language: document.getElementById('create-language').value
-                    }));
-                    
-                    // Rediriger vers la salle après 2 secondes
-                    setTimeout(() => {
-                        window.location.href = `/room/${data.room_id}`;
-                    }, 2000);
-                } else {
-                    showStatus(data.error, 'error');
-                    btn.disabled = false;
-                    btn.textContent = '🎉 Créer la salle';
-                }
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                showStatus('Erreur de connexion au serveur', 'error');
-                btn.disabled = false;
-                btn.textContent = '🎉 Créer la salle';
-            });
-        });
+        function leaveRoom() {
+            if (confirm('Êtes-vous sûr de vouloir quitter la salle ?')) {
+                // Arrêter toutes les activités
+                if (updateInterval) clearInterval(updateInterval);
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
+                if (isListening) stopHostListening();
+                if (isParticipantListening) stopParticipantListening();
+                
+                fetch(`/api/room/${userData.room_id}/leave`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userData.user_id })
+                })
+                .finally(() => {
+                    localStorage.removeItem('tradlive_user');
+                    window.location.href = '/rooms';
+                });
+            }
+        }
         
-        // Rejoindre une salle
-        document.getElementById('join-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const btn = document.getElementById('join-btn');
-            btn.disabled = true;
-            btn.textContent = 'Connexion en cours...';
-            
-            const data = {
-                room_id: document.getElementById('join-room-id').value.trim(),
-                nickname: document.getElementById('join-nickname').value.trim(),
-                language: document.getElementById('join-language').value,
-                password: document.getElementById('join-password').value.trim() || null
-            };
-            
-            fetch('/api/join-room', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showStatus('Connexion réussie !', 'success');
-                    
-                    // Sauvegarder les informations dans le localStorage
-                    localStorage.setItem('tradlive_user', JSON.stringify({
-                        user_id: data.user_id,
-                        room_id: data.room_id,
-                        nickname: document.getElementById('join-nickname').value,
-                        language: document.getElementById('join-language').value
-                    }));
-                    
-                    // Rediriger vers la salle après 1 seconde
-                    setTimeout(() => {
-                        window.location.href = `/room/${data.room_id}`;
-                    }, 1000);
-                } else {
-                    showStatus(data.error, 'error');
-                    btn.disabled = false;
-                    btn.textContent = '🚪 Rejoindre la salle';
-                }
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                showStatus('Erreur de connexion au serveur', 'error');
-                btn.disabled = false;
-                btn.textContent = '🚪 Rejoindre la salle';
-            });
-        });
+        function showError(message) {
+            statusEl.textContent = message;
+            statusEl.className = 'status error';
+        }
         
-        // Formater automatiquement le code de salle
-        document.getElementById('join-room-id').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, ''); // Garder seulement les chiffres
-            if (value.length > 4) value = value.substring(0, 4);
-            e.target.value = value;
+        function getLanguageName(code) {
+            const names = {
+                'fr': 'Français',
+                'en': 'Anglais',
+                'es': 'Espagnol',
+                'de': 'Allemand',
+                'it': 'Italien',
+                'pt': 'Portugais',
+                'ru': 'Russe',
+                'zh-CN': 'Chinois',
+                'ja': 'Japonais',
+                'ar': 'Arabe',
+                'uk': 'Ukrainien',
+                'fa': 'Persan',
+                'hi': 'Hindi',
+                'bn': 'Bengali',
+                'te': 'Télougou',
+                'mr': 'Marathi'
+            };
+            return names[code] || code;
+        }
+        
+        function getRecognitionLanguageCode(code) {
+            const mapping = {
+                'en': 'en-US',
+                'es': 'es-ES',
+                'de': 'de-DE',
+                'it': 'it-IT',
+                'pt': 'pt-PT',
+                'ru': 'ru-RU',
+                'zh-CN': 'zh-CN',
+                'ja': 'ja-JP',
+                'ar': 'ar-SA',
+                'uk': 'uk-UA',
+                'fa': 'fa-IR',
+                'hi': 'hi-IN',
+                'bn': 'bn-IN',
+                'te': 'te-IN',
+                'mr': 'mr-IN',
+                'fr': 'fr-FR'
+            };
+            return mapping[code] || 'en-US';
+        }
+        
+        // Nettoyage à la fermeture
+        window.addEventListener('beforeunload', function() {
+            if (updateInterval) clearInterval(updateInterval);
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (isListening) stopHostListening();
+            if (isParticipantListening) stopParticipantListening();
+            
+            // Envoyer un signal de déconnexion
+            if (userData) {
+                navigator.sendBeacon(`/api/room/${userData.room_id}/leave`, 
+                    JSON.stringify({ user_id: userData.user_id }));
+            }
         });
     </script>
 </body>
