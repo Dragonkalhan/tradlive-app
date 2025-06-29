@@ -665,12 +665,46 @@
             
             // Mettre à jour le QR code
             updateQRCode();
+            
+            // 🔧 AJOUT : Event listeners de secours pour les boutons
+            setupButtonListeners();
         }
         
         function updateQRCode() {
             // QR code mène directement à la salle pour rejoindre automatiquement
             const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
             qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}&t=${Date.now()}`;
+        }
+        
+        // 🔧 NOUVELLE FONCTION : S'assurer que tous les boutons marchent
+        function setupButtonListeners() {
+            console.log('🔧 Configuration des boutons...');
+            
+            // Boutons de l'hôte
+            if (micButton && !micButton.hasAttribute('data-listener')) {
+                micButton.addEventListener('click', toggleHostListening);
+                micButton.setAttribute('data-listener', 'true');
+                console.log('✅ Bouton micro hôte connecté');
+            }
+            
+            if (textModeButton && !textModeButton.hasAttribute('data-listener')) {
+                textModeButton.addEventListener('click', showTextInput);
+                textModeButton.setAttribute('data-listener', 'true');
+                console.log('✅ Bouton texte hôte connecté');
+            }
+            
+            // Boutons des participants
+            if (participantMicButton && !participantMicButton.hasAttribute('data-listener')) {
+                participantMicButton.addEventListener('click', toggleParticipantListening);
+                participantMicButton.setAttribute('data-listener', 'true');
+                console.log('✅ Bouton micro participant connecté');
+            }
+            
+            if (participantTextButton && !participantTextButton.hasAttribute('data-listener')) {
+                participantTextButton.addEventListener('click', showParticipantTextInput);
+                participantTextButton.setAttribute('data-listener', 'true');
+                console.log('✅ Bouton texte participant connecté');
+            }
         }
         
         function loadRoomInfo() {
@@ -892,8 +926,13 @@
                     }
                 };
                 
-                micButton.addEventListener('click', toggleHostListening);
-                textModeButton.addEventListener('click', showTextInput);
+                // Event listeners pour l'hôte
+                if (micButton) {
+                    micButton.addEventListener('click', toggleHostListening);
+                }
+                if (textModeButton) {
+                    textModeButton.addEventListener('click', showTextInput);
+                }
             } else {
                 // Configuration pour les participants (leur langue)
                 participantRecognition = new SpeechRecognition();
@@ -955,12 +994,18 @@
                     }
                 };
                 
-                participantMicButton.addEventListener('click', toggleParticipantListening);
-                participantTextButton.addEventListener('click', showParticipantTextInput);
+                // Event listeners pour les participants
+                if (participantMicButton) {
+                    participantMicButton.addEventListener('click', toggleParticipantListening);
+                }
+                if (participantTextButton) {
+                    participantTextButton.addEventListener('click', showParticipantTextInput);
+                }
             }
         }
         
         function toggleHostListening() {
+            console.log('🎤 Toggle micro hôte, isListening:', isListening);
             if (isListening) {
                 stopHostListening();
             } else {
@@ -969,6 +1014,15 @@
         }
         
         function startHostListening() {
+            console.log('🎤 Démarrage micro hôte...');
+            
+            // Vérifier si la reconnaissance est disponible
+            if (!recognition) {
+                console.log('❌ Pas de reconnaissance vocale, mode texte');
+                showTextInput();
+                return;
+            }
+            
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
                     recognition.start();
@@ -981,7 +1035,8 @@
                 })
                 .catch(err => {
                     console.error('Erreur accès micro hôte:', err);
-                    showError('Impossible d\'accéder au microphone');
+                    showError('Impossible d\'accéder au microphone. Mode texte activé.');
+                    showTextInput();
                 });
         }
         
@@ -996,6 +1051,7 @@
         }
         
         function toggleParticipantListening() {
+            console.log('🎤 Toggle micro participant, isParticipantListening:', isParticipantListening);
             if (isParticipantListening) {
                 stopParticipantListening();
             } else {
@@ -1004,6 +1060,15 @@
         }
         
         function startParticipantListening() {
+            console.log('🎤 Démarrage micro participant...');
+            
+            // Vérifier si la reconnaissance est disponible
+            if (!participantRecognition) {
+                console.log('❌ Pas de reconnaissance vocale participant, mode texte');
+                showParticipantTextInput();
+                return;
+            }
+            
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
                     participantRecognition.start();
@@ -1016,7 +1081,8 @@
                 })
                 .catch(err => {
                     console.error('Erreur accès micro participant:', err);
-                    showError('Impossible d\'accéder au microphone');
+                    showError('Impossible d\'accéder au microphone. Mode texte activé.');
+                    showParticipantTextInput();
                 });
         }
         
@@ -1112,12 +1178,24 @@
         
         // Fonctions pour le mode texte
         function showTextInput() {
-            textInputFallback.classList.add('show');
-            document.getElementById('text-input').focus();
+            console.log('📝 Affichage mode texte hôte');
+            if (textInputFallback) {
+                textInputFallback.classList.add('show');
+                const textInput = document.getElementById('text-input');
+                if (textInput) {
+                    textInput.focus();
+                }
+                console.log('✅ Mode texte hôte activé');
+            } else {
+                console.log('❌ Element textInputFallback introuvable');
+            }
         }
         
         function hideTextInput() {
-            textInputFallback.classList.remove('show');
+            console.log('📝 Masquage mode texte hôte');
+            if (textInputFallback) {
+                textInputFallback.classList.remove('show');
+            }
         }
         
         function sendHostText() {
@@ -1130,12 +1208,24 @@
         }
         
         function showParticipantTextInput() {
-            participantTextInput.classList.add('show');
-            document.getElementById('participant-text').focus();
+            console.log('📝 Affichage mode texte participant');
+            if (participantTextInput) {
+                participantTextInput.classList.add('show');
+                const textInput = document.getElementById('participant-text');
+                if (textInput) {
+                    textInput.focus();
+                }
+                console.log('✅ Mode texte participant activé');
+            } else {
+                console.log('❌ Element participantTextInput introuvable');
+            }
         }
         
         function hideParticipantTextInput() {
-            participantTextInput.classList.remove('show');
+            console.log('📝 Masquage mode texte participant');
+            if (participantTextInput) {
+                participantTextInput.classList.remove('show');
+            }
         }
         
         function sendParticipantText() {
