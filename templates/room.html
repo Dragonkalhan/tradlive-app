@@ -490,6 +490,15 @@
     <script>
         // 🎵 NOUVEAU : Fonctions pour la synthèse vocale
         function speakText(text, language = 'fr') {
+            if (!text || text.trim() === '') return;
+            
+            // 🔧 CORRECTION : Éviter les répétitions
+            const currentTime = Date.now();
+            if (text === lastSpokenText && (currentTime - lastSpokenTimestamp) < 5000) {
+                console.log('🔇 Traduction identique ignorée (anti-spam)');
+                return;
+            }
+            
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
@@ -506,6 +515,10 @@
                 
                 window.speechSynthesis.speak(utterance);
                 console.log('🎵 Audio:', text);
+                
+                // 🔧 NOUVEAU : Mémoriser pour éviter les répétitions
+                lastSpokenText = text;
+                lastSpokenTimestamp = currentTime;
             } else {
                 console.log('❌ Pas de synthèse vocale');
             }
@@ -521,43 +534,241 @@
             return voices[langCode] || 'fr-FR';
         }
         
-        // 🧠 NOUVEAU : Adaptation automatique aux navigateurs
+        // 🧠 NOUVEAU SYSTÈME INTELLIGENT DE DÉTECTION NAVIGATEUR
+        class BrowserCompatibilityDetector {
+            constructor() {
+                this.userAgent = navigator.userAgent;
+                this.capabilities = {
+                    microphone: false,
+                    speechRecognition: false,
+                    speechSynthesis: false,
+                    webRTC: false
+                };
+                this.browserInfo = this.detectBrowser();
+                this.compatibility = this.checkCompatibility();
+            }
+            
+            detectBrowser() {
+                const ua = this.userAgent;
+                
+                // Brave (se fait passer pour Chrome, mais a des spécificités)
+                if (ua.includes('Brave')) {
+                    return {
+                        name: 'Brave',
+                        version: this.extractVersion(ua, 'Brave'),
+                        micSupport: 'limited',
+                        message: '⚠️ Brave bloque les APIs Google par défaut. Cliquez sur l\'icône 🛡️ dans la barre d\'adresse et autorisez les APIs.',
+                        showMic: true,
+                        showWarning: true
+                    };
+                }
+                
+                // Chrome et dérivés
+                if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('OPR')) {
+                    return {
+                        name: 'Chrome',
+                        version: this.extractVersion(ua, 'Chrome'),
+                        micSupport: 'excellent',
+                        message: '✅ Chrome est parfaitement compatible avec TradLive !',
+                        showMic: true,
+                        showWarning: false
+                    };
+                }
+                
+                // Edge nouveau (Chromium)
+                if (ua.includes('Edg/')) {
+                    return {
+                        name: 'Edge',
+                        version: this.extractVersion(ua, 'Edg'),
+                        micSupport: 'excellent',
+                        message: '✅ Edge est parfaitement compatible avec TradLive !',
+                        showMic: true,
+                        showWarning: false
+                    };
+                }
+                
+                // Edge Legacy
+                if (ua.includes('Edge/')) {
+                    return {
+                        name: 'Edge Legacy',
+                        version: this.extractVersion(ua, 'Edge'),
+                        micSupport: 'poor',
+                        message: '❌ Edge Legacy n\'est pas compatible. Mettez à jour vers le nouvel Edge ou utilisez Chrome.',
+                        showMic: false,
+                        showWarning: true
+                    };
+                }
+                
+                // Firefox
+                if (ua.includes('Firefox')) {
+                    return {
+                        name: 'Firefox',
+                        version: this.extractVersion(ua, 'Firefox'),
+                        micSupport: 'limited',
+                        message: '⚠️ Firefox a un support limité. Chrome ou Edge sont recommandés pour une meilleure expérience.',
+                        showMic: true,
+                        showWarning: true
+                    };
+                }
+                
+                // Safari
+                if (ua.includes('Safari') && !ua.includes('Chrome')) {
+                    const isMobile = ua.includes('Mobile');
+                    return {
+                        name: isMobile ? 'Safari Mobile' : 'Safari',
+                        version: this.extractVersion(ua, 'Safari'),
+                        micSupport: isMobile ? 'none' : 'poor',
+                        message: isMobile ? 
+                            '❌ Safari Mobile ne supporte pas la reconnaissance vocale. Utilisez Chrome Mobile.' :
+                            '❌ Safari Desktop a un support très limité. Utilisez Chrome ou Edge.',
+                        showMic: false,
+                        showWarning: true
+                    };
+                }
+                
+                // Opera
+                if (ua.includes('OPR/') || ua.includes('Opera')) {
+                    return {
+                        name: 'Opera',
+                        version: this.extractVersion(ua, 'OPR') || this.extractVersion(ua, 'Opera'),
+                        micSupport: 'good',
+                        message: '✅ Opera devrait fonctionner correctement avec TradLive.',
+                        showMic: true,
+                        showWarning: false
+                    };
+                }
+                
+                // Navigateur mobile générique
+                if (ua.includes('Mobile')) {
+                    return {
+                        name: 'Navigateur mobile',
+                        version: 'Inconnu',
+                        micSupport: 'limited',
+                        message: '⚠️ Navigateur mobile détecté. Chrome Mobile est recommandé pour une meilleure expérience.',
+                        showMic: true,
+                        showWarning: true
+                    };
+                }
+                
+                // Navigateur inconnu
+                return {
+                    name: 'Navigateur inconnu',
+                    version: 'Inconnu',
+                    micSupport: 'unknown',
+                    message: '🤔 Navigateur non testé. Chrome ou Edge sont recommandés.',
+                    showMic: true,
+                    showWarning: true
+                };
+            }
+            
+            extractVersion(ua, browserName) {
+                const regex = new RegExp(browserName + '/([\\d.]+)');
+                const match = ua.match(regex);
+                return match ? match[1] : 'Inconnu';
+            }
+            
+            checkCompatibility() {
+                // Test des APIs disponibles
+                this.capabilities.microphone = 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices;
+                this.capabilities.speechRecognition = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+                this.capabilities.speechSynthesis = 'speechSynthesis' in window;
+                this.capabilities.webRTC = 'RTCPeerConnection' in window;
+                
+                // Calcul du score
+                let score = 0;
+                if (this.capabilities.microphone) score += 40;
+                if (this.capabilities.speechRecognition) score += 40;
+                if (this.capabilities.speechSynthesis) score += 15;
+                if (this.capabilities.webRTC) score += 5;
+                
+                return {
+                    score: score,
+                    level: score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'limited' : 'poor'
+                };
+            }
+            
+            getUserMessage() {
+                return this.browserInfo;
+            }
+        }
+        
+        // 🧠 NOUVELLE FONCTION D'ADAPTATION INTELLIGENTE
         function adaptToNavigateur() {
-            const canSpeak = 'speechSynthesis' in window;
-            const canListen = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+            const detector = new BrowserCompatibilityDetector();
+            const message = detector.getUserMessage();
+            const capabilities = detector.capabilities;
             
-            console.log('🧪 Capacités:', { canSpeak, canListen });
+            console.log('🧪 Navigateur détecté:', message.name, message.version);
+            console.log('🎯 Support micro:', message.micSupport);
+            console.log('🔧 Capacités:', capabilities);
             
-            if (!canListen) {
-                // Cacher les boutons micro
+            // Afficher le message de compatibilité
+            if (message.showWarning || message.micSupport !== 'excellent') {
+                const warningDiv = document.createElement('div');
+                warningDiv.textContent = message.message;
+                warningDiv.className = 'status ' + (message.micSupport === 'excellent' ? 'connected' : 
+                                                    message.micSupport === 'good' ? 'info' : 
+                                                    message.micSupport === 'limited' ? 'info' : 'error');
+                warningDiv.style.cssText = 'margin: 10px 0; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold;';
+                
+                if (document.querySelector('.container')) {
+                    // Insérer après le header
+                    const header = document.querySelector('.header');
+                    if (header) {
+                        header.insertAdjacentElement('afterend', warningDiv);
+                    } else {
+                        document.querySelector('.container').prepend(warningDiv);
+                    }
+                }
+            }
+            
+            // Masquer les boutons micro si incompatible
+            if (!message.showMic) {
+                console.log('❌ Masquage des boutons micro (navigateur incompatible)');
                 document.querySelectorAll('.mic-button').forEach(btn => {
                     btn.style.display = 'none';
                 });
                 
-                // Afficher mode texte automatiquement
+                // Activer automatiquement le mode texte
                 setTimeout(() => {
                     if (isHost && typeof showTextInput === 'function') {
                         showTextInput();
+                        console.log('📝 Mode texte hôte activé automatiquement');
                     } else if (!isHost && typeof showParticipantTextInput === 'function') {
                         showParticipantTextInput();
+                        console.log('📝 Mode texte participant activé automatiquement');
                     }
                 }, 1000);
+            }
+            
+            // Instructions spécifiques pour Brave
+            if (message.name === 'Brave') {
+                const braveInstructions = document.createElement('div');
+                braveInstructions.innerHTML = `
+                    <h4>🛡️ Instructions pour Brave :</h4>
+                    <ol>
+                        <li>Cliquez sur l'icône 🛡️ dans la barre d'adresse</li>
+                        <li>Cliquez sur "Paramètres avancés"</li>
+                        <li>Mettez "Blocage" sur "Autorisé"</li>
+                        <li>Autorisez "Microphone" et rechargez la page</li>
+                    </ol>
+                `;
+                braveInstructions.style.cssText = 'background: #fff3cd; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #ffc107;';
                 
-                if (statusEl) {
-                    statusEl.textContent = '📝 Reconnaissance vocale non supportée. Mode texte activé.';
-                    statusEl.className = 'status info';
+                if (document.querySelector('.container')) {
+                    const header = document.querySelector('.header');
+                    if (header) {
+                        header.insertAdjacentElement('afterend', braveInstructions);
+                    }
                 }
             }
             
-            if (!canSpeak) {
-                const warning = document.createElement('div');
-                warning.textContent = '🔇 Synthèse vocale non supportée. Traductions en texte uniquement.';
-                warning.className = 'status info';
-                warning.style.cssText = 'background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0;';
-                if (document.querySelector('.container')) {
-                    document.querySelector('.container').prepend(warning);
-                }
-            }
+            return {
+                compatible: message.showMic,
+                browser: message.name,
+                support: message.micSupport,
+                capabilities: capabilities
+            };
         }
         
         // Variables globales
@@ -572,6 +783,10 @@
         let heartbeatInterval = null;
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
+        
+        // 🔧 NOUVEAU : Variables pour éviter la lecture en boucle
+        let lastSpokenText = '';
+        let lastSpokenTimestamp = 0;
         
         // Éléments DOM
         const statusEl = document.getElementById('status');
@@ -865,12 +1080,25 @@
         function setupSpeechRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
+            // 🔧 CORRECTION : Vérifier si vraiment disponible
+            if (!SpeechRecognition) {
+                console.log('❌ Aucune API de reconnaissance vocale disponible');
+                return;
+            }
+            
             if (isHost) {
                 // Configuration pour l'hôte (français)
-                recognition = new SpeechRecognition();
-                recognition.lang = 'fr-FR';
-                recognition.continuous = true;
-                recognition.interimResults = true;
+                try {
+                    recognition = new SpeechRecognition();
+                    recognition.lang = 'fr-FR';
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    
+                    console.log('✅ Reconnaissance vocale hôte configurée pour Edge/Chrome');
+                } catch (e) {
+                    console.error('❌ Erreur création reconnaissance hôte:', e);
+                    return;
+                }
                 
                 recognition.onresult = function(event) {
                     const lastResultIndex = event.results.length - 1;
@@ -935,10 +1163,17 @@
                 }
             } else {
                 // Configuration pour les participants (leur langue)
-                participantRecognition = new SpeechRecognition();
-                participantRecognition.lang = getRecognitionLanguageCode(userData.language);
-                participantRecognition.continuous = true;
-                participantRecognition.interimResults = true;
+                try {
+                    participantRecognition = new SpeechRecognition();
+                    participantRecognition.lang = getRecognitionLanguageCode(userData.language);
+                    participantRecognition.continuous = true;
+                    participantRecognition.interimResults = true;
+                    
+                    console.log('✅ Reconnaissance vocale participant configurée pour', userData.language);
+                } catch (e) {
+                    console.error('❌ Erreur création reconnaissance participant:', e);
+                    return;
+                }
                 
                 participantRecognition.onresult = function(event) {
                     const lastResultIndex = event.results.length - 1;
@@ -1016,22 +1251,101 @@
         function startHostListening() {
             console.log('🎤 Démarrage micro hôte...');
             
-            // Vérifier si la reconnaissance est disponible
+            // 🔧 CORRECTION : Essayer même si recognition n'est pas défini
             if (!recognition) {
-                console.log('❌ Pas de reconnaissance vocale, mode texte');
-                showTextInput();
-                return;
+                console.log('⚠️ Pas de reconnaissance vocale configurée, tentative de création...');
+                
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                    try {
+                        recognition = new SpeechRecognition();
+                        recognition.lang = 'fr-FR';
+                        recognition.continuous = true;
+                        recognition.interimResults = true;
+                        
+                        // Réajouter les event listeners
+                        recognition.onresult = function(event) {
+                            const lastResultIndex = event.results.length - 1;
+                            const transcript = event.results[lastResultIndex][0].transcript;
+                            
+                            if (event.results[lastResultIndex].isFinal) {
+                                sendHostTranslation(transcript);
+                            } else {
+                                hostOriginalText.textContent = transcript;
+                                hostOriginalText.classList.remove('empty-translation');
+                            }
+                        };
+                        
+                        recognition.onerror = function(event) {
+                            console.error('Erreur reconnaissance:', event.error);
+                            
+                            if (event.error === 'network') {
+                                console.log('🌐 Problème réseau, réessai...');
+                                statusEl.textContent = 'Problème réseau, nouvelle tentative...';
+                                statusEl.className = 'status info';
+                                
+                                setTimeout(() => {
+                                    if (isListening) {
+                                        try {
+                                            recognition.start();
+                                        } catch (e) {
+                                            showTextInput();
+                                            stopHostListening();
+                                        }
+                                    }
+                                }, 2000);
+                                
+                            } else if (event.error === 'not-allowed') {
+                                showError('❌ Autorisez le microphone et rechargez la page.');
+                                stopHostListening();
+                            } else if (event.error === 'no-speech') {
+                                console.log('🤫 Pas de parole, on continue...');
+                            } else {
+                                showError('Problème micro. Mode texte activé.');
+                                showTextInput();
+                                stopHostListening();
+                            }
+                        };
+                        
+                        recognition.onend = function() {
+                            if (isListening) {
+                                try {
+                                    recognition.start();
+                                } catch (e) {
+                                    stopHostListening();
+                                }
+                            }
+                        };
+                        
+                        console.log('✅ Reconnaissance vocale créée dynamiquement');
+                    } catch (e) {
+                        console.error('❌ Impossible de créer la reconnaissance:', e);
+                        showTextInput();
+                        return;
+                    }
+                } else {
+                    console.log('❌ Aucune API de reconnaissance disponible, mode texte');
+                    showTextInput();
+                    return;
+                }
             }
             
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    recognition.start();
-                    isListening = true;
-                    micButton.textContent = '🎤 Arrêter';
-                    micButton.classList.add('active');
-                    waveAnimation.classList.add('active');
-                    statusEl.textContent = 'En écoute... Parlez en français.';
-                    statusEl.className = 'status info';
+                    try {
+                        recognition.start();
+                        isListening = true;
+                        micButton.textContent = '🎤 Arrêter';
+                        micButton.classList.add('active');
+                        waveAnimation.classList.add('active');
+                        statusEl.textContent = 'En écoute... Parlez en français.';
+                        statusEl.className = 'status info';
+                        console.log('✅ Reconnaissance vocale démarrée');
+                    } catch (e) {
+                        console.error('❌ Erreur démarrage reconnaissance:', e);
+                        showError('Erreur démarrage reconnaissance. Mode texte activé.');
+                        showTextInput();
+                    }
                 })
                 .catch(err => {
                     console.error('Erreur accès micro hôte:', err);
@@ -1062,22 +1376,100 @@
         function startParticipantListening() {
             console.log('🎤 Démarrage micro participant...');
             
-            // Vérifier si la reconnaissance est disponible
+            // 🔧 CORRECTION : Essayer même si participantRecognition n'est pas défini
             if (!participantRecognition) {
-                console.log('❌ Pas de reconnaissance vocale participant, mode texte');
-                showParticipantTextInput();
-                return;
+                console.log('⚠️ Pas de reconnaissance vocale participant configurée, tentative de création...');
+                
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                    try {
+                        participantRecognition = new SpeechRecognition();
+                        participantRecognition.lang = getRecognitionLanguageCode(userData.language);
+                        participantRecognition.continuous = true;
+                        participantRecognition.interimResults = true;
+                        
+                        // Réajouter les event listeners
+                        participantRecognition.onresult = function(event) {
+                            const lastResultIndex = event.results.length - 1;
+                            const transcript = event.results[lastResultIndex][0].transcript;
+                            
+                            if (event.results[lastResultIndex].isFinal) {
+                                sendParticipantTranslation(transcript);
+                            } else {
+                                statusEl.textContent = 'En cours: ' + transcript;
+                            }
+                        };
+                        
+                        participantRecognition.onerror = function(event) {
+                            console.error('Erreur reconnaissance participant:', event.error);
+                            
+                            if (event.error === 'network') {
+                                console.log('🌐 Problème réseau participant, réessai...');
+                                statusEl.textContent = 'Problème réseau, nouvelle tentative...';
+                                statusEl.className = 'status info';
+                                
+                                setTimeout(() => {
+                                    if (isParticipantListening) {
+                                        try {
+                                            participantRecognition.start();
+                                        } catch (e) {
+                                            showParticipantTextInput();
+                                            stopParticipantListening();
+                                        }
+                                    }
+                                }, 2000);
+                                
+                            } else if (event.error === 'not-allowed') {
+                                showError('❌ Autorisez le microphone et rechargez la page.');
+                                stopParticipantListening();
+                            } else if (event.error === 'no-speech') {
+                                console.log('🤫 Pas de parole participant, on continue...');
+                            } else {
+                                showError('Problème micro. Mode texte activé.');
+                                showParticipantTextInput();
+                                stopParticipantListening();
+                            }
+                        };
+                        
+                        participantRecognition.onend = function() {
+                            if (isParticipantListening) {
+                                try {
+                                    participantRecognition.start();
+                                } catch (e) {
+                                    stopParticipantListening();
+                                }
+                            }
+                        };
+                        
+                        console.log('✅ Reconnaissance vocale participant créée dynamiquement');
+                    } catch (e) {
+                        console.error('❌ Impossible de créer la reconnaissance participant:', e);
+                        showParticipantTextInput();
+                        return;
+                    }
+                } else {
+                    console.log('❌ Aucune API de reconnaissance disponible, mode texte');
+                    showParticipantTextInput();
+                    return;
+                }
             }
             
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    participantRecognition.start();
-                    isParticipantListening = true;
-                    participantMicButton.textContent = '🎤 Arrêter';
-                    participantMicButton.classList.add('active');
-                    participantWave.classList.add('active');
-                    statusEl.textContent = `En écoute... Parlez en ${getLanguageName(userData.language)}.`;
-                    statusEl.className = 'status info';
+                    try {
+                        participantRecognition.start();
+                        isParticipantListening = true;
+                        participantMicButton.textContent = '🎤 Arrêter';
+                        participantMicButton.classList.add('active');
+                        participantWave.classList.add('active');
+                        statusEl.textContent = `En écoute... Parlez en ${getLanguageName(userData.language)}.`;
+                        statusEl.className = 'status info';
+                        console.log('✅ Reconnaissance vocale participant démarrée');
+                    } catch (e) {
+                        console.error('❌ Erreur démarrage reconnaissance participant:', e);
+                        showError('Erreur démarrage reconnaissance. Mode texte activé.');
+                        showParticipantTextInput();
+                    }
                 })
                 .catch(err => {
                     console.error('Erreur accès micro participant:', err);
