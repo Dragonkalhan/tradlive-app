@@ -488,6 +488,78 @@
     </div>
     
     <script>
+        // 🎵 NOUVEAU : Fonctions pour la synthèse vocale
+        function speakText(text, language = 'fr') {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = getVoiceLanguageCode(language);
+                utterance.volume = 0.8;
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                
+                const voices = window.speechSynthesis.getVoices();
+                const voice = voices.find(v => v.lang.startsWith(utterance.lang.substring(0, 2)));
+                if (voice) {
+                    utterance.voice = voice;
+                }
+                
+                window.speechSynthesis.speak(utterance);
+                console.log('🎵 Audio:', text);
+            } else {
+                console.log('❌ Pas de synthèse vocale');
+            }
+        }
+        
+        function getVoiceLanguageCode(langCode) {
+            const voices = {
+                'fr': 'fr-FR', 'en': 'en-US', 'es': 'es-ES', 'de': 'de-DE',
+                'it': 'it-IT', 'pt': 'pt-PT', 'ru': 'ru-RU', 'zh-CN': 'zh-CN',
+                'ja': 'ja-JP', 'ar': 'ar-SA', 'uk': 'uk-UA', 'hi': 'hi-IN',
+                'bn': 'bn-IN', 'te': 'te-IN', 'mr': 'mr-IN'
+            };
+            return voices[langCode] || 'fr-FR';
+        }
+        
+        // 🧠 NOUVEAU : Adaptation automatique aux navigateurs
+        function adaptToNavigateur() {
+            const canSpeak = 'speechSynthesis' in window;
+            const canListen = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+            
+            console.log('🧪 Capacités:', { canSpeak, canListen });
+            
+            if (!canListen) {
+                // Cacher les boutons micro
+                document.querySelectorAll('.mic-button').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                
+                // Afficher mode texte automatiquement
+                setTimeout(() => {
+                    if (isHost && typeof showTextInput === 'function') {
+                        showTextInput();
+                    } else if (!isHost && typeof showParticipantTextInput === 'function') {
+                        showParticipantTextInput();
+                    }
+                }, 1000);
+                
+                if (statusEl) {
+                    statusEl.textContent = '📝 Reconnaissance vocale non supportée. Mode texte activé.';
+                    statusEl.className = 'status info';
+                }
+            }
+            
+            if (!canSpeak) {
+                const warning = document.createElement('div');
+                warning.textContent = '🔇 Synthèse vocale non supportée. Traductions en texte uniquement.';
+                warning.className = 'status info';
+                warning.style.cssText = 'background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0;';
+                if (document.querySelector('.container')) {
+                    document.querySelector('.container').prepend(warning);
+                }
+            }
+        }
+        
         // Variables globales
         let userData = null;
         let roomData = null;
@@ -566,12 +638,30 @@
             document.getElementById('user-language').textContent = getLanguageName(userData.language);
             document.getElementById('qr-room-code').textContent = userData.room_id;
             
+            // 🧠 NOUVEAU : Adapter l'interface selon le navigateur
+            adaptToNavigateur();
+            
+            // Initialiser les voix
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = function() {
+                    console.log('🎵 Voix disponibles:', window.speechSynthesis.getVoices().length);
+                };
+            }
+            
             // Charger les informations de la salle
             loadRoomInfo();
             
             // Démarrer la mise à jour en temps réel
             startRealTimeUpdates();
             startHeartbeat();
+            
+            // Configurer la reconnaissance vocale
+            if (window.webkitSpeechRecognition || window.SpeechRecognition) {
+                setupSpeechRecognition();
+            } else {
+                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
+            }
             
             // Mettre à jour le QR code
             updateQRCode();
@@ -616,13 +706,6 @@
                             }
                             
                             controlsEl.style.display = 'block';
-                            
-                            // Configurer la reconnaissance vocale maintenant que le rôle est déterminé
-                            if (window.webkitSpeechRecognition || window.SpeechRecognition) {
-                                setupSpeechRecognition();
-                            } else {
-                                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
-                            }
                         } else {
                             showError('Utilisateur non trouvé dans la salle');
                             return;
@@ -700,21 +783,21 @@
                                     hostResponsesText.classList.remove('empty-translation');
                                 }
                             } else {
-                                // Interface participant
+                                // Interface participant - 🎵 NOUVELLE VERSION AVEC AUDIO
                                 if (data.original && data.show_translation) {
-                                    // Message de l'hôte en français + traduction
                                     participantOriginalText.textContent = data.original;
                                     participantOriginalText.classList.remove('empty-translation');
                                     
                                     if (data.translated) {
                                         participantTranslatedText.textContent = data.translated;
                                         participantTranslatedText.classList.remove('empty-translation');
+                                        
+                                        // 🎵 NOUVEAU : Lecture audio !
+                                        if (data.enable_speech) {
+                                            console.log('🎵 Lecture traduction:', data.translated);
+                                            speakText(data.translated, userData.language);
+                                        }
                                     }
-                                } else if (data.show_own_message) {
-                                    // Son propre message + traduction française
-                                    participantOwnText.textContent = data.original;
-                                    participantFrenchText.textContent = data.translated;
-                                    participantMessageArea.style.display = 'block';
                                 }
                             }
                         }
@@ -767,10 +850,34 @@
                     }
                 };
                 
+                // 🛡️ NOUVELLE GESTION D'ERREUR AMÉLIORÉE
                 recognition.onerror = function(event) {
-                    console.error('Erreur reconnaissance hôte:', event.error);
-                    if (event.error !== 'no-speech') {
-                        showError('Erreur de reconnaissance vocale: ' + event.error);
+                    console.error('Erreur reconnaissance:', event.error);
+                    
+                    if (event.error === 'network') {
+                        console.log('🌐 Problème réseau, réessai...');
+                        statusEl.textContent = 'Problème réseau, nouvelle tentative...';
+                        statusEl.className = 'status info';
+                        
+                        setTimeout(() => {
+                            if (isListening) {
+                                try {
+                                    recognition.start();
+                                } catch (e) {
+                                    showTextInput();
+                                    stopHostListening();
+                                }
+                            }
+                        }, 2000);
+                        
+                    } else if (event.error === 'not-allowed') {
+                        showError('❌ Autorisez le microphone et rechargez la page.');
+                        stopHostListening();
+                    } else if (event.error === 'no-speech') {
+                        console.log('🤫 Pas de parole, on continue...');
+                    } else {
+                        showError('Problème micro. Mode texte activé.');
+                        showTextInput();
                         stopHostListening();
                     }
                 };
@@ -806,10 +913,34 @@
                     }
                 };
                 
+                // 🛡️ MÊME GESTION D'ERREUR POUR LES PARTICIPANTS
                 participantRecognition.onerror = function(event) {
                     console.error('Erreur reconnaissance participant:', event.error);
-                    if (event.error !== 'no-speech') {
-                        showError('Erreur de reconnaissance vocale: ' + event.error);
+                    
+                    if (event.error === 'network') {
+                        console.log('🌐 Problème réseau participant, réessai...');
+                        statusEl.textContent = 'Problème réseau, nouvelle tentative...';
+                        statusEl.className = 'status info';
+                        
+                        setTimeout(() => {
+                            if (isParticipantListening) {
+                                try {
+                                    participantRecognition.start();
+                                } catch (e) {
+                                    showParticipantTextInput();
+                                    stopParticipantListening();
+                                }
+                            }
+                        }, 2000);
+                        
+                    } else if (event.error === 'not-allowed') {
+                        showError('❌ Autorisez le microphone et rechargez la page.');
+                        stopParticipantListening();
+                    } else if (event.error === 'no-speech') {
+                        console.log('🤫 Pas de parole participant, on continue...');
+                    } else {
+                        showError('Problème micro. Mode texte activé.');
+                        showParticipantTextInput();
                         stopParticipantListening();
                     }
                 };
@@ -964,6 +1095,11 @@
                 if (data.success) {
                     statusEl.textContent = 'Réponse envoyée à l\'hôte !';
                     statusEl.className = 'status connected';
+                    
+                    // Simulation de la traduction française (sera remplacée par les updates)
+                    setTimeout(() => {
+                        participantFrenchText.textContent = "Traduction en cours...";
+                    }, 500);
                 } else {
                     throw new Error(data.error || 'Erreur de traduction');
                 }
