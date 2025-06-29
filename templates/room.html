@@ -14,6 +14,94 @@
             color: white;
         }
         
+        // 🎯 NOUVELLES FONCTIONS : Interface propre quand micro incompatible
+        function showMicrophoneIncompatibleMessage() {
+            // Créer un message bien visible
+            const messageDiv = document.createElement('div');
+            messageDiv.innerHTML = `
+                <div style="text-align: center; margin: 20px 0;">
+                    <h3 style="color: #e74c3c; margin-bottom: 15px;">🎤 Microphone non compatible</h3>
+                    <p style="font-size: 16px; margin-bottom: 10px;">
+                        Votre navigateur ne peut pas utiliser la reconnaissance vocale avec TradLive.
+                    </p>
+                    <p style="font-size: 14px; opacity: 0.8; margin-bottom: 15px;">
+                        💡 <strong>Solution :</strong> Utilisez la zone de saisie ci-dessous pour écrire vos messages.
+                    </p>
+                </div>
+            `;
+            messageDiv.className = 'status error';
+            messageDiv.style.cssText = `
+                background: rgba(244, 67, 54, 0.9); 
+                color: white; 
+                padding: 20px; 
+                border-radius: 15px; 
+                margin: 20px 0; 
+                border: 2px solid #e74c3c;
+            `;
+            
+            // Placer le message au bon endroit
+            const controlsEl = document.getElementById('controls');
+            if (controlsEl) {
+                controlsEl.insertAdjacentElement('beforebegin', messageDiv);
+                console.log('✅ Message microphone incompatible affiché');
+            }
+        }
+        
+        function cleanInterfaceForTextOnly() {
+            console.log('🧹 Nettoyage interface pour mode texte uniquement...');
+            
+            // 1. Masquer TOUS les boutons micro
+            const micButtons = document.querySelectorAll('.mic-button');
+            micButtons.forEach(btn => {
+                btn.style.display = 'none';
+                console.log('🚫 Bouton micro masqué');
+            });
+            
+            // 2. Masquer les boutons "Mode Texte" (plus besoin)
+            const textModeButtons = document.querySelectorAll('.text-mode-button');
+            textModeButtons.forEach(btn => {
+                btn.style.display = 'none';
+                console.log('🚫 Bouton "Mode Texte" masqué');
+            });
+            
+            // 3. Masquer les animations d'onde
+            const waveAnimations = document.querySelectorAll('.wave-animation');
+            waveAnimations.forEach(wave => {
+                wave.style.display = 'none';
+            });
+            
+            // 4. Afficher directement la zone de saisie selon le rôle
+            setTimeout(() => {
+                if (isHost) {
+                    showTextInput();
+                    console.log('📝 Zone texte hôte affichée automatiquement');
+                    
+                    // Modifier le titre de la zone texte pour être plus clair
+                    const textInputTitle = document.querySelector('#text-input-fallback h4');
+                    if (textInputTitle) {
+                        textInputTitle.textContent = '✍️ Écrivez vos messages en français';
+                    }
+                } else {
+                    showParticipantTextInput();
+                    console.log('📝 Zone texte participant affichée automatiquement');
+                    
+                    // Modifier le titre pour les participants
+                    const participantTextTitle = document.querySelector('#participant-text-input h4');
+                    if (participantTextTitle) {
+                        participantTextTitle.textContent = '✍️ Écrivez vos messages dans votre langue';
+                    }
+                }
+            }, 500);
+            
+            // 5. Mettre à jour le statut
+            setTimeout(() => {
+                if (statusEl) {
+                    statusEl.textContent = 'Mode texte activé. Utilisez la zone de saisie ci-dessous.';
+                    statusEl.className = 'status info';
+                }
+            }, 1000);
+        }
+        
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -719,76 +807,119 @@
             console.log('🎯 Support micro:', message.micSupport);
             console.log('🔧 Capacités:', capabilities);
             
-            // 🔧 CORRECTION : Afficher le message de compatibilité
-            if (message.showWarning || message.micSupport !== 'excellent') {
-                const warningDiv = document.createElement('div');
-                warningDiv.innerHTML = `<strong>🔍 ${message.name} détecté</strong><br>${message.message}`;
-                warningDiv.className = 'status ' + (message.micSupport === 'excellent' ? 'connected' : 
-                                                    message.micSupport === 'good' ? 'info' : 
-                                                    message.micSupport === 'limited' ? 'info' : 'error');
-                warningDiv.style.cssText = 'margin: 15px 0; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 14px;';
-                
-                // 🔧 CORRECTION : Insertion au bon endroit
-                const container = document.querySelector('.container');
-                const status = document.getElementById('status');
-                if (container && status) {
-                    status.insertAdjacentElement('beforebegin', warningDiv);
-                    console.log('✅ Message de compatibilité affiché');
-                } else {
-                    console.log('❌ Impossible de placer le message de compatibilité');
-                }
+            // 🔧 RETOUR : Retourner les infos pour affichage séparé
+            return {
+                compatible: message.showMic,
+                browser: message.name,
+                support: message.micSupport,
+                capabilities: capabilities,
+                message: message.message,
+                showWarning: message.showWarning
+            };
+        }
+        
+        // 🎯 NOUVELLE FONCTION : Afficher le message de compatibilité de façon visible
+        function showBrowserCompatibilityMessage(compatibilityInfo) {
+            if (!compatibilityInfo) return;
+            
+            console.log('🎨 Affichage message compatibilité:', compatibilityInfo);
+            
+            // Créer le message de compatibilité
+            const compatDiv = document.createElement('div');
+            
+            let statusClass = 'info';
+            let backgroundColor = 'rgba(33, 150, 243, 0.9)';
+            let icon = '🔍';
+            
+            switch (compatibilityInfo.support) {
+                case 'excellent':
+                    statusClass = 'connected';
+                    backgroundColor = 'rgba(76, 175, 80, 0.9)';
+                    icon = '✅';
+                    break;
+                case 'good':
+                    statusClass = 'info';
+                    backgroundColor = 'rgba(33, 150, 243, 0.9)';
+                    icon = '✅';
+                    break;
+                case 'limited':
+                    statusClass = 'info';
+                    backgroundColor = 'rgba(255, 193, 7, 0.9)';
+                    icon = '⚠️';
+                    break;
+                case 'poor':
+                case 'none':
+                    statusClass = 'error';
+                    backgroundColor = 'rgba(244, 67, 54, 0.9)';
+                    icon = '❌';
+                    break;
             }
             
-            // Masquer les boutons micro si incompatible
-            if (!message.showMic) {
-                console.log('❌ Masquage des boutons micro (navigateur incompatible)');
-                setTimeout(() => {
-                    document.querySelectorAll('.mic-button').forEach(btn => {
-                        btn.style.display = 'none';
-                        console.log('🔧 Bouton micro masqué');
-                    });
-                    
-                    // Activer automatiquement le mode texte
-                    setTimeout(() => {
-                        if (isHost && typeof showTextInput === 'function') {
-                            showTextInput();
-                            console.log('📝 Mode texte hôte activé automatiquement');
-                        } else if (!isHost && typeof showParticipantTextInput === 'function') {
-                            showParticipantTextInput();
-                            console.log('📝 Mode texte participant activé automatiquement');
-                        }
-                    }, 500);
-                }, 100);
+            compatDiv.innerHTML = `
+                <div style="text-align: center;">
+                    <strong>${icon} ${compatibilityInfo.browser} détecté</strong><br>
+                    <span style="font-size: 14px;">${compatibilityInfo.message}</span>
+                </div>
+            `;
+            
+            compatDiv.className = `status ${statusClass}`;
+            compatDiv.style.cssText = `
+                background: ${backgroundColor}; 
+                color: white; 
+                padding: 15px; 
+                border-radius: 10px; 
+                margin: 15px 0; 
+                font-weight: bold; 
+                font-size: 14px;
+                border: 2px solid rgba(255,255,255,0.3);
+            `;
+            
+            // Placer le message au bon endroit (après le header, avant les contrôles)
+            const header = document.querySelector('.header');
+            const controls = document.getElementById('controls');
+            
+            if (header && controls) {
+                controls.insertAdjacentElement('beforebegin', compatDiv);
+                console.log('✅ Message de compatibilité affiché avec succès');
+            } else if (header) {
+                header.insertAdjacentElement('afterend', compatDiv);
+                console.log('✅ Message de compatibilité affiché (position alternative)');
+            } else {
+                console.log('❌ Impossible de placer le message de compatibilité');
             }
             
             // Instructions spécifiques pour Brave
-            if (message.name === 'Brave') {
+            if (compatibilityInfo.browser === 'Brave') {
                 const braveInstructions = document.createElement('div');
                 braveInstructions.innerHTML = `
-                    <h4>🛡️ Instructions pour Brave :</h4>
-                    <ol>
+                    <h4 style="margin-top: 0; color: #ffc107;">🛡️ Instructions pour Brave :</h4>
+                    <ol style="text-align: left; margin-bottom: 0; font-size: 13px;">
                         <li>Cliquez sur l'icône 🛡️ dans la barre d'adresse</li>
                         <li>Cliquez sur "Paramètres avancés"</li>
                         <li>Mettez "Blocage" sur "Autorisé"</li>
                         <li>Autorisez "Microphone" et rechargez la page</li>
                     </ol>
                 `;
-                braveInstructions.style.cssText = 'background: #fff3cd; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #ffc107;';
+                braveInstructions.style.cssText = `
+                    background: rgba(255, 193, 7, 0.9); 
+                    color: #333; 
+                    padding: 15px; 
+                    margin: 15px 0; 
+                    border-radius: 8px; 
+                    border-left: 4px solid #ffc107;
+                `;
                 
-                if (document.querySelector('.container')) {
-                    const header = document.querySelector('.header');
-                    if (header) {
-                        header.insertAdjacentElement('afterend', braveInstructions);
-                    }
-                }
+                compatDiv.insertAdjacentElement('afterend', braveInstructions);
+                console.log('🛡️ Instructions Brave ajoutées');
             }
             
-            return {
-                compatible: message.showMic,
-                browser: message.name,
-                support: message.micSupport,
-                capabilities: capabilities
-            };
+            // Masquer les boutons micro si incompatible
+            if (!compatibilityInfo.compatible) {
+                console.log('❌ Navigateur incompatible, nettoyage interface...');
+                setTimeout(() => {
+                    cleanInterfaceForTextOnly();
+                }, 500);
+            }
         }
         
         // Variables globales
@@ -875,10 +1006,14 @@
             document.getElementById('user-language').textContent = getLanguageName(userData.language);
             document.getElementById('qr-room-code').textContent = userData.room_id;
             
-            // 🧠 CORRECTION : Adapter l'interface selon le navigateur (au bon moment)
+            // 🧠 CORRECTION : Adapter l'interface selon le navigateur (au bon moment + plus visible)
             setTimeout(() => {
-                adaptToNavigateur();
-            }, 500);
+                const compatibilityResult = adaptToNavigateur();
+                console.log('🔍 Résultat compatibilité:', compatibilityResult);
+                
+                // Afficher un message de compatibilité plus visible
+                showBrowserCompatibilityMessage(compatibilityResult);
+            }, 1000); // Augmenter le délai pour être sûr
             
             // Initialiser les voix
             if ('speechSynthesis' in window) {
@@ -1308,11 +1443,13 @@
                                 networkErrorCount++;
                                 console.log(`🌐 Problème réseau (${networkErrorCount}/3), réessai...`);
                                 
-                                // 🔧 CORRECTION : Arrêter après 3 tentatives
+                                // 🔧 CORRECTION : Arrêter après 3 tentatives avec interface propre
                                 if (networkErrorCount >= 3) {
                                     console.log('❌ Trop d\'erreurs réseau, basculement en mode texte');
-                                    showError('Microphone incompatible avec ce navigateur. Mode texte activé.');
-                                    showTextInput();
+                                    
+                                    // 🎯 NOUVEAU : Message clair + interface propre
+                                    showMicrophoneIncompatibleMessage();
+                                    cleanInterfaceForTextOnly();
                                     stopHostListening();
                                     return;
                                 }
