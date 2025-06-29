@@ -488,19 +488,30 @@
     </div>
     
     <script>
-        // 🎵 NOUVEAU : Fonctions pour la synthèse vocale
-        function speakText(text, language = 'fr') {
+        // 🎵 CORRECTION : Fonctions pour la synthèse vocale (anti-spam renforcé)
+        function speakText(text, language = 'fr', translationId = null) {
             if (!text || text.trim() === '') return;
             
-            // 🔧 CORRECTION : Éviter les répétitions
+            // 🔧 CORRECTION MAJEURE : Système anti-spam renforcé
             const currentTime = Date.now();
-            if (text === lastSpokenText && (currentTime - lastSpokenTimestamp) < 5000) {
-                console.log('🔇 Traduction identique ignorée (anti-spam)');
+            const translationKey = translationId || `${text}_${language}`;
+            
+            // Vérifier si c'est exactement la même traduction (même ID)
+            if (translationKey === lastTranslationId) {
+                console.log('🔇 Traduction identique ignorée (même ID):', translationKey);
+                return;
+            }
+            
+            // Double vérification avec le texte ET le délai
+            if (text === lastSpokenText && (currentTime - lastSpokenTimestamp) < 10000) {
+                console.log('🔇 Traduction identique ignorée (délai 10s):', text);
                 return;
             }
             
             if ('speechSynthesis' in window) {
+                // Arrêter toute lecture en cours
                 window.speechSynthesis.cancel();
+                
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = getVoiceLanguageCode(language);
                 utterance.volume = 0.8;
@@ -513,12 +524,18 @@
                     utterance.voice = voice;
                 }
                 
-                window.speechSynthesis.speak(utterance);
-                console.log('🎵 Audio:', text);
+                // Event pour savoir quand la lecture est finie
+                utterance.onend = function() {
+                    console.log('🎵 Lecture terminée:', text);
+                };
                 
-                // 🔧 NOUVEAU : Mémoriser pour éviter les répétitions
+                window.speechSynthesis.speak(utterance);
+                console.log('🎵 Audio lancé:', text, 'ID:', translationKey);
+                
+                // 🔧 NOUVEAU : Mémoriser avec ID unique
                 lastSpokenText = text;
                 lastSpokenTimestamp = currentTime;
+                lastTranslationId = translationKey;
             } else {
                 console.log('❌ Pas de synthèse vocale');
             }
@@ -702,43 +719,46 @@
             console.log('🎯 Support micro:', message.micSupport);
             console.log('🔧 Capacités:', capabilities);
             
-            // Afficher le message de compatibilité
+            // 🔧 CORRECTION : Afficher le message de compatibilité
             if (message.showWarning || message.micSupport !== 'excellent') {
                 const warningDiv = document.createElement('div');
-                warningDiv.textContent = message.message;
+                warningDiv.innerHTML = `<strong>🔍 ${message.name} détecté</strong><br>${message.message}`;
                 warningDiv.className = 'status ' + (message.micSupport === 'excellent' ? 'connected' : 
                                                     message.micSupport === 'good' ? 'info' : 
                                                     message.micSupport === 'limited' ? 'info' : 'error');
-                warningDiv.style.cssText = 'margin: 10px 0; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold;';
+                warningDiv.style.cssText = 'margin: 15px 0; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 14px;';
                 
-                if (document.querySelector('.container')) {
-                    // Insérer après le header
-                    const header = document.querySelector('.header');
-                    if (header) {
-                        header.insertAdjacentElement('afterend', warningDiv);
-                    } else {
-                        document.querySelector('.container').prepend(warningDiv);
-                    }
+                // 🔧 CORRECTION : Insertion au bon endroit
+                const container = document.querySelector('.container');
+                const status = document.getElementById('status');
+                if (container && status) {
+                    status.insertAdjacentElement('beforebegin', warningDiv);
+                    console.log('✅ Message de compatibilité affiché');
+                } else {
+                    console.log('❌ Impossible de placer le message de compatibilité');
                 }
             }
             
             // Masquer les boutons micro si incompatible
             if (!message.showMic) {
                 console.log('❌ Masquage des boutons micro (navigateur incompatible)');
-                document.querySelectorAll('.mic-button').forEach(btn => {
-                    btn.style.display = 'none';
-                });
-                
-                // Activer automatiquement le mode texte
                 setTimeout(() => {
-                    if (isHost && typeof showTextInput === 'function') {
-                        showTextInput();
-                        console.log('📝 Mode texte hôte activé automatiquement');
-                    } else if (!isHost && typeof showParticipantTextInput === 'function') {
-                        showParticipantTextInput();
-                        console.log('📝 Mode texte participant activé automatiquement');
-                    }
-                }, 1000);
+                    document.querySelectorAll('.mic-button').forEach(btn => {
+                        btn.style.display = 'none';
+                        console.log('🔧 Bouton micro masqué');
+                    });
+                    
+                    // Activer automatiquement le mode texte
+                    setTimeout(() => {
+                        if (isHost && typeof showTextInput === 'function') {
+                            showTextInput();
+                            console.log('📝 Mode texte hôte activé automatiquement');
+                        } else if (!isHost && typeof showParticipantTextInput === 'function') {
+                            showParticipantTextInput();
+                            console.log('📝 Mode texte participant activé automatiquement');
+                        }
+                    }, 500);
+                }, 100);
             }
             
             // Instructions spécifiques pour Brave
@@ -784,9 +804,11 @@
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
         
-        // 🔧 NOUVEAU : Variables pour éviter la lecture en boucle
+        // 🔧 CORRECTIONS : Variables pour éviter la lecture en boucle
         let lastSpokenText = '';
         let lastSpokenTimestamp = 0;
+        let lastTranslationId = null; // NOUVEAU : ID unique de traduction
+        let networkErrorCount = 0; // NOUVEAU : Compteur d'erreurs réseau
         
         // Éléments DOM
         const statusEl = document.getElementById('status');
@@ -853,8 +875,10 @@
             document.getElementById('user-language').textContent = getLanguageName(userData.language);
             document.getElementById('qr-room-code').textContent = userData.room_id;
             
-            // 🧠 NOUVEAU : Adapter l'interface selon le navigateur
-            adaptToNavigateur();
+            // 🧠 CORRECTION : Adapter l'interface selon le navigateur (au bon moment)
+            setTimeout(() => {
+                adaptToNavigateur();
+            }, 500);
             
             // Initialiser les voix
             if ('speechSynthesis' in window) {
@@ -1032,7 +1056,7 @@
                                     hostResponsesText.classList.remove('empty-translation');
                                 }
                             } else {
-                                // Interface participant - 🎵 NOUVELLE VERSION AVEC AUDIO
+                                // Interface participant - 🎵 CORRECTION ANTI-SPAM
                                 if (data.original && data.show_translation) {
                                     participantOriginalText.textContent = data.original;
                                     participantOriginalText.classList.remove('empty-translation');
@@ -1041,10 +1065,11 @@
                                         participantTranslatedText.textContent = data.translated;
                                         participantTranslatedText.classList.remove('empty-translation');
                                         
-                                        // 🎵 NOUVEAU : Lecture audio !
+                                        // 🔧 CORRECTION MAJEURE : ID unique basé sur timestamp + contenu
                                         if (data.enable_speech) {
-                                            console.log('🎵 Lecture traduction:', data.translated);
-                                            speakText(data.translated, userData.language);
+                                            const translationId = `${data.timestamp}_${data.translated.substring(0, 20)}`;
+                                            console.log('🎵 Tentative lecture traduction:', data.translated, 'ID:', translationId);
+                                            speakText(data.translated, userData.language, translationId);
                                         }
                                     }
                                 }
@@ -1280,8 +1305,19 @@
                             console.error('Erreur reconnaissance:', event.error);
                             
                             if (event.error === 'network') {
-                                console.log('🌐 Problème réseau, réessai...');
-                                statusEl.textContent = 'Problème réseau, nouvelle tentative...';
+                                networkErrorCount++;
+                                console.log(`🌐 Problème réseau (${networkErrorCount}/3), réessai...`);
+                                
+                                // 🔧 CORRECTION : Arrêter après 3 tentatives
+                                if (networkErrorCount >= 3) {
+                                    console.log('❌ Trop d\'erreurs réseau, basculement en mode texte');
+                                    showError('Microphone incompatible avec ce navigateur. Mode texte activé.');
+                                    showTextInput();
+                                    stopHostListening();
+                                    return;
+                                }
+                                
+                                statusEl.textContent = `Problème réseau (${networkErrorCount}/3), nouvelle tentative...`;
                                 statusEl.className = 'status info';
                                 
                                 setTimeout(() => {
@@ -1289,6 +1325,7 @@
                                         try {
                                             recognition.start();
                                         } catch (e) {
+                                            console.log('❌ Impossible de redémarrer, mode texte');
                                             showTextInput();
                                             stopHostListening();
                                         }
@@ -1300,7 +1337,9 @@
                                 stopHostListening();
                             } else if (event.error === 'no-speech') {
                                 console.log('🤫 Pas de parole, on continue...');
+                                // Ne pas compter comme erreur réseau
                             } else {
+                                console.log('❌ Erreur autre:', event.error);
                                 showError('Problème micro. Mode texte activé.');
                                 showTextInput();
                                 stopHostListening();
@@ -1335,6 +1374,7 @@
                     try {
                         recognition.start();
                         isListening = true;
+                        networkErrorCount = 0; // 🔧 RESET compteur d'erreurs
                         micButton.textContent = '🎤 Arrêter';
                         micButton.classList.add('active');
                         waveAnimation.classList.add('active');
