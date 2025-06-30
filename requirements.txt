@@ -1,16 +1,15 @@
+# Serveur web
 Flask==2.3.3
+gunicorn==21.2.0
+
+# Traduction
 deep-translator==1.11.4
-pyttsx3==2.90
-pygame==2.5.2
-pyOpenSSL==23.2.0
+
+# QR Codes
 qrcode==7.4.2
 Pillow==10.0.0
-transformers==4.35.0
-torch==2.0.1
-sentencepiece==0.1.99
-sacremoses==0.0.53
-gunicorn==21.2.0
-# Nouveaux outils pour Whisper (système de secours pour le micro)
+
+# Whisper (transcription audio)
 openai-whisper==20231117
 ffmpeg-python==0.2.0
 librosa==0.10.1
