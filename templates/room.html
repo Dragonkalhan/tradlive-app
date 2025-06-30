@@ -656,11 +656,13 @@
             detectBrowser() {
                 const ua = this.userAgent;
                 
-                // Brave (se fait passer pour Chrome, mais a des spécificités)
-                if (ua.includes('Brave')) {
+                // 🔧 AMÉLIORATION : Détection plus robuste de Brave
+                const isBrave = this.isBraveDetected();
+                
+                if (isBrave) {
                     return {
                         name: 'Brave',
-                        version: this.extractVersion(ua, 'Brave'),
+                        version: this.extractVersion(ua, 'Chrome'), // Brave utilise la version Chrome
                         micSupport: 'limited',
                         message: '⚠️ Brave bloque les APIs Google par défaut. Cliquez sur l\'icône 🛡️ dans la barre d\'adresse et autorisez les APIs.',
                         showMic: true,
@@ -668,7 +670,7 @@
                     };
                 }
                 
-                // Chrome et dérivés
+                // Chrome et dérivés (APRÈS avoir exclu Brave)
                 if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('OPR')) {
                     return {
                         name: 'Chrome',
@@ -766,6 +768,44 @@
                 };
             }
             
+            // 🔧 NOUVELLE MÉTHODE : Détection robuste de Brave
+            isBraveDetected() {
+                // Méthode 1 : API Brave native
+                if (navigator.brave && navigator.brave.isBrave) {
+                    console.log('🛡️ Brave détecté via navigator.brave');
+                    return true;
+                }
+                
+                // Méthode 2 : User agent contient "Brave" 
+                if (this.userAgent.includes('Brave')) {
+                    console.log('🛡️ Brave détecté via user agent');
+                    return true;
+                }
+                
+                // Méthode 3 : Chrome sans window.chrome (indique souvent Brave)
+                if (this.userAgent.includes('Chrome') && typeof window.chrome === 'undefined') {
+                    console.log('🛡️ Brave suspecté (Chrome sans window.chrome)');
+                    return true;
+                }
+                
+                // Méthode 4 : Test de fonctionnalité (Brave bloque certaines APIs)
+                try {
+                    if (this.userAgent.includes('Chrome') && 
+                        'webkitSpeechRecognition' in window && 
+                        !navigator.webkitTemporaryStorage) {
+                        console.log('🛡️ Brave suspecté (APIs bloquées)');
+                        return true;
+                    }
+                } catch (e) {
+                    // Si l'API génère une erreur, c'est peut-être Brave
+                    console.log('🛡️ Brave suspecté (erreur API)');
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            // 🧪 Extraire la version du navigateur
             extractVersion(ua, browserName) {
                 const regex = new RegExp(browserName + '/([\\d.]+)');
                 const match = ua.match(regex);
@@ -935,11 +975,12 @@
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
         
-        // 🔧 CORRECTIONS : Variables pour éviter la lecture en boucle
+        // 🔧 CORRECTIONS : Variables pour éviter la lecture en boucle + erreurs réseau
         let lastSpokenText = '';
         let lastSpokenTimestamp = 0;
         let lastTranslationId = null; // NOUVEAU : ID unique de traduction
         let networkErrorCount = 0; // NOUVEAU : Compteur d'erreurs réseau
+        let microphoneDisabled = false; // NOUVEAU : Flag pour désactiver définitivement le micro
         
         // Éléments DOM
         const statusEl = document.getElementById('status');
@@ -976,6 +1017,96 @@
         
         const participantsListEl = document.getElementById('participants-list');
         const participantCountEl = document.getElementById('participant-count');
+        
+        // 🎯 NOUVELLES FONCTIONS : Interface propre quand micro incompatible (définies AVANT utilisation)
+        function showMicrophoneIncompatibleMessage() {
+            console.log('🎤 Affichage message microphone incompatible');
+            
+            // Créer un message bien visible
+            const messageDiv = document.createElement('div');
+            messageDiv.innerHTML = `
+                <div style="text-align: center; margin: 20px 0;">
+                    <h3 style="color: #e74c3c; margin-bottom: 15px;">🎤 Microphone non compatible</h3>
+                    <p style="font-size: 16px; margin-bottom: 10px;">
+                        Votre navigateur ne peut pas utiliser la reconnaissance vocale avec TradLive.
+                    </p>
+                    <p style="font-size: 14px; opacity: 0.8; margin-bottom: 15px;">
+                        💡 <strong>Solution :</strong> Utilisez la zone de saisie ci-dessous pour écrire vos messages.
+                    </p>
+                </div>
+            `;
+            messageDiv.className = 'status error';
+            messageDiv.style.cssText = `
+                background: rgba(244, 67, 54, 0.9); 
+                color: white; 
+                padding: 20px; 
+                border-radius: 15px; 
+                margin: 20px 0; 
+                border: 2px solid #e74c3c;
+            `;
+            
+            // Placer le message au bon endroit
+            const controlsEl = document.getElementById('controls');
+            if (controlsEl) {
+                controlsEl.insertAdjacentElement('beforebegin', messageDiv);
+                console.log('✅ Message microphone incompatible affiché');
+            }
+        }
+        
+        function cleanInterfaceForTextOnly() {
+            console.log('🧹 Nettoyage interface pour mode texte uniquement...');
+            
+            // 1. Masquer TOUS les boutons micro
+            const micButtons = document.querySelectorAll('.mic-button');
+            micButtons.forEach(btn => {
+                btn.style.display = 'none';
+                console.log('🚫 Bouton micro masqué');
+            });
+            
+            // 2. Masquer les boutons "Mode Texte" (plus besoin)
+            const textModeButtons = document.querySelectorAll('.text-mode-button');
+            textModeButtons.forEach(btn => {
+                btn.style.display = 'none';
+                console.log('🚫 Bouton "Mode Texte" masqué');
+            });
+            
+            // 3. Masquer les animations d'onde
+            const waveAnimations = document.querySelectorAll('.wave-animation');
+            waveAnimations.forEach(wave => {
+                wave.style.display = 'none';
+            });
+            
+            // 4. Afficher directement la zone de saisie selon le rôle
+            setTimeout(() => {
+                if (isHost) {
+                    showTextInput();
+                    console.log('📝 Zone texte hôte affichée automatiquement');
+                    
+                    // Modifier le titre de la zone texte pour être plus clair
+                    const textInputTitle = document.querySelector('#text-input-fallback h4');
+                    if (textInputTitle) {
+                        textInputTitle.textContent = '✍️ Écrivez vos messages en français';
+                    }
+                } else {
+                    showParticipantTextInput();
+                    console.log('📝 Zone texte participant affichée automatiquement');
+                    
+                    // Modifier le titre pour les participants
+                    const participantTextTitle = document.querySelector('#participant-text-input h4');
+                    if (participantTextTitle) {
+                        participantTextTitle.textContent = '✍️ Écrivez vos messages dans votre langue';
+                    }
+                }
+            }, 500);
+            
+            // 5. Mettre à jour le statut
+            setTimeout(() => {
+                if (statusEl) {
+                    statusEl.textContent = 'Mode texte activé. Utilisez la zone de saisie ci-dessous.';
+                    statusEl.className = 'status info';
+                }
+            }, 1000);
+        }
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -1409,7 +1540,14 @@
         }
         
         function startHostListening() {
-            console.log('🎤 Démarrage micro hôte...');
+            console.log('🎤 Demande démarrage micro hôte...');
+            
+            // 🔧 NOUVEAU : Vérifier si le micro a été désactivé
+            if (microphoneDisabled) {
+                console.log('🚫 Microphone désactivé, impossible de démarrer');
+                showError('Microphone désactivé. Utilisez le mode texte.');
+                return;
+            }
             
             // 🔧 CORRECTION : Essayer même si recognition n'est pas défini
             if (!recognition) {
@@ -1439,18 +1577,37 @@
                         recognition.onerror = function(event) {
                             console.error('Erreur reconnaissance:', event.error);
                             
+                            // 🔧 CORRECTION : Si micro déjà désactivé, ignorer les erreurs
+                            if (microphoneDisabled) {
+                                console.log('🚫 Microphone désactivé, ignorant les erreurs');
+                                return;
+                            }
+                            
                             if (event.error === 'network') {
                                 networkErrorCount++;
                                 console.log(`🌐 Problème réseau (${networkErrorCount}/3), réessai...`);
                                 
-                                // 🔧 CORRECTION : Arrêter après 3 tentatives avec interface propre
+                                // 🔧 CORRECTION : Arrêter DÉFINITIVEMENT après 3 tentatives
                                 if (networkErrorCount >= 3) {
-                                    console.log('❌ Trop d\'erreurs réseau, basculement en mode texte');
+                                    console.log('❌ Trop d\'erreurs réseau, DÉSACTIVATION PERMANENTE du micro');
                                     
-                                    // 🎯 NOUVEAU : Message clair + interface propre
+                                    // Marquer le micro comme définitivement désactivé
+                                    microphoneDisabled = true;
+                                    isListening = false;
+                                    
+                                    // Arrêter la reconnaissance
+                                    if (recognition) {
+                                        try {
+                                            recognition.stop();
+                                            recognition = null; // Supprimer la référence
+                                        } catch (e) {
+                                            console.log('Erreur arrêt reconnaissance:', e);
+                                        }
+                                    }
+                                    
+                                    // 🎯 Interface propre
                                     showMicrophoneIncompatibleMessage();
                                     cleanInterfaceForTextOnly();
-                                    stopHostListening();
                                     return;
                                 }
                                 
@@ -1458,13 +1615,14 @@
                                 statusEl.className = 'status info';
                                 
                                 setTimeout(() => {
-                                    if (isListening) {
+                                    if (isListening && !microphoneDisabled) {
                                         try {
                                             recognition.start();
                                         } catch (e) {
-                                            console.log('❌ Impossible de redémarrer, mode texte');
-                                            showTextInput();
-                                            stopHostListening();
+                                            console.log('❌ Impossible de redémarrer, désactivation micro');
+                                            microphoneDisabled = true;
+                                            showMicrophoneIncompatibleMessage();
+                                            cleanInterfaceForTextOnly();
                                         }
                                     }
                                 }, 2000);
