@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradLive - Salle de traduction</title>
+    <title>TradLive - Salle {{ room_id }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -40,67 +40,19 @@
             flex-wrap: wrap;
         }
         
-        .room-code {
-            font-size: 24px;
-            font-weight: bold;
-            color: #FFD700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        
-        .user-info {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .leave-button {
-            padding: 10px 20px;
-            background: rgba(244, 67, 54, 0.8);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .compatibility-alert {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
-            border: 2px solid #ff5252;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(255, 82, 82, 0.3);
-        }
-        
-        .compatibility-alert h3 {
-            margin: 0 0 15px 0;
-            font-size: 20px;
-        }
-        
-        .compatibility-alert .fix-button {
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .compatibility-alert .fix-button:hover {
-            background: white;
-            transform: translateY(-2px);
-        }
-        
-        .intelligent-fallback {
+        .voice-method-indicator {
             background: rgba(33, 150, 243, 0.9);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin: 10px 0;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
+        
+        .method-whisper { background: rgba(76, 175, 80, 0.9); }
+        .method-speech { background: rgba(255, 193, 7, 0.9); color: #333; }
+        .method-text { background: rgba(244, 67, 54, 0.9); }
         
         .status {
             text-align: center;
@@ -108,19 +60,14 @@
             border-radius: 10px;
             margin-bottom: 20px;
             font-weight: bold;
+            transition: all 0.3s ease;
         }
         
-        .status.connected {
-            background: rgba(76, 175, 80, 0.8);
-        }
-        
-        .status.error {
-            background: rgba(244, 67, 54, 0.8);
-        }
-        
-        .status.info {
-            background: rgba(33, 150, 243, 0.8);
-        }
+        .status.connected { background: rgba(76, 175, 80, 0.8); }
+        .status.error { background: rgba(244, 67, 54, 0.8); }
+        .status.info { background: rgba(33, 150, 243, 0.8); }
+        .status.recording { background: rgba(255, 193, 7, 0.8); color: #333; }
+        .status.processing { background: rgba(156, 39, 176, 0.8); }
         
         .controls {
             text-align: center;
@@ -138,6 +85,8 @@
             transition: all 0.3s ease;
             margin: 10px;
             min-width: 250px;
+            position: relative;
+            overflow: hidden;
         }
         
         .mic-button:hover {
@@ -145,21 +94,48 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         
-        .mic-button.active {
+        .mic-button.recording {
             background: linear-gradient(45deg, #f44336, #da190b);
             animation: pulse 2s infinite;
         }
         
+        .mic-button.processing {
+            background: linear-gradient(45deg, #9c27b0, #7b1fa2);
+            animation: processing 1.5s infinite;
+        }
+        
         .mic-button:disabled {
-            background: #ccc;
+            background: #666;
             cursor: not-allowed;
             opacity: 0.6;
+            transform: none;
         }
         
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
             100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+        }
+        
+        @keyframes processing {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .recording-timer {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 12px;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .mic-button.recording .recording-timer {
+            display: block;
         }
         
         .text-mode-button {
@@ -200,6 +176,12 @@
             border-radius: 10px;
             min-height: 60px;
             word-wrap: break-word;
+            transition: all 0.3s ease;
+        }
+        
+        .translation-text.updating {
+            background: rgba(255, 193, 7, 0.3);
+            transform: scale(1.02);
         }
         
         .empty-translation {
@@ -245,6 +227,7 @@
             padding: 15px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
+            border: 2px solid rgba(33, 150, 243, 0.5);
         }
         
         .text-input-fallback.show {
@@ -260,6 +243,7 @@
             margin-bottom: 10px;
             box-sizing: border-box;
             font-size: 16px;
+            resize: vertical;
         }
         
         .text-input-fallback button {
@@ -270,6 +254,32 @@
             border-radius: 5px;
             cursor: pointer;
             margin-right: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .confidence-indicator {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        .error-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(244, 67, 54, 0.9);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 4px solid #f44336;
+            max-width: 300px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .error-notification.show {
+            transform: translateX(0);
         }
         
         @media (max-width: 600px) {
@@ -281,11 +291,6 @@
             .room-info {
                 flex-direction: column;
                 text-align: center;
-            }
-            
-            .room-code {
-                font-size: 20px;
-                margin-bottom: 10px;
             }
             
             .mic-button {
@@ -301,34 +306,22 @@
         <div class="header">
             <h1>🌍 TradLive</h1>
             <div class="room-info">
-                <div class="room-code">Salle : <span id="room-id">1234</span></div>
+                <div class="room-code">Salle : <span id="room-id">{{ room_id }}</span></div>
                 <div class="user-info">
-                    <span id="user-nickname">Utilisateur</span> 
-                    (<span id="user-language">Français</span>)
+                    <span id="user-nickname">Chargement...</span>
+                    <div id="voice-method" class="voice-method-indicator">Détection en cours...</div>
                 </div>
                 <button class="leave-button" onclick="leaveRoom()">🚪 Quitter</button>
             </div>
         </div>
         
-        <!-- Zone d'alerte de compatibilité -->
-        <div id="compatibility-alert" class="compatibility-alert" style="display: none;">
-            <h3>🎤 Problème de microphone détecté</h3>
-            <p id="compatibility-message">Votre navigateur a des difficultés avec la reconnaissance vocale.</p>
-            <button class="fix-button" onclick="tryAlternativeMethod()">🔧 Essayer une solution alternative</button>
-            <button class="fix-button" onclick="showTextMode()">📝 Utiliser le mode texte</button>
-            <button class="fix-button" onclick="showBrowserHelp()">❓ Aide navigateur</button>
-        </div>
-        
-        <!-- Zone de fallback intelligent -->
-        <div id="intelligent-fallback" class="intelligent-fallback" style="display: none;">
-            <h3>🧠 Mode intelligent activé</h3>
-            <p>TradLive a détecté des problèmes de compatibilité et a activé automatiquement le mode texte optimisé.</p>
-        </div>
-        
-        <div id="status" class="status info">Vérification de la compatibilité...</div>
+        <div id="status" class="status info">Initialisation du système vocal...</div>
         
         <div id="controls" class="controls">
-            <button id="mic-button" class="mic-button">🎤 Vérification en cours...</button>
+            <button id="mic-button" class="mic-button" disabled>
+                🎤 Initialisation...
+                <div class="recording-timer" id="recording-timer">0s</div>
+            </button>
             <button id="text-mode-button" class="text-mode-button">💬 Mode Texte</button>
             
             <div class="wave-animation" id="wave-animation">
@@ -340,10 +333,11 @@
             </div>
             
             <div id="text-input-fallback" class="text-input-fallback">
-                <h4>✍️ Saisie de texte</h4>
+                <h4 id="text-input-title">✍️ Saisie de texte</h4>
                 <textarea id="text-input" placeholder="Écrivez votre message ici..."></textarea>
                 <button onclick="sendText()">📤 Envoyer</button>
                 <button onclick="hideTextInput()">❌ Fermer</button>
+                <button onclick="tryVoiceAgain()">🎤 Réessayer le micro</button>
             </div>
         </div>
         
@@ -353,6 +347,7 @@
                 <div id="original-text" class="translation-text empty-translation">
                     En attente de votre message...
                 </div>
+                <div id="confidence-display" class="confidence-indicator" style="display: none;"></div>
             </div>
             
             <div class="translation-section">
@@ -364,434 +359,679 @@
         </div>
     </div>
     
+    <!-- Notification d'erreur -->
+    <div id="error-notification" class="error-notification">
+        <div id="error-message"></div>
+    </div>
+    
     <script>
-        // 🧠 NOUVEAU SYSTÈME INTELLIGENT DE GESTION D'ERREUR
-        class IntelligentSpeechManager {
-            constructor() {
+        // 🎵 CLASSES COMPLÈTES POUR WHISPER ET FALLBACK
+        class WhisperAudioRecorder {
+            constructor(options = {}) {
+                this.isRecording = false;
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.stream = null;
+                this.recordingTimeout = null;
+                this.recordingStartTime = null;
+                this.maxRecordingTime = options.maxRecordingTime || 30000;
+                this.minRecordingTime = options.minRecordingTime || 1000;
+                this.apiEndpoint = options.apiEndpoint || '/api/transcribe-audio';
+                this.language = options.language || 'fr';
+                this.roomId = options.roomId || null;
+                this.userId = options.userId || null;
+                
+                this.onResult = options.onResult || (() => {});
+                this.onError = options.onError || (() => {});
+                this.onStatusChange = options.onStatusChange || (() => {});
+            }
+            
+            static isSupported() {
+                return 'MediaRecorder' in window && 'mediaDevices' in navigator;
+            }
+            
+            async initialize() {
+                if (!WhisperAudioRecorder.isSupported()) {
+                    throw new Error('MediaRecorder non supporté');
+                }
+                
+                try {
+                    this.stream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            channelCount: 1,
+                            sampleRate: 16000,
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        }
+                    });
+                    
+                    const options = {
+                        mimeType: this.getSupportedMimeType(),
+                        audioBitsPerSecond: 128000
+                    };
+                    
+                    this.mediaRecorder = new MediaRecorder(this.stream, options);
+                    
+                    this.mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            this.audioChunks.push(event.data);
+                        }
+                    };
+                    
+                    this.mediaRecorder.onstop = () => {
+                        this.processRecording();
+                    };
+                    
+                    this.mediaRecorder.onerror = (event) => {
+                        this.onError('Erreur MediaRecorder: ' + event.error);
+                    };
+                    
+                    console.log('✅ Whisper MediaRecorder initialisé');
+                    return true;
+                    
+                } catch (error) {
+                    console.error('❌ Erreur init Whisper:', error);
+                    throw error;
+                }
+            }
+            
+            getSupportedMimeType() {
+                const types = [
+                    'audio/webm;codecs=opus',
+                    'audio/webm',
+                    'audio/ogg;codecs=opus',
+                    'audio/mp4',
+                    'audio/wav'
+                ];
+                
+                for (const type of types) {
+                    if (MediaRecorder.isTypeSupported(type)) {
+                        return type;
+                    }
+                }
+                return '';
+            }
+            
+            async startRecording() {
+                if (this.isRecording) return;
+                
+                try {
+                    if (!this.mediaRecorder) {
+                        await this.initialize();
+                    }
+                    
+                    this.audioChunks = [];
+                    this.recordingStartTime = Date.now();
+                    
+                    this.mediaRecorder.start(1000);
+                    this.isRecording = true;
+                    
+                    this.recordingTimeout = setTimeout(() => {
+                        if (this.isRecording) {
+                            this.stopRecording();
+                        }
+                    }, this.maxRecordingTime);
+                    
+                    this.onStatusChange('recording', 'Enregistrement en cours...');
+                    
+                } catch (error) {
+                    this.onError('Impossible de démarrer l\'enregistrement: ' + error.message);
+                    this.isRecording = false;
+                }
+            }
+            
+            stopRecording() {
+                if (!this.isRecording) return;
+                
+                if (this.recordingTimeout) {
+                    clearTimeout(this.recordingTimeout);
+                    this.recordingTimeout = null;
+                }
+                
+                if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    this.mediaRecorder.stop();
+                }
+                
+                this.isRecording = false;
+                this.onStatusChange('processing', 'Traitement en cours...');
+            }
+            
+            async processRecording() {
+                if (this.audioChunks.length === 0) {
+                    this.onError('Aucune donnée audio enregistrée');
+                    return;
+                }
+                
+                try {
+                    const audioBlob = new Blob(this.audioChunks, { 
+                        type: this.getSupportedMimeType() || 'audio/wav' 
+                    });
+                    
+                    if (audioBlob.size < 1000) {
+                        this.onError('Enregistrement trop court');
+                        return;
+                    }
+                    
+                    await this.sendToServer(audioBlob);
+                    
+                } catch (error) {
+                    this.onError('Erreur de traitement: ' + error.message);
+                }
+            }
+            
+            async sendToServer(audioBlob) {
+                try {
+                    this.onStatusChange('uploading', 'Envoi au serveur...');
+                    
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob, 'recording.wav');
+                    formData.append('language', this.language);
+                    
+                    if (this.roomId) formData.append('room_id', this.roomId);
+                    if (this.userId) formData.append('user_id', this.userId);
+                    
+                    const response = await fetch(this.apiEndpoint, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erreur serveur: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.onResult({
+                            text: data.text,
+                            detected_language: data.detected_language,
+                            confidence: data.confidence || 1
+                        });
+                        this.onStatusChange('success', 'Transcription réussie');
+                    } else {
+                        throw new Error(data.error || 'Erreur de transcription');
+                    }
+                    
+                } catch (error) {
+                    this.onError('Erreur de communication: ' + error.message);
+                    this.onStatusChange('error', 'Erreur de communication');
+                }
+            }
+            
+            cleanup() {
+                if (this.recordingTimeout) {
+                    clearTimeout(this.recordingTimeout);
+                }
+                
+                if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    this.mediaRecorder.stop();
+                }
+                
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+                
+                this.isRecording = false;
+                this.audioChunks = [];
+            }
+            
+            getRecordingDuration() {
+                if (!this.recordingStartTime) return 0;
+                return Math.floor((Date.now() - this.recordingStartTime) / 1000);
+            }
+        }
+        
+        // 🧠 GESTIONNAIRE INTELLIGENT PRINCIPAL
+        class IntelligentVoiceManager {
+            constructor(options = {}) {
+                this.roomId = options.roomId;
+                this.userId = options.userId;
+                this.language = options.language || 'fr';
+                this.isHost = options.isHost || false;
+                
+                this.onResult = options.onResult || (() => {});
+                this.onError = options.onError || (() => {});
+                this.onStatusChange = options.onStatusChange || (() => {});
+                
+                this.speechRecognition = null;
+                this.whisperRecorder = null;
+                this.currentMethod = null;
                 this.isListening = false;
-                this.recognition = null;
-                this.errorCount = 0;
-                this.maxErrors = 3;
-                this.currentStrategy = 'speech'; // 'speech', 'alternative', 'text'
+                this.recordingTimer = null;
+                
                 this.browserInfo = this.detectBrowser();
-                this.init();
             }
             
             detectBrowser() {
                 const ua = navigator.userAgent;
-                let browser = {
-                    name: 'unknown',
-                    compatibility: 'unknown',
-                    speechSupport: false,
-                    recommendation: ''
-                };
+                let browser = { name: 'unknown', compatibility: 'unknown', recommendation: '' };
                 
-                if (ua.includes('Chrome') && !ua.includes('Edge')) {
-                    browser.name = 'Chrome';
-                    browser.compatibility = 'excellent';
-                    browser.speechSupport = true;
-                    browser.recommendation = 'Parfait pour TradLive !';
+                if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('Brave')) {
+                    browser = { name: 'Chrome', compatibility: 'excellent', recommendation: 'Parfait !' };
                 } else if (ua.includes('Brave')) {
-                    browser.name = 'Brave';
-                    browser.compatibility = 'problematic';
-                    browser.speechSupport = true;
-                    browser.recommendation = 'Activez les APIs Google dans les paramètres';
+                    browser = { name: 'Brave', compatibility: 'problematic', recommendation: 'Whisper recommandé' };
                 } else if (ua.includes('Edge')) {
-                    browser.name = 'Edge';
-                    browser.compatibility = 'good';
-                    browser.speechSupport = true;
-                    browser.recommendation = 'Très compatible avec TradLive';
+                    browser = { name: 'Edge', compatibility: 'good', recommendation: 'Très compatible' };
                 } else if (ua.includes('Firefox')) {
-                    browser.name = 'Firefox';
-                    browser.compatibility = 'limited';
-                    browser.speechSupport = false;
-                    browser.recommendation = 'Utilisez Chrome ou Edge pour une meilleure expérience';
+                    browser = { name: 'Firefox', compatibility: 'limited', recommendation: 'Whisper recommandé' };
                 } else if (ua.includes('Safari')) {
-                    browser.name = 'Safari';
-                    browser.compatibility = 'poor';
-                    browser.speechSupport = false;
-                    browser.recommendation = 'Safari n\'est pas compatible. Utilisez Chrome.';
+                    browser = { name: 'Safari', compatibility: 'poor', recommendation: 'Mode texte recommandé' };
                 }
                 
                 return browser;
             }
             
-            async init() {
-                console.log('🧠 Initialisation du gestionnaire intelligent');
-                console.log('Navigateur détecté:', this.browserInfo);
+            async detectBestMethod() {
+                const capabilities = {
+                    speechRecognition: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
+                    mediaRecorder: WhisperAudioRecorder.isSupported(),
+                    browser: this.browserInfo
+                };
                 
-                // Afficher les informations de compatibilité
-                this.showCompatibilityStatus();
+                // Priorité à Whisper pour Brave et navigateurs problématiques
+                if (capabilities.mediaRecorder && (this.browserInfo.compatibility === 'problematic' || this.browserInfo.compatibility === 'limited')) {
+                    return 'whisper';
+                }
                 
-                // Tenter de configurer la reconnaissance vocale
-                if (this.browserInfo.speechSupport) {
-                    try {
-                        await this.setupSpeechRecognition();
-                        this.updateStatus('Reconnaissance vocale prête !', 'connected');
-                        document.getElementById('mic-button').textContent = '🎤 Parler';
-                        document.getElementById('mic-button').disabled = false;
-                    } catch (error) {
-                        console.error('Erreur lors de la configuration:', error);
-                        this.handleInitError(error);
+                // Vérifier si Whisper est disponible côté serveur
+                try {
+                    const response = await fetch('/api/whisper-status');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.available && capabilities.mediaRecorder) {
+                            return 'whisper';
+                        }
                     }
-                } else {
-                    this.handleIncompatibleBrowser();
+                } catch (error) {
+                    console.log('Whisper non disponible côté serveur');
                 }
-            }
-            
-            showCompatibilityStatus() {
-                const statusEl = document.getElementById('status');
-                const compatAlert = document.getElementById('compatibility-alert');
                 
-                if (this.browserInfo.compatibility === 'problematic') {
-                    statusEl.textContent = `⚠️ ${this.browserInfo.name} détecté - Problèmes possibles`;
-                    statusEl.className = 'status info';
-                    
-                    compatAlert.style.display = 'block';
-                    document.getElementById('compatibility-message').textContent = 
-                        `${this.browserInfo.name}: ${this.browserInfo.recommendation}`;
-                } else if (this.browserInfo.compatibility === 'poor' || this.browserInfo.compatibility === 'limited') {
-                    statusEl.textContent = `❌ ${this.browserInfo.name} - Compatibilité limitée`;
-                    statusEl.className = 'status error';
-                    
-                    compatAlert.style.display = 'block';
-                    document.getElementById('compatibility-message').textContent = 
-                        `${this.browserInfo.recommendation}`;
-                } else {
-                    statusEl.textContent = `✅ ${this.browserInfo.name} - Compatible`;
-                    statusEl.className = 'status connected';
+                // Fallback sur Speech Recognition si disponible
+                if (capabilities.speechRecognition && this.browserInfo.compatibility !== 'poor') {
+                    return 'speech';
+                }
+                
+                return 'text';
+            }
+            
+            async initialize() {
+                const method = await this.detectBestMethod();
+                this.currentMethod = method;
+                
+                try {
+                    switch (method) {
+                        case 'whisper':
+                            await this.initializeWhisper();
+                            break;
+                        case 'speech':
+                            await this.initializeSpeechRecognition();
+                            break;
+                        default:
+                            this.onStatusChange('text', 'Mode texte activé');
+                            break;
+                    }
+                    return method;
+                } catch (error) {
+                    console.error('Erreur initialisation:', error);
+                    this.currentMethod = 'text';
+                    this.onStatusChange('text', 'Mode texte activé (erreur init)');
+                    return 'text';
                 }
             }
             
-            async setupSpeechRecognition() {
+            async initializeWhisper() {
+                this.whisperRecorder = new WhisperAudioRecorder({
+                    apiEndpoint: '/api/transcribe-audio',
+                    language: this.language,
+                    roomId: this.roomId,
+                    userId: this.userId,
+                    onResult: this.onResult,
+                    onError: this.onError,
+                    onStatusChange: this.onStatusChange
+                });
+                
+                await this.whisperRecorder.initialize();
+            }
+            
+            async initializeSpeechRecognition() {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 
-                if (!SpeechRecognition) {
-                    throw new Error('API Speech Recognition non disponible');
-                }
+                this.speechRecognition = new SpeechRecognition();
+                this.speechRecognition.lang = this.language === 'fr' ? 'fr-FR' : `${this.language}-${this.language.toUpperCase()}`;
+                this.speechRecognition.continuous = false;
+                this.speechRecognition.interimResults = true;
                 
-                this.recognition = new SpeechRecognition();
-                this.recognition.lang = 'fr-FR';
-                this.recognition.continuous = true;
-                this.recognition.interimResults = true;
-                
-                // Gestion intelligente des résultats
-                this.recognition.onresult = (event) => {
-                    const lastResultIndex = event.results.length - 1;
-                    const transcript = event.results[lastResultIndex][0].transcript;
+                this.speechRecognition.onresult = (event) => {
+                    const lastResult = event.results[event.results.length - 1];
+                    const transcript = lastResult[0].transcript;
                     
-                    if (event.results[lastResultIndex].isFinal) {
-                        this.handleFinalResult(transcript);
-                        this.errorCount = 0; // Reset sur succès
+                    if (lastResult.isFinal) {
+                        this.onResult({ 
+                            text: transcript, 
+                            confidence: lastResult[0].confidence || 0.9 
+                        });
+                    }
+                };
+                
+                this.speechRecognition.onerror = (event) => {
+                    if (event.error === 'network') {
+                        this.onError('Erreur réseau Speech Recognition - basculement vers Whisper recommandé');
                     } else {
-                        this.handleInterimResult(transcript);
+                        this.onError('Speech Recognition: ' + event.error);
                     }
                 };
-                
-                // Gestion intelligente des erreurs
-                this.recognition.onerror = (event) => {
-                    this.handleSpeechError(event.error);
-                };
-                
-                this.recognition.onend = () => {
-                    if (this.isListening && this.currentStrategy === 'speech') {
-                        this.restartRecognition();
-                    }
-                };
-                
-                // Test de la reconnaissance
-                await this.testMicrophoneAccess();
-            }
-            
-            async testMicrophoneAccess() {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    stream.getTracks().forEach(track => track.stop());
-                    console.log('✅ Accès microphone confirmé');
-                    return true;
-                } catch (error) {
-                    console.error('❌ Accès microphone refusé:', error);
-                    throw new Error('Accès microphone refusé');
-                }
-            }
-            
-            handleSpeechError(error) {
-                console.error('Erreur reconnaissance:', error);
-                this.errorCount++;
-                
-                // Gestion spécifique selon le type d'erreur
-                switch (error) {
-                    case 'network':
-                        this.handleNetworkError();
-                        break;
-                    case 'not-allowed':
-                        this.handlePermissionError();
-                        break;
-                    case 'no-speech':
-                        this.handleNoSpeechError();
-                        break;
-                    case 'audio-capture':
-                        this.handleAudioCaptureError();
-                        break;
-                    default:
-                        this.handleGenericError(error);
-                }
-            }
-            
-            handleNetworkError() {
-                if (this.errorCount >= this.maxErrors) {
-                    this.updateStatus('❌ Trop d\'erreurs réseau. Basculement en mode texte.', 'error');
-                    this.switchToIntelligentFallback();
-                } else {
-                    this.updateStatus(`🌐 Erreur réseau (${this.errorCount}/${this.maxErrors}). Nouvelle tentative...`, 'info');
-                    setTimeout(() => this.restartRecognition(), 2000);
-                }
-            }
-            
-            handlePermissionError() {
-                this.updateStatus('❌ Autorisez le microphone et rechargez la page.', 'error');
-                this.switchToTextMode();
-            }
-            
-            handleNoSpeechError() {
-                // Ne pas compter comme une vraie erreur
-                this.updateStatus('🤫 Aucune parole détectée. Continuez...', 'info');
-            }
-            
-            handleAudioCaptureError() {
-                this.updateStatus('❌ Problème microphone. Mode texte activé.', 'error');
-                this.switchToTextMode();
-            }
-            
-            handleGenericError(error) {
-                if (this.errorCount >= this.maxErrors) {
-                    this.updateStatus(`❌ Erreur persistante (${error}). Mode intelligent activé.`, 'error');
-                    this.switchToIntelligentFallback();
-                } else {
-                    this.updateStatus(`⚠️ Erreur: ${error}. Tentative ${this.errorCount}/${this.maxErrors}`, 'info');
-                    setTimeout(() => this.restartRecognition(), 1000);
-                }
-            }
-            
-            handleInitError(error) {
-                console.error('Erreur d\'initialisation:', error);
-                this.updateStatus('❌ Impossible d\'initialiser la reconnaissance vocale.', 'error');
-                this.switchToIntelligentFallback();
-            }
-            
-            handleIncompatibleBrowser() {
-                this.updateStatus(`❌ ${this.browserInfo.name} n'est pas compatible avec la reconnaissance vocale.`, 'error');
-                this.switchToIntelligentFallback();
-            }
-            
-            switchToIntelligentFallback() {
-                this.currentStrategy = 'text';
-                this.isListening = false;
-                
-                // Afficher le mode intelligent
-                document.getElementById('intelligent-fallback').style.display = 'block';
-                document.getElementById('compatibility-alert').style.display = 'none';
-                
-                // Désactiver le bouton micro
-                const micButton = document.getElementById('mic-button');
-                micButton.textContent = '🎤 Non disponible';
-                micButton.disabled = true;
-                
-                // Activer automatiquement le mode texte
-                this.showTextMode();
-                
-                this.updateStatus('📝 Mode texte intelligent activé. Tapez vos messages ci-dessous.', 'info');
-            }
-            
-            switchToTextMode() {
-                this.currentStrategy = 'text';
-                this.showTextMode();
-            }
-            
-            showTextMode() {
-                document.getElementById('text-input-fallback').classList.add('show');
-                const textInput = document.getElementById('text-input');
-                if (textInput) {
-                    textInput.focus();
-                }
             }
             
             async startListening() {
-                if (!this.recognition || this.currentStrategy !== 'speech') {
-                    this.showTextMode();
-                    return;
-                }
+                if (this.isListening) return;
                 
-                try {
-                    this.recognition.start();
-                    this.isListening = true;
-                    this.updateUI(true);
-                    this.updateStatus('🎤 Écoute en cours...', 'info');
-                } catch (error) {
-                    console.error('Erreur démarrage:', error);
-                    this.handleSpeechError('start-error');
+                this.isListening = true;
+                
+                switch (this.currentMethod) {
+                    case 'whisper':
+                        if (this.whisperRecorder) {
+                            await this.whisperRecorder.startRecording();
+                            this.startRecordingTimer();
+                        }
+                        break;
+                    case 'speech':
+                        if (this.speechRecognition) {
+                            try {
+                                this.speechRecognition.start();
+                            } catch (error) {
+                                this.onError('Erreur Speech Recognition: ' + error.message);
+                                this.isListening = false;
+                            }
+                        }
+                        break;
+                    default:
+                        this.onStatusChange('text', 'Utilisez le mode texte');
+                        this.isListening = false;
+                        break;
                 }
             }
             
             stopListening() {
-                if (this.recognition) {
-                    this.recognition.stop();
-                }
+                if (!this.isListening) return;
+                
                 this.isListening = false;
-                this.updateUI(false);
-                this.updateStatus('Cliquez sur le micro pour parler.', 'connected');
+                this.stopRecordingTimer();
+                
+                switch (this.currentMethod) {
+                    case 'whisper':
+                        if (this.whisperRecorder) {
+                            this.whisperRecorder.stopRecording();
+                        }
+                        break;
+                    case 'speech':
+                        if (this.speechRecognition) {
+                            this.speechRecognition.stop();
+                        }
+                        break;
+                }
             }
             
-            restartRecognition() {
-                if (this.isListening && this.errorCount < this.maxErrors) {
-                    try {
-                        this.recognition.start();
-                    } catch (error) {
-                        this.handleSpeechError('restart-error');
+            startRecordingTimer() {
+                const timerEl = document.getElementById('recording-timer');
+                let seconds = 0;
+                
+                this.recordingTimer = setInterval(() => {
+                    seconds++;
+                    if (timerEl) {
+                        timerEl.textContent = `${seconds}s`;
                     }
-                }
-            }
-            
-            updateUI(listening) {
-                const micButton = document.getElementById('mic-button');
-                const waveAnimation = document.getElementById('wave-animation');
-                
-                if (listening) {
-                    micButton.textContent = '🎤 Arrêter';
-                    micButton.classList.add('active');
-                    waveAnimation.classList.add('active');
-                } else {
-                    micButton.textContent = '🎤 Parler';
-                    micButton.classList.remove('active');
-                    waveAnimation.classList.remove('active');
-                }
-            }
-            
-            updateStatus(message, className) {
-                const statusEl = document.getElementById('status');
-                statusEl.textContent = message;
-                statusEl.className = `status ${className}`;
-            }
-            
-            handleFinalResult(transcript) {
-                document.getElementById('original-text').textContent = transcript;
-                document.getElementById('original-text').classList.remove('empty-translation');
-                
-                // Simuler l'envoi de traduction
-                this.updateStatus('📤 Envoi de la traduction...', 'info');
-                
-                // Ici tu peux appeler ton API de traduction
-                setTimeout(() => {
-                    document.getElementById('translated-text').textContent = `Traduction de: ${transcript}`;
-                    document.getElementById('translated-text').classList.remove('empty-translation');
-                    this.updateStatus('✅ Traduction envoyée !', 'connected');
                 }, 1000);
             }
             
-            handleInterimResult(transcript) {
-                document.getElementById('original-text').textContent = transcript;
-                this.updateStatus('🎤 En cours: ' + transcript.substring(0, 30) + '...', 'info');
+            stopRecordingTimer() {
+                if (this.recordingTimer) {
+                    clearInterval(this.recordingTimer);
+                    this.recordingTimer = null;
+                }
+                
+                const timerEl = document.getElementById('recording-timer');
+                if (timerEl) {
+                    timerEl.textContent = '0s';
+                }
+            }
+            
+            cleanup() {
+                this.stopRecordingTimer();
+                
+                if (this.whisperRecorder) {
+                    this.whisperRecorder.cleanup();
+                }
+                if (this.speechRecognition) {
+                    this.speechRecognition = null;
+                }
+            }
+            
+            getStatus() {
+                return {
+                    method: this.currentMethod,
+                    isListening: this.isListening,
+                    browser: this.browserInfo
+                };
             }
         }
         
-        // Fonctions globales
-        let speechManager;
+        // 🚀 INTÉGRATION DANS L'INTERFACE
+        let voiceManager;
+        let userData = { room_id: '{{ room_id }}', user_id: 'demo', language: 'fr' };
+        let updateInterval;
         
-        document.addEventListener('DOMContentLoaded', function() {
-            speechManager = new IntelligentSpeechManager();
-            
-            // Event listeners
-            document.getElementById('mic-button').addEventListener('click', function() {
-                if (speechManager.isListening) {
-                    speechManager.stopListening();
-                } else {
-                    speechManager.startListening();
-                }
-            });
-            
-            document.getElementById('text-mode-button').addEventListener('click', function() {
-                speechManager.showTextMode();
-            });
+        // Éléments DOM
+        const statusEl = document.getElementById('status');
+        const micButton = document.getElementById('mic-button');
+        const textModeButton = document.getElementById('text-mode-button');
+        const waveAnimation = document.getElementById('wave-animation');
+        const textInputFallback = document.getElementById('text-input-fallback');
+        const originalTextEl = document.getElementById('original-text');
+        const translatedTextEl = document.getElementById('translated-text');
+        const confidenceDisplay = document.getElementById('confidence-display');
+        const voiceMethodEl = document.getElementById('voice-method');
+        const errorNotification = document.getElementById('error-notification');
+        const errorMessage = document.getElementById('error-message');
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initializeVoiceSystem();
+            startRealTimeUpdates();
         });
         
-        function tryAlternativeMethod() {
-            speechManager.updateStatus('🔄 Tentative avec méthode alternative...', 'info');
-            speechManager.errorCount = 0;
-            speechManager.init();
-        }
-        
-        function showTextMode() {
-            speechManager.showTextMode();
-        }
-        
-        function showBrowserHelp() {
-            const browser = speechManager.browserInfo.name;
-            let helpMessage = '';
+        async function initializeVoiceSystem() {
+            voiceManager = new IntelligentVoiceManager({
+                roomId: userData.room_id,
+                userId: userData.user_id,
+                language: userData.language,
+                isHost: true, // Simulé
+                onResult: handleVoiceResult,
+                onError: handleVoiceError,
+                onStatusChange: handleStatusChange
+            });
             
-            switch (browser) {
-                case 'Brave':
-                    helpMessage = `
-                    🛡️ Pour Brave:
-                    1. Cliquez sur l'icône 🛡️ dans la barre d'adresse
-                    2. Sélectionnez "Paramètres avancés"
-                    3. Changez "Blocage" vers "Autorisé"
-                    4. Autorisez le microphone
-                    5. Rechargez la page
-                    `;
-                    break;
-                case 'Firefox':
-                    helpMessage = `
-                    🦊 Pour Firefox:
-                    La reconnaissance vocale n'est pas entièrement supportée.
-                    Recommandation: Utilisez Chrome ou Edge pour une meilleure expérience.
-                    `;
-                    break;
-                case 'Safari':
-                    helpMessage = `
-                    🧭 Pour Safari:
-                    Safari ne supporte pas la reconnaissance vocale.
-                    Recommandation: Utilisez Chrome, Edge ou Firefox.
-                    `;
-                    break;
-                default:
-                    helpMessage = `
-                    🌐 Conseils généraux:
-                    1. Autorisez l'accès au microphone
-                    2. Vérifiez votre connexion internet
-                    3. Essayez Chrome ou Edge
-                    4. Rechargez la page si nécessaire
-                    `;
+            try {
+                const method = await voiceManager.initialize();
+                updateMethodDisplay(method);
+                
+                if (method === 'text') {
+                    showTextInput();
+                } else {
+                    micButton.disabled = false;
+                    micButton.textContent = '🎤 Parler';
+                }
+                
+            } catch (error) {
+                console.error('Erreur init système vocal:', error);
+                showTextInput();
+            }
+        }
+        
+        function updateMethodDisplay(method) {
+            const methodNames = {
+                'whisper': 'Whisper (Serveur)',
+                'speech': 'Speech Recognition',
+                'text': 'Mode Texte'
+            };
+            
+            const methodClasses = {
+                'whisper': 'method-whisper',
+                'speech': 'method-speech',  
+                'text': 'method-text'
+            };
+            
+            voiceMethodEl.textContent = methodNames[method] || method;
+            voiceMethodEl.className = `voice-method-indicator ${methodClasses[method] || ''}`;
+        }
+        
+        function handleVoiceResult(result) {
+            console.log('Résultat vocal:', result);
+            
+            // Afficher le texte original avec animation
+            originalTextEl.classList.add('updating');
+            originalTextEl.textContent = result.text;
+            originalTextEl.classList.remove('empty-translation');
+            
+            setTimeout(() => {
+                originalTextEl.classList.remove('updating');
+            }, 300);
+            
+            // Afficher la confiance si disponible
+            if (result.confidence && result.confidence < 1) {
+                confidenceDisplay.textContent = `Confiance: ${Math.round(result.confidence * 100)}%`;
+                confidenceDisplay.style.display = 'block';
+            } else {
+                confidenceDisplay.style.display = 'none';
             }
             
-            alert(helpMessage);
+            // Simuler traduction (remplace par ton API de traduction)
+            simulateTranslation(result.text);
+        }
+        
+        function handleVoiceError(error) {
+            console.error('Erreur vocale:', error);
+            showErrorNotification(error);
+            
+            // Auto-basculement vers mode texte après 3 erreurs
+            if (error.includes('network') || error.includes('communication')) {
+                setTimeout(() => {
+                    showTextInput();
+                }, 2000);
+            }
+        }
+        
+        function handleStatusChange(status, message) {
+            updateStatus(message, status);
+            updateButtonState(status);
+        }
+        
+        function updateStatus(message, className) {
+            statusEl.textContent = message;
+            statusEl.className = `status ${className}`;
+        }
+        
+        function updateButtonState(status) {
+            micButton.classList.remove('recording', 'processing');
+            waveAnimation.classList.remove('active');
+            
+            switch (status) {
+                case 'recording':
+                    micButton.classList.add('recording');
+                    micButton.textContent = '🎤 Arrêter';
+                    waveAnimation.classList.add('active');
+                    break;
+                case 'processing':
+                case 'uploading':
+                    micButton.classList.add('processing');
+                    micButton.textContent = '⏳ Traitement...';
+                    micButton.disabled = true;
+                    break;
+                case 'success':
+                case 'connected':
+                case 'info':
+                default:
+                    micButton.textContent = '🎤 Parler';
+                    micButton.disabled = false;
+                    break;
+            }
+        }
+        
+        function showErrorNotification(message) {
+            errorMessage.textContent = message;
+            errorNotification.classList.add('show');
+            
+            setTimeout(() => {
+                errorNotification.classList.remove('show');
+            }, 5000);
+        }
+        
+        function simulateTranslation(text) {
+            updateStatus('📤 Traduction en cours...', 'info');
+            
+            // Simuler délai API
+            setTimeout(() => {
+                translatedTextEl.classList.add('updating');
+                translatedTextEl.textContent = `[EN] ${text}`;
+                translatedTextEl.classList.remove('empty-translation');
+                
+                setTimeout(() => {
+                    translatedTextEl.classList.remove('updating');
+                }, 300);
+                
+                updateStatus('✅ Traduction terminée', 'connected');
+            }, 1000);
+        }
+        
+        // Event listeners
+        micButton.addEventListener('click', function() {
+            if (voiceManager.isListening) {
+                voiceManager.stopListening();
+            } else {
+                voiceManager.startListening();
+            }
+        });
+        
+        textModeButton.addEventListener('click', showTextInput);
+        
+        function showTextInput() {
+            textInputFallback.classList.add('show');
+            document.getElementById('text-input').focus();
+        }
+        
+        function hideTextInput() {
+            textInputFallback.classList.remove('show');
         }
         
         function sendText() {
             const text = document.getElementById('text-input').value.trim();
             if (text) {
-                document.getElementById('original-text').textContent = text;
-                document.getElementById('original-text').classList.remove('empty-translation');
-                
-                // Simuler traduction
-                speechManager.updateStatus('📤 Envoi de la traduction...', 'info');
-                setTimeout(() => {
-                    document.getElementById('translated-text').textContent = `Traduction de: ${text}`;
-                    document.getElementById('translated-text').classList.remove('empty-translation');
-                    speechManager.updateStatus('✅ Traduction envoyée !', 'connected');
-                }, 1000);
-                
+                handleVoiceResult({ text: text, confidence: 1 });
                 document.getElementById('text-input').value = '';
+                hideTextInput();
             }
         }
         
-        function hideTextInput() {
-            document.getElementById('text-input-fallback').classList.remove('show');
+        function tryVoiceAgain() {
+            hideTextInput();
+            initializeVoiceSystem();
         }
         
         function leaveRoom() {
-            if (confirm('Êtes-vous sûr de vouloir quitter la salle ?')) {
+            if (confirm('Quitter la salle ?')) {
+                if (voiceManager) voiceManager.cleanup();
+                if (updateInterval) clearInterval(updateInterval);
                 window.location.href = '/rooms';
             }
+        }
+        
+        function startRealTimeUpdates() {
+            // Simuler des mises à jour en temps réel
+            updateInterval = setInterval(() => {
+                // Ici tu peux appeler ton API pour récupérer les nouvelles traductions
+                console.log('Vérification des mises à jour...');
+            }, 3000);
         }
         
         // Gestion Entrée pour envoyer
@@ -802,6 +1042,12 @@
                     sendText();
                 }
             }
+        });
+        
+        // Nettoyage à la fermeture
+        window.addEventListener('beforeunload', function() {
+            if (voiceManager) voiceManager.cleanup();
+            if (updateInterval) clearInterval(updateInterval);
         });
     </script>
 </body>
