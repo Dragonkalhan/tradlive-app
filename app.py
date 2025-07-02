@@ -11,20 +11,7 @@ import qrcode
 from io import BytesIO
 from room_manager import room_manager
 from translation_manager import translation_manager
-# Nouveaux imports pour Whisper
-import whisper
-import tempfile
-import os
-from werkzeug.utils import secure_filename
 
-# Charger le modèle Whisper une seule fois au démarrage
-print("🎵 Chargement du modèle Whisper...")
-try:
-    whisper_model = whisper.load_model("base")
-    print("✅ Modèle Whisper prêt")
-except Exception as e:
-    print(f"❌ Erreur Whisper: {e}")
-    whisper_model = None
 
 # ============================================================
 # CONFIGURATION ENVIRONNEMENT
