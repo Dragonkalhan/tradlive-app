@@ -532,16 +532,16 @@ def set_preferred_language():
     })
 
 # ============================================================
-# NOUVELLES ROUTES POUR WHISPER (SYSTÈME DE SECOURS MICRO)
+# NOUVELLES ROUTES AZURE (REMPLACENT WHISPER TEMPORAIREMENT)
 # ============================================================
 
 @app.route('/api/transcribe-audio', methods=['POST'])
 def transcribe_audio():
-    """Route pour transcrire l'audio avec Whisper (système de secours)"""
+    """Route pour transcrire l'audio avec Azure (compatible interface Whisper)"""
     update_heartbeat()
     
-    if not whisper_model:
-        return jsonify({'success': False, 'error': 'Whisper non disponible'}), 500
+    if not speech_manager.service_available:
+        return jsonify({'success': False, 'error': 'Azure Speech non configuré'}), 500
     
     try:
         # Vérifier qu'un fichier audio a été envoyé
@@ -552,89 +552,70 @@ def transcribe_audio():
         if audio_file.filename == '':
             return jsonify({'success': False, 'error': 'Nom de fichier audio vide'}), 400
         
-        # Paramètres optionnels
-        language = request.form.get('language', 'fr')  # Langue par défaut : français
+        # Paramètres
+        language = request.form.get('language', 'fr')
+        azure_lang = 'fr-FR' if language == 'fr' else f'{language}-{language.upper()}'
         room_id = request.form.get('room_id')
         user_id = request.form.get('user_id')
         
-        # Créer un fichier temporaire sécurisé
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-            temp_path = temp_file.name
-            audio_file.save(temp_path)
+        # Transcription avec Azure
+        result = speech_manager.transcribe_audio(audio_file, azure_lang)
         
-        try:
-            # Transcription avec Whisper
-            result = whisper_model.transcribe(
-                temp_path, 
-                language=language if language != 'auto' else None,
-                fp16=False  # Meilleure compatibilité
-            )
-            
-            transcribed_text = result["text"].strip()
-            detected_language = result.get("language", language)
-            
-            # Log pour débogage
-            print(f"🎵 Whisper transcription: '{transcribed_text}' (langue: {detected_language})")
-            
-            # Si on a un room_id, diffuser automatiquement
-            if room_id and user_id and transcribed_text:
-                room = room_manager.get_room(room_id)
-                if room and room.get_user(user_id):
-                    room_manager.update_user_activity(room_id, user_id)
-                    
-                    # Diffuser selon le rôle
-                    user = room.get_user(user_id)
-                    source_language = 'fr' if user.is_host else user.language
-                    
-                    success = room_manager.broadcast_translation(
-                        room_id, 
-                        transcribed_text, 
-                        source_language, 
-                        user_id, 
-                        enable_speech=user.is_host
-                    )
-                    
-                    return jsonify({
-                        'success': True,
-                        'text': transcribed_text,
-                        'detected_language': detected_language,
-                        'broadcast': success,
-                        'message': 'Transcription et diffusion réussies'
-                    })
-            
-            # Réponse simple sans diffusion
-            return jsonify({
-                'success': True,
-                'text': transcribed_text,
-                'detected_language': detected_language,
-                'confidence': 0.9  # Whisper est généralement fiable
-            })
-            
-        except Exception as e:
-            print(f"❌ Erreur Whisper: {str(e)}")
-            return jsonify({
-                'success': False, 
-                'error': f'Erreur de transcription: {str(e)}'
-            }), 500
-            
-        finally:
-            # Nettoyer le fichier temporaire
-            try:
-                os.unlink(temp_path)
-            except:
-                pass
+        transcribed_text = result['text']
+        
+        # Log pour débogage
+        print(f"🎤 Azure transcription: '{transcribed_text}' (langue: {azure_lang})")
+        
+        # Si on a un room_id, diffuser automatiquement
+        if room_id and user_id and transcribed_text:
+            room = room_manager.get_room(room_id)
+            if room and room.get_user(user_id):
+                room_manager.update_user_activity(room_id, user_id)
                 
+                # Diffuser selon le rôle
+                user = room.get_user(user_id)
+                source_language = 'fr' if user.is_host else user.language
+                
+                success = room_manager.broadcast_translation(
+                    room_id, 
+                    transcribed_text, 
+                    source_language, 
+                    user_id, 
+                    enable_speech=user.is_host
+                )
+                
+                return jsonify({
+                    'success': True,
+                    'text': transcribed_text,
+                    'detected_language': azure_lang,
+                    'broadcast': success,
+                    'service': 'azure',
+                    'message': 'Transcription et diffusion réussies'
+                })
+        
+        # Réponse simple sans diffusion
+        return jsonify({
+            'success': True,
+            'text': transcribed_text,
+            'detected_language': azure_lang,
+            'confidence': result['confidence'],
+            'service': 'azure'
+        })
+        
     except Exception as e:
-        print(f"❌ Erreur générale transcription: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"❌ Erreur transcription: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'error': f'Erreur de transcription: {str(e)}'
+        }), 500
 
 @app.route('/api/simple-transcribe', methods=['POST'])
 def simple_transcribe():
     """Route simplifiée pour transcription audio"""
     update_heartbeat()
     
-    if not whisper_model:
-        return jsonify({'error': 'Whisper non disponible'}), 500
+    if not speech_manager.service_available:
+        return jsonify({'error': 'Azure Speech non configuré'}), 500
     
     try:
         if 'audio' not in request.files:
@@ -643,52 +624,45 @@ def simple_transcribe():
         audio_file = request.files['audio']
         target_language = request.form.get('target_language', 'en')
         
-        # Sauvegarder temporairement
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-            temp_path = temp_file.name
-            audio_file.save(temp_path)
+        # Transcription
+        result = speech_manager.transcribe_audio(audio_file, 'fr-FR')
+        french_text = result['text']
         
-        try:
-            # Transcription
-            result = whisper_model.transcribe(temp_path, language='fr')
-            french_text = result["text"].strip()
-            
-            if not french_text:
-                return jsonify({'error': 'Aucun texte détecté'}), 400
-            
-            # Traduction avec TON système existant
-            translated_text = translation_manager.translate(french_text, 'fr', target_language)
-            
-            return jsonify({
-                'success': True,
-                'original': french_text,
-                'translated': translated_text,
-                'detected_language': result.get("language", 'fr')
-            })
-            
-        finally:
-            os.unlink(temp_path)
-            
+        if not french_text:
+            return jsonify({'error': 'Aucun texte détecté'}), 400
+        
+        # Traduction avec votre système existant
+        translated_text = translation_manager.translate(french_text, 'fr', target_language)
+        
+        return jsonify({
+            'success': True,
+            'original': french_text,
+            'translated': translated_text,
+            'detected_language': 'fr',
+            'service': 'azure'
+        })
+        
     except Exception as e:
         print(f"❌ Erreur transcription simple: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/whisper-status')
-def whisper_status():
-    """Vérifie si Whisper est disponible"""
+@app.route('/api/speech-status')
+def speech_status():
+    """Vérifie si Azure Speech est disponible (remplace whisper-status)"""
     update_heartbeat()
     
-    if not whisper_model:
+    if not speech_manager.service_available:
         return jsonify({
             'available': False,
-            'error': 'Modèle Whisper non chargé'
+            'error': 'Azure Speech non configuré'
         }), 500
     
     return jsonify({
         'available': True,
-        'model': 'base',
+        'service': 'azure',
         'languages': ['fr', 'en', 'es', 'de', 'it', 'pt', 'ru', 'zh', 'ja', 'ar'],
-        'message': 'Whisper opérationnel'
+        'message': 'Azure Speech opérationnel',
+        'quota_info': 'Service temporaire - migration Whisper prévue'
     })
 
 # ============================================================
