@@ -12,6 +12,70 @@ from io import BytesIO
 from room_manager import room_manager
 from translation_manager import translation_manager
 
+# ============================================================
+# SYSTÈME DE TRANSCRIPTION AUDIO (AZURE TEMPORAIRE)
+# ============================================================
+
+import azure.cognitiveservices.speech as speechsdk
+import tempfile
+
+class SpeechTranscriptionManager:
+    """Gestionnaire de transcription - Azure temporaire, migration Whisper future"""
+    
+    def __init__(self):
+        # Configuration Azure
+        self.azure_key = os.environ.get('AZURE_SPEECH_KEY', 'not-configured')
+        self.azure_region = os.environ.get('AZURE_SPEECH_REGION', 'westeurope')
+        self.service_available = self.azure_key != 'not-configured'
+        
+        print(f"🎤 Speech Manager initialisé - Azure disponible: {self.service_available}")
+    
+    def transcribe_audio(self, audio_file, language='fr-FR'):
+        """Transcrit un fichier audio avec Azure"""
+        if not self.service_available:
+            raise Exception("Azure Speech non configuré")
+            
+        try:
+            # Sauvegarder temporairement
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+                temp_path = temp_file.name
+                audio_file.save(temp_path)
+            
+            # Configuration Azure
+            speech_config = speechsdk.SpeechConfig(
+                subscription=self.azure_key, 
+                region=self.azure_region
+            )
+            speech_config.speech_recognition_language = language
+            
+            # Transcription
+            audio_config = speechsdk.audio.AudioConfig(filename=temp_path)
+            speech_recognizer = speechsdk.SpeechRecognizer(
+                speech_config=speech_config, 
+                audio_config=audio_config
+            )
+            
+            result = speech_recognizer.recognize_once()
+            
+            # Nettoyer
+            os.unlink(temp_path)
+            
+            if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+                return {
+                    'success': True,
+                    'text': result.text.strip(),
+                    'confidence': 0.9,
+                    'service': 'azure'
+                }
+            else:
+                raise Exception(f"Erreur Azure: {result.reason}")
+                
+        except Exception as e:
+            print(f"❌ Erreur transcription Azure: {str(e)}")
+            raise e
+
+# Instance globale (remplace whisper_model)
+speech_manager = SpeechTranscriptionManager()
 
 # ============================================================
 # CONFIGURATION ENVIRONNEMENT
