@@ -62,7 +62,6 @@
             border-radius: 20px;
             cursor: pointer;
             font-size: 14px;
-            text-decoration: none;
         }
         
         .status {
@@ -324,15 +323,7 @@
         <div class="header">
             <h1>🌍 TradLive</h1>
             <div class="room-info">
-                <div class="room-code">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <img id="qr-image" src="" alt="QR Code" style="width: 60px; height: 60px; border-radius: 8px; display: none;">
-                        <div>
-                            <div style="font-size: 16px; font-weight: bold;">Salle : <span id="room-id">{{ room_id }}</span></div>
-                            <div id="qr-caption" style="font-size: 12px; opacity: 0.8; margin-top: 5px; display: none;">📱 Scannez le QR code pour rejoindre</div>
-                        </div>
-                    </div>
-                </div>
+                <div class="room-code">Salle : <span id="room-id">{{ room_id }}</span></div>
                 <div class="user-info">
                     <span id="user-nickname">Chargement...</span>
                     <div id="voice-method" class="voice-method-indicator">Détection en cours...</div>
@@ -349,14 +340,6 @@
                 <div class="recording-timer" id="recording-timer">0s</div>
             </button>
             <button id="text-mode-button" class="text-mode-button">💬 Mode Texte</button>
-            <button id="debug-azure-button" class="text-mode-button" style="background: rgba(255, 152, 0, 0.8); display: none;" onclick="debugAzure()">🔧 Test Azure</button>
-            
-            <div id="audio-info" class="browser-info" style="margin-top: 15px; padding: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; font-size: 11px;">
-                <div>📱 <strong>Stratégie audio intelligente :</strong></div>
-                <div>• <strong>Web Speech API :</strong> WebM/Opus (petit, rapide)</div>
-                <div>• <strong>Azure Speech :</strong> WAV (compatible, qualité)</div>
-                <div>• <strong>Qualité vocale :</strong> Identique pour reconnaissance</div>
-            </div>
             
             <div class="wave-animation" id="wave-animation">
                 <div class="wave-bar"></div>
@@ -401,7 +384,7 @@
     </div>
     
     <script>
-        // 🧠 GESTIONNAIRE VOCAL CORRIGÉ (WEB SPEECH + AZURE)
+        // 🧠 GESTIONNAIRE INTELLIGENT PRINCIPAL (WEB SPEECH + AZURE)
         class VoiceManager {
             constructor(options = {}) {
                 this.roomId = options.roomId;
@@ -418,8 +401,6 @@
                 this.isListening = false;
                 this.recordingTimer = null;
                 this.recordingStartTime = null;
-                this.errorCount = 0; // Protection contre boucles d'erreurs
-                this.maxErrors = 3;
                 
                 this.browserInfo = this.detectBrowser();
                 this.azureAvailable = false;
@@ -427,105 +408,137 @@
             
             detectBrowser() {
                 const ua = navigator.userAgent;
-                console.log('🔍 User Agent détecté:', ua);
+                const isIOS = /iPad|iPhone|iPod/.test(ua);
+                const isSafari = ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('Edge');
                 
                 let browser = { name: 'unknown', compatibility: 'unknown', method: 'text' };
                 
-                if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('Brave')) {
+                // iPhone/iPad → Toujours mode texte (limitations Apple)
+                if (isIOS) {
+                    browser = { 
+                        name: 'iOS Safari', 
+                        compatibility: 'poor', 
+                        method: 'text',
+                        description: 'Mode Texte (Limitation iOS)',
+                        limitation: 'Apple bloque Web Speech et MediaRecorder pose problème'
+                    };
+                }
+                // Chrome Desktop/Android → Web Speech optimal
+                else if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('Brave')) {
                     browser = { 
                         name: 'Chrome', 
                         compatibility: 'excellent', 
                         method: 'webspeech',
-                        description: 'Web Speech API (Chrome)' 
+                        description: 'Web Speech API (Optimal)' 
                     };
-                } else if (ua.includes('Brave')) {
-                    browser = { 
-                        name: 'Brave', 
-                        compatibility: 'good', 
-                        method: 'webspeech',
-                        description: 'Web Speech API (Brave)' 
-                    };
-                } else if (ua.includes('Edge')) {
+                }
+                // Edge Chromium → Web Speech optimal
+                else if (ua.includes('Edge')) {
                     browser = { 
                         name: 'Edge', 
                         compatibility: 'excellent', 
                         method: 'webspeech',
-                        description: 'Web Speech API (Edge)' 
+                        description: 'Web Speech API (Optimal)' 
                     };
-                } else if (ua.includes('Opera') || ua.includes('OPR')) {
+                }
+                // Opera (Chromium) → Web Speech
+                else if (ua.includes('Opera') || ua.includes('OPR')) {
                     browser = { 
                         name: 'Opera', 
                         compatibility: 'good', 
                         method: 'webspeech',
-                        description: 'Web Speech API (Opera)' 
+                        description: 'Web Speech API (Chromium)' 
                     };
-                } else if (ua.includes('Firefox')) {
+                }
+                // Brave → Web Speech puis Azure fallback
+                else if (ua.includes('Brave')) {
+                    browser = { 
+                        name: 'Brave', 
+                        compatibility: 'limited', 
+                        method: 'webspeech',
+                        description: 'Web Speech + Azure Fallback' 
+                    };
+                }
+                // Firefox → Azure direct (pas de Web Speech)
+                else if (ua.includes('Firefox')) {
                     browser = { 
                         name: 'Firefox', 
                         compatibility: 'limited', 
                         method: 'azure',
-                        description: 'Azure Speech (Firefox)' 
+                        description: 'Azure Speech (Fallback)' 
                     };
-                } else if (ua.includes('Safari')) {
+                }
+                // Safari Desktop → Mode texte (bugs Web Speech)
+                else if (isSafari) {
                     browser = { 
                         name: 'Safari', 
                         compatibility: 'poor', 
                         method: 'text',
-                        description: 'Mode Texte (Safari)' 
+                        description: 'Mode Texte (Bugs Safari)',
+                        limitation: 'Web Speech API buggée sur Safari'
+                    };
+                }
+                // Samsung Internet et autres
+                else if (ua.includes('Samsung')) {
+                    browser = { 
+                        name: 'Samsung Internet', 
+                        compatibility: 'limited', 
+                        method: 'azure',
+                        description: 'Azure Speech (Mobile)' 
+                    };
+                }
+                // Navigateurs inconnus → Azure puis texte
+                else {
+                    browser = { 
+                        name: 'Navigateur inconnu', 
+                        compatibility: 'unknown', 
+                        method: 'azure',
+                        description: 'Azure Speech (Tentative)' 
                     };
                 }
                 
-                console.log('🌐 Navigateur détecté:', browser);
                 return browser;
             }
             
             async checkAzureAvailability() {
                 try {
-                    console.log('🔍 Vérification disponibilité Azure...');
                     const response = await fetch('/api/speech-status');
                     if (response.ok) {
                         const data = await response.json();
-                        console.log('✅ Réponse Azure:', data);
                         this.azureAvailable = data.available;
-                        if (!data.available) {
-                            console.warn('⚠️ Azure non disponible:', data.error || 'Service non configuré');
-                        }
                         return data.available;
-                    } else {
-                        console.error('❌ Erreur vérification Azure:', response.status, response.statusText);
-                        return false;
                     }
                 } catch (error) {
-                    console.error('❌ Erreur réseau Azure:', error);
-                    return false;
+                    console.log('Azure non disponible:', error);
                 }
+                return false;
             }
             
             async selectBestMethod() {
-                console.log('🎯 Sélection de la meilleure méthode...');
-                
-                // Vérifier Azure d'abord pour les navigateurs qui en ont besoin
+                // Vérifier Azure d'abord
                 await this.checkAzureAvailability();
+                
+                // iOS → Toujours mode texte (limitations Apple)
+                if (this.browserInfo.method === 'text' && this.browserInfo.limitation) {
+                    return 'text';
+                }
                 
                 // Logique de sélection intelligente selon navigateur
                 switch (this.browserInfo.method) {
                     case 'webspeech':
-                        // Chrome/Edge/Opera/Brave → TOUJOURS Web Speech
+                        // Chrome/Edge/Opera → Priorité Web Speech
                         if (this.isWebSpeechSupported()) {
-                            console.log('🌐 Utilisation Web Speech pour:', this.browserInfo.name);
                             return 'webspeech';
-                        } else {
-                            console.warn('⚠️ Web Speech non supporté pour', this.browserInfo.name, '- passage en mode texte');
-                            return 'text';
+                        } else if (this.azureAvailable) {
+                            return 'azure';
                         }
+                        break;
                         
                     case 'azure':
                         // Firefox/Samsung → Priorité Azure
                         if (this.azureAvailable) {
-                            console.log('☁️ Utilisation Azure pour:', this.browserInfo.name);
                             return 'azure';
                         } else if (this.isWebSpeechSupported()) {
-                            console.log('🌐 Azure indispo, fallback Web Speech pour:', this.browserInfo.name);
                             return 'webspeech';
                         }
                         break;
@@ -533,29 +546,15 @@
                     case 'text':
                     default:
                         // Safari/iOS → Mode texte obligatoire
-                        console.log('💬 Mode texte pour:', this.browserInfo.name);
                         return 'text';
                 }
                 
                 // Fallback final
-                console.warn('⚠️ Aucune méthode vocale disponible - mode texte');
                 return 'text';
             }
             
             isWebSpeechSupported() {
-                const hasWebKit = 'webkitSpeechRecognition' in window;
-                const hasStandard = 'SpeechRecognition' in window;
-                const isSupported = hasWebKit || hasStandard;
-                
-                console.log('🔍 Web Speech Support:', {
-                    webkitSpeechRecognition: hasWebKit,
-                    SpeechRecognition: hasStandard,
-                    supported: isSupported,
-                    protocol: location.protocol,
-                    hostname: location.hostname
-                });
-                
-                return isSupported;
+                return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
             }
             
             async initialize() {
@@ -594,7 +593,6 @@
                 
                 this.speechRecognition.onstart = () => {
                     this.onStatusChange('recording', 'Écoute en cours...');
-                    this.errorCount = 0; // Reset compteur d'erreurs
                 };
                 
                 this.speechRecognition.onresult = (event) => {
@@ -609,25 +607,15 @@
                             service: 'webspeech'
                         });
                         this.onStatusChange('success', 'Reconnaissance réussie');
-                        this.errorCount = 0; // Reset après succès
                     }
                 };
                 
                 this.speechRecognition.onerror = (event) => {
-                    this.errorCount++;
                     let errorMsg = 'Erreur Web Speech: ';
-                    
                     switch (event.error) {
                         case 'network':
-                            errorMsg += 'Problème réseau';
-                            // Pour les navigateurs Chromium (Chrome/Brave/Edge), ne pas basculer vers Azure
-                            if (this.browserInfo.name === 'Chrome' || this.browserInfo.name === 'Brave' || this.browserInfo.name === 'Edge') {
-                                errorMsg += ' - réessayez ou utilisez le mode texte';
-                            } else if (this.azureAvailable && this.errorCount < this.maxErrors) {
-                                errorMsg += ' - basculement vers Azure';
-                                this.fallbackToAzure();
-                                return;
-                            }
+                            errorMsg += 'Problème réseau - basculement vers Azure';
+                            this.fallbackToAzure();
                             break;
                         case 'not-allowed':
                             errorMsg += 'Microphone non autorisé';
@@ -638,14 +626,6 @@
                         default:
                             errorMsg += event.error;
                     }
-                    
-                    // Éviter les boucles d'erreurs
-                    if (this.errorCount >= this.maxErrors) {
-                        errorMsg += ' (passage en mode texte)';
-                        this.currentMethod = 'text';
-                        this.onStatusChange('text', 'Mode texte activé après erreurs');
-                    }
-                    
                     this.onError(errorMsg);
                 };
                 
@@ -656,15 +636,9 @@
             }
             
             async fallbackToAzure() {
-                if (this.azureAvailable && this.errorCount < this.maxErrors) {
+                if (this.azureAvailable) {
                     this.currentMethod = 'azure';
                     this.onStatusChange('info', 'Basculement vers Azure Speech...');
-                    // Réessayer automatiquement avec Azure
-                    setTimeout(() => {
-                        if (!this.isListening) {
-                            this.startListening();
-                        }
-                    }, 1000);
                 } else {
                     this.currentMethod = 'text';
                     this.onStatusChange('text', 'Mode texte activé');
@@ -674,34 +648,17 @@
             async startListening() {
                 if (this.isListening) return;
                 
-                // Protection contre trop d'erreurs
-                if (this.errorCount >= this.maxErrors) {
-                    this.onError('Trop d\'erreurs - utilisez le mode texte');
-                    return;
-                }
-                
                 this.isListening = true;
                 
                 switch (this.currentMethod) {
                     case 'webspeech':
                         if (this.speechRecognition) {
                             try {
-                                // Vérifier les permissions microphone d'abord
-                                console.log('🎤 Demande permission microphone...');
-                                await navigator.mediaDevices.getUserMedia({ audio: true })
-                                    .then(stream => {
-                                        console.log('✅ Permission microphone accordée');
-                                        stream.getTracks().forEach(track => track.stop()); // Arrêter le stream de test
-                                    });
-                                
-                                console.log('🎤 Démarrage Web Speech Recognition...');
                                 this.speechRecognition.start();
                                 this.startRecordingTimer();
                             } catch (error) {
-                                console.error('❌ Erreur Web Speech startup:', error);
                                 this.onError('Erreur Web Speech: ' + error.message);
                                 this.isListening = false;
-                                this.errorCount++;
                             }
                         }
                         break;
@@ -722,26 +679,21 @@
                     this.onStatusChange('recording', 'Enregistrement pour Azure...');
                     this.startRecordingTimer();
                     
-                    // Obtenir l'accès au microphone avec paramètres optimisés pour Azure
+                    // Obtenir l'accès au microphone
                     const stream = await navigator.mediaDevices.getUserMedia({
                         audio: {
                             channelCount: 1,
-                            sampleRate: 16000,  // Azure préfère 16kHz
+                            sampleRate: 16000,
                             echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
+                            noiseSuppression: true
                         }
                     });
                     
-                    // Forcer WAV pour Azure (éviter INVALID_HEADER)
-                    let mimeType = this.getSupportedMimeType(true); // true = pour Azure
-                    
+                    // Configuration MediaRecorder
                     const options = {
-                        mimeType: mimeType,
-                        audioBitsPerSecond: mimeType.includes('wav') ? 16000 : 64000  // WAV = moins de compression
+                        mimeType: this.getSupportedMimeType(),
+                        audioBitsPerSecond: 128000
                     };
-                    
-                    console.log('🎤 Configuration MediaRecorder:', options);
                     
                     this.mediaRecorder = new MediaRecorder(stream, options);
                     this.audioChunks = [];
@@ -761,7 +713,7 @@
                     
                     // Auto-stop après 30 secondes
                     setTimeout(() => {
-                        if (this.isListening && this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                        if (this.isListening && this.mediaRecorder.state === 'recording') {
                             this.stopListening();
                         }
                     }, 30000);
@@ -770,46 +722,23 @@
                     this.onError('Erreur Azure: ' + error.message);
                     this.isListening = false;
                     this.stopRecordingTimer();
-                    this.errorCount++;
                 }
             }
             
-            getSupportedMimeType(forAzure = false) {
-                // Stratégie différente selon la destination
-                if (forAzure) {
-                    // Pour Azure : WAV prioritaire pour éviter SPXERR_INVALID_HEADER
-                    const azureTypes = [
-                        'audio/wav',
-                        'audio/mp4',  // Azure supporte aussi MP4
-                        'audio/webm;codecs=opus',  // Tenter quand même WebM
-                        'audio/webm'
-                    ];
-                    
-                    for (const type of azureTypes) {
-                        if (MediaRecorder.isTypeSupported(type)) {
-                            console.log('🎤 Format Azure sélectionné:', type);
-                            return type;
-                        }
-                    }
-                } else {
-                    // Pour Web Speech : Opus prioritaire (meilleure compression)
-                    const webSpeechTypes = [
-                        'audio/webm;codecs=opus',
-                        'audio/webm',
-                        'audio/ogg;codecs=opus',
-                        'audio/wav',
-                        'audio/mp4'
-                    ];
-                    
-                    for (const type of webSpeechTypes) {
-                        if (MediaRecorder.isTypeSupported(type)) {
-                            console.log('🎤 Format Web Speech sélectionné:', type);
-                            return type;
-                        }
+            getSupportedMimeType() {
+                const types = [
+                    'audio/webm;codecs=opus',
+                    'audio/webm',
+                    'audio/ogg;codecs=opus',
+                    'audio/mp4',
+                    'audio/wav'
+                ];
+                
+                for (const type of types) {
+                    if (MediaRecorder.isTypeSupported(type)) {
+                        return type;
                     }
                 }
-                
-                console.warn('⚠️ Aucun format audio supporté, utilisation par défaut');
                 return 'audio/wav';
             }
             
@@ -822,55 +751,26 @@
                 try {
                     this.onStatusChange('processing', 'Envoi vers Azure...');
                     
-                    // Créer le blob avec le bon type MIME
-                    let blobType = this.mediaRecorder.mimeType || 'audio/wav';
-                    const audioBlob = new Blob(this.audioChunks, { type: blobType });
-                    
-                    console.log('📤 Envoi Azure - Taille blob:', audioBlob.size, 'bytes');
-                    console.log('📤 Envoi Azure - Type MIME:', blobType);
-                    console.log('📤 Envoi Azure - Room ID:', this.roomId);
-                    console.log('📤 Envoi Azure - User ID:', this.userId);
-                    
-                    // Convertir filename selon le format
-                    let filename = 'recording.wav';
-                    if (blobType.includes('webm')) {
-                        filename = 'recording.webm';
-                    } else if (blobType.includes('mp4')) {
-                        filename = 'recording.mp4';
-                    }
+                    const audioBlob = new Blob(this.audioChunks, { 
+                        type: this.getSupportedMimeType() 
+                    });
                     
                     const formData = new FormData();
-                    formData.append('audio', audioBlob, filename);
+                    formData.append('audio', audioBlob, 'recording.wav');
                     formData.append('language', this.language);
                     formData.append('room_id', this.roomId);
                     formData.append('user_id', this.userId);
-                    
-                    console.log('📤 Envoi Azure - Début requête vers /api/transcribe-audio');
                     
                     const response = await fetch('/api/transcribe-audio', {
                         method: 'POST',
                         body: formData
                     });
                     
-                    console.log('📤 Azure - Status réponse:', response.status, response.statusText);
-                    
                     if (!response.ok) {
-                        // Tenter de lire le détail de l'erreur
-                        let errorDetail = `Status ${response.status}`;
-                        try {
-                            const errorData = await response.json();
-                            errorDetail = errorData.error || errorData.message || errorDetail;
-                            console.error('❌ Détail erreur Azure:', errorData);
-                        } catch (e) {
-                            const errorText = await response.text();
-                            console.error('❌ Erreur texte Azure:', errorText);
-                            errorDetail = errorText || errorDetail;
-                        }
-                        throw new Error(`Erreur serveur Azure: ${errorDetail}`);
+                        throw new Error(`Erreur serveur: ${response.status}`);
                     }
                     
                     const data = await response.json();
-                    console.log('✅ Réponse Azure complète:', data);
                     
                     if (data.success && data.text) {
                         this.onResult({
@@ -879,27 +779,12 @@
                             service: 'azure'
                         });
                         this.onStatusChange('success', 'Transcription Azure réussie');
-                        this.errorCount = 0; // Reset après succès
                     } else {
-                        throw new Error(data.error || 'Aucun texte détecté par Azure');
+                        throw new Error(data.error || 'Aucun texte détecté');
                     }
                     
                 } catch (error) {
-                    console.error('❌ Erreur complète Azure:', error);
-                    this.onError('Azure: ' + error.message);
-                    this.errorCount++;
-                    
-                    // Si Azure échoue systématiquement, proposer Web Speech ou mode texte
-                    if (this.errorCount >= 2) {
-                        if (this.isWebSpeechSupported()) {
-                            this.onError('Azure défaillant - basculement vers Web Speech');
-                            this.currentMethod = 'webspeech';
-                            this.initializeWebSpeech();
-                        } else {
-                            this.onError('Azure défaillant - utilisez le mode texte');
-                            this.currentMethod = 'text';
-                        }
-                    }
+                    this.onError('Erreur Azure: ' + error.message);
                 }
             }
             
@@ -968,18 +853,20 @@
                     method: this.currentMethod,
                     isListening: this.isListening,
                     browser: this.browserInfo,
-                    azureAvailable: this.azureAvailable,
-                    errorCount: this.errorCount
+                    azureAvailable: this.azureAvailable
                 };
             }
         }
         
         // 🚀 INTÉGRATION DANS L'INTERFACE
         let voiceManager;
-        let userData = null; // Sera initialisé dynamiquement
+        let userData = { 
+            room_id: '{{ room_id }}', 
+            user_id: sessionStorage.getItem('userId') || 'demo', 
+            language: sessionStorage.getItem('userLang') || 'fr',
+            nickname: sessionStorage.getItem('userNickname') || 'Utilisateur'
+        };
         let updateInterval;
-        let updateErrorCount = 0;
-        const maxUpdateErrors = 5;
         
         // Éléments DOM
         const statusEl = document.getElementById('status');
@@ -995,216 +882,13 @@
         const errorMessage = document.getElementById('error-message');
         const browserInfoEl = document.getElementById('browser-info');
         const userNicknameEl = document.getElementById('user-nickname');
-        const qrImageEl = document.getElementById('qr-image');
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', async function() {
-            await initializeUserData(); // Charge les données de base ET les données backend
-            // QR code sera généré dans updateUserDisplay() si c'est l'hôte
             await initializeVoiceSystem();
             startRealTimeUpdates();
+            updateUserDisplay();
         });
-        
-        async function initializeUserData() {
-            // Récupérer les données de base
-            const roomId = '{{ room_id }}';
-            
-            // Vérifier si c'est un accès via QR code pour rejoindre
-            const urlParams = new URLSearchParams(window.location.search);
-            const autoJoin = urlParams.get('auto_join');
-            
-            if (autoJoin === 'true') {
-                // Redirection automatique vers la page de join avec room pré-remplie
-                console.log('🔗 Accès via QR code détecté - redirection vers page de join');
-                window.location.href = `/rooms?join=${roomId}`;
-                return;
-            }
-            
-            // Essayer de récupérer l'utilisateur depuis sessionStorage ou URL
-            let userId = sessionStorage.getItem('userId');
-            let userLang = sessionStorage.getItem('userLang') || 'fr';
-            
-            // Si pas d'userId, essayer les paramètres URL
-            if (!userId) {
-                userId = urlParams.get('user_id');
-                userLang = urlParams.get('lang') || 'fr';
-            }
-            
-            // Initialiser avec les données de base
-            userData = {
-                room_id: roomId,
-                user_id: userId || 'demo', // Fallback temporaire
-                language: userLang,
-                nickname: 'Chargement...', // Sera mis à jour par l'API
-                role: 'participant'
-            };
-            
-            console.log('👤 Données utilisateur initiales:', userData);
-            
-            // Récupérer les vraies données depuis le backend
-            await loadRoomInfo();
-        }
-        
-        async function loadRoomInfo() {
-            try {
-                console.log('🔍 Récupération des données de la room...');
-                
-                const response = await fetch(`/api/room/${userData.room_id}/info`);
-                
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        // Room n'existe pas
-                        showErrorNotification('Cette salle n\'existe pas');
-                        setTimeout(() => {
-                            window.location.href = '/rooms';
-                        }, 3000);
-                        return;
-                    }
-                    throw new Error(`Erreur ${response.status}`);
-                }
-                
-                const roomData = await response.json();
-                console.log('📊 Données room reçues:', roomData);
-                
-                if (roomData.success && roomData.room) {
-                    // Chercher l'utilisateur actuel dans la room
-                    const currentUser = findCurrentUser(roomData.room);
-                    
-                    if (currentUser) {
-                        // Utilisateur trouvé - mettre à jour les données
-                        userData.nickname = currentUser.nickname;
-                        userData.role = currentUser.is_host ? 'host' : 'participant';
-                        userData.user_id = currentUser.user_id;
-                        
-                        console.log('✅ Utilisateur trouvé:', {
-                            nickname: userData.nickname,
-                            role: userData.role,
-                            id: userData.user_id
-                        });
-                        
-                        updateUserDisplay();
-                        
-                        // Sauvegarder pour les prochaines visites
-                        sessionStorage.setItem('userId', userData.user_id);
-                        sessionStorage.setItem('userLang', userData.language);
-                        
-                    } else {
-                        // Utilisateur pas dans la room - rediriger vers page de join
-                        console.warn('⚠️ Utilisateur non trouvé dans la room - redirection');
-                        window.location.href = `/rooms?join=${userData.room_id}`;
-                        return;
-                    }
-                } else {
-                    throw new Error('Format de réponse invalide');
-                }
-                
-            } catch (error) {
-                console.error('❌ Erreur lors de la récupération des données room:', error);
-                
-                // Si erreur API, proposer de rejoindre la room
-                userData.nickname = 'Visiteur';
-                userData.role = 'participant';
-                updateUserDisplay();
-                
-                showUserNotification();
-            }
-        }
-        
-        function findCurrentUser(roomData) {
-            // Stratégies pour trouver l'utilisateur actuel :
-            
-            // 1. Par userId exact (si on en a un)
-            if (userData.user_id && userData.user_id !== 'demo') {
-                const userByID = roomData.users?.find(user => user.user_id === userData.user_id);
-                if (userByID) {
-                    console.log('👤 Utilisateur trouvé par ID:', userByID);
-                    return userByID;
-                }
-            }
-            
-            // 2. Si un seul utilisateur (l'hôte), c'est probablement lui
-            if (roomData.users?.length === 1) {
-                console.log('👑 Un seul utilisateur (hôte), sélection automatique');
-                return roomData.users[0];
-            }
-            
-            // 3. Demander à l'utilisateur qui il est (si plusieurs)
-            if (roomData.users?.length > 1) {
-                console.log('👥 Plusieurs utilisateurs détectés');
-                // Pour l'instant, retourner null pour déclencher la redirection
-                return null;
-            }
-            
-            return null;
-        }
-        
-        function handleUserNotInRoom(roomData) {
-            // Afficher les infos de la room
-            const roomName = roomData.room_name || 'Salle inconnue';
-            const hostName = roomData.users?.find(u => u.is_host)?.nickname || 'Hôte inconnu';
-            
-            // Proposer de rejoindre la room
-            const joinDiv = document.createElement('div');
-            joinDiv.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(255, 255, 255, 0.95);
-                color: #333;
-                padding: 30px;
-                border-radius: 15px;
-                max-width: 400px;
-                text-align: center;
-                z-index: 1002;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            `;
-            
-            joinDiv.innerHTML = `
-                <h3 style="margin-top: 0; color: #667eea;">🌍 TradLive</h3>
-                <p><strong>"${roomName}"</strong></p>
-                <p>Créée par <strong>${hostName}</strong></p>
-                <p style="margin: 20px 0;">Voulez-vous rejoindre cette salle ?</p>
-                <button onclick="joinThisRoom()" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 5px; font-size: 16px;">
-                    👥 Rejoindre la salle
-                </button>
-                <button onclick="goHome()" style="padding: 12px 24px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 5px; font-size: 16px;">
-                    🏠 Retour à l'accueil
-                </button>
-            `;
-            
-            document.body.appendChild(joinDiv);
-            
-            // Ajouter les fonctions globales
-            window.joinThisRoom = () => {
-                window.location.href = `/rooms?join=${userData.room_id}`;
-            };
-            
-            window.goHome = () => {
-                window.location.href = '/rooms';
-            };
-        }
-        
-        async function initializeQRCode() {
-            // Attendre que userData soit correctement initialisé
-            if (!userData || !userData.room_id) {
-                console.warn('⚠️ userData pas encore initialisé pour QR code');
-                return;
-            }
-            
-            // Seul l'hôte devrait avoir le QR code
-            if (userData.role !== 'host') {
-                console.log('👤 Utilisateur participant - pas de QR code nécessaire');
-                return;
-            }
-            
-            // Générer l'URL qui redirige directement vers la page de join
-            const joinUrl = `${window.location.origin}/rooms?join=${userData.room_id}`;
-            const qrUrl = `/qrcode?url=${encodeURIComponent(joinUrl)}`;
-            qrImageEl.src = qrUrl;
-            
-            console.log('📱 QR Code généré pour:', joinUrl);
-        }
         
         async function initializeVoiceSystem() {
             voiceManager = new VoiceManager({
@@ -1246,12 +930,6 @@
                         updateStatus('💬 Mode texte par défaut', 'info');
                 }
                 
-                // Afficher le bouton debug Azure si nécessaire
-                const debugButton = document.getElementById('debug-azure-button');
-                if (method === 'azure' || voiceManager.browserInfo.method === 'azure') {
-                    debugButton.style.display = 'inline-block';
-                }
-                
             } catch (error) {
                 console.error('Erreur init système vocal:', error);
                 showTextInput();
@@ -1275,67 +953,6 @@
             
             voiceMethodEl.textContent = methodNames[method] || method;
             voiceMethodEl.className = `voice-method-indicator ${methodClasses[method] || ''}`;
-        }
-        
-        function updateUserDisplay() {
-            if (!userData.nickname || userData.nickname === 'Chargement...') {
-                userNicknameEl.textContent = 'Chargement...';
-                return;
-            }
-            
-            const roleEmoji = userData.role === 'host' ? '👑' : '👤';
-            const roleText = userData.role === 'host' ? 'Hôte' : 'Participant';
-            userNicknameEl.innerHTML = `${roleEmoji} ${userData.nickname} <span style="font-size: 11px; opacity: 0.7;">(${roleText})</span>`;
-            
-            // Afficher le QR code SEULEMENT pour l'hôte
-            const qrImage = document.getElementById('qr-image');
-            const qrCaption = document.getElementById('qr-caption');
-            
-            if (userData.role === 'host') {
-                qrImage.style.display = 'block';
-                qrCaption.style.display = 'block';
-                // Générer le QR code si pas encore fait
-                if (!qrImage.src || qrImage.src === window.location.href) {
-                    initializeQRCode();
-                }
-            } else {
-                qrImage.style.display = 'none';
-                qrCaption.style.display = 'none';
-            }
-        }
-        
-        function showUserNotification() {
-            // Avertir que l'utilisateur devrait passer par le processus normal
-            const notifDiv = document.createElement('div');
-            notifDiv.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                background: rgba(255, 193, 7, 0.9);
-                color: #333;
-                padding: 15px 20px;
-                border-radius: 10px;
-                max-width: 300px;
-                font-size: 14px;
-                z-index: 1001;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            `;
-            notifDiv.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 8px;">⚠️ Accès direct détecté</div>
-                <div>Impossible de vous identifier. Rejoignez la salle via la page d'accueil pour utiliser toutes les fonctionnalités.</div>
-                <button onclick="window.location.href='/rooms'" style="margin-top: 10px; padding: 5px 10px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    🏠 Aller à l'accueil
-                </button>
-            `;
-            
-            document.body.appendChild(notifDiv);
-            
-            // Retirer après 15 secondes
-            setTimeout(() => {
-                if (notifDiv.parentNode) {
-                    notifDiv.remove();
-                }
-            }, 15000);
         }
         
         function updateBrowserInfo() {
@@ -1410,7 +1027,7 @@
             showErrorNotification(error);
             
             // Auto-basculement vers mode texte après erreurs critiques
-            if (error.includes('Microphone non autorisé') || error.includes('Trop d\'erreurs')) {
+            if (error.includes('Microphone non autorisé') || error.includes('Safari')) {
                 setTimeout(() => {
                     showTextInput();
                 }, 2000);
@@ -1442,14 +1059,6 @@
                     micButton.classList.add('processing');
                     micButton.textContent = '⏳ Traitement...';
                     micButton.disabled = true;
-                    setTimeout(() => {
-                        // Protection contre blocage infini
-                        if (micButton.textContent === '⏳ Traitement...') {
-                            micButton.textContent = '🎤 Parler';
-                            micButton.disabled = false;
-                            micButton.classList.remove('processing');
-                        }
-                    }, 10000);
                     break;
                 case 'success':
                 case 'connected':
@@ -1471,13 +1080,6 @@
         }
         
         async function sendForTranslation(text) {
-            // Vérifier que l'utilisateur est identifié
-            if (!userData.user_id || userData.user_id === 'demo' || userData.nickname === 'Chargement...') {
-                updateStatus('❌ Utilisateur non identifié', 'error');
-                showErrorNotification('Vous devez rejoindre la salle pour envoyer des messages');
-                return;
-            }
-            
             try {
                 updateStatus('📤 Envoi de la traduction...', 'info');
                 
@@ -1500,11 +1102,6 @@
                     } else {
                         throw new Error(data.error);
                     }
-                } else if (response.status === 403) {
-                    // Utilisateur non autorisé - recharger les données
-                    updateStatus('🔄 Rechargement des données...', 'info');
-                    await loadRoomInfo();
-                    throw new Error('Utilisateur non autorisé - rechargement en cours');
                 } else {
                     throw new Error('Erreur serveur de traduction');
                 }
@@ -1546,185 +1143,7 @@
         
         function tryVoiceAgain() {
             hideTextInput();
-            // Reset compteur d'erreurs
-            if (voiceManager) {
-                voiceManager.errorCount = 0;
-            }
             initializeVoiceSystem();
-        }
-        
-        async function debugAzure() {
-            // Vérifier que l'utilisateur est identifié
-            if (!userData.user_id || userData.user_id === 'demo' || userData.nickname === 'Chargement...') {
-                showErrorNotification('Impossible de tester Azure - utilisateur non identifié');
-                return;
-            }
-            
-            updateStatus('🔧 Test de configuration Azure...', 'info');
-            
-            try {
-                console.log('🔧 === DEBUG AZURE START ===');
-                
-                // 1. Tester la route de statut Azure
-                console.log('🔧 Test 1: Vérification /api/speech-status');
-                const statusResponse = await fetch('/api/speech-status');
-                console.log('🔧 Status response:', statusResponse.status, statusResponse.statusText);
-                
-                if (statusResponse.ok) {
-                    const statusData = await statusResponse.json();
-                    console.log('🔧 Status data:', statusData);
-                    
-                    if (!statusData.available) {
-                        updateStatus('❌ Azure non configuré sur le serveur', 'error');
-                        showErrorNotification('Azure Speech Service non configuré. Vérifiez les variables AZURE_SPEECH_KEY et AZURE_SPEECH_REGION sur Render.');
-                        return;
-                    }
-                } else {
-                    updateStatus('❌ Route Azure inaccessible', 'error');
-                    showErrorNotification('Route /api/speech-status introuvable. Vérifiez le déploiement backend.');
-                    return;
-                }
-                
-                // 2. Tester l'enregistrement audio
-                console.log('🔧 Test 2: Vérification MediaRecorder');
-                if (!('MediaRecorder' in window)) {
-                    updateStatus('❌ MediaRecorder non supporté', 'error');
-                    showErrorNotification('Votre navigateur ne supporte pas MediaRecorder. Utilisez Chrome, Firefox ou Edge.');
-                    return;
-                }
-                
-                // 3. Tester l'accès microphone
-                console.log('🔧 Test 3: Test accès microphone');
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    console.log('🔧 Microphone OK');
-                    stream.getTracks().forEach(track => track.stop());
-                } catch (micError) {
-                    updateStatus('❌ Microphone inaccessible', 'error');
-                    showErrorNotification('Accès microphone refusé. Autorisez le microphone dans votre navigateur.');
-                    console.error('🔧 Erreur microphone:', micError);
-                    return;
-                }
-                
-                // 4. Test Azure avec audio factice
-                console.log('🔧 Test 4: Test Azure avec données factices');
-                const fakeBlob = new Blob(['fake audio data for testing'], { type: 'audio/wav' });
-                const formData = new FormData();
-                formData.append('audio', fakeBlob, 'test.wav');
-                formData.append('language', userData.language);
-                formData.append('room_id', userData.room_id);
-                formData.append('user_id', userData.user_id);
-                
-                const testResponse = await fetch('/api/transcribe-audio', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                console.log('🔧 Test Azure response:', testResponse.status, testResponse.statusText);
-                
-                if (testResponse.ok) {
-                    const testData = await testResponse.json();
-                    console.log('🔧 Test Azure data:', testData);
-                    updateStatus('✅ Configuration Azure OK', 'connected');
-                    showErrorNotification('Azure fonctionne ! Le problème pourrait venir du format audio réel.');
-                } else {
-                    const errorText = await testResponse.text();
-                    console.error('🔧 Erreur test Azure:', errorText);
-                    updateStatus('❌ Azure échoue', 'error');
-                    showErrorNotification('Azure retourne erreur 500. Vérifiez les logs Render et la configuration Azure.');
-                }
-                
-                console.log('🔧 === DEBUG AZURE END ===');
-                
-            } catch (error) {
-                console.error('🔧 Erreur debug Azure:', error);
-                updateStatus('❌ Erreur debug Azure', 'error');
-                showErrorNotification('Erreur pendant le debug: ' + error.message);
-            }
-        }
-        
-        async function debugAzure() {
-            updateStatus('🔧 Test de configuration Azure...', 'info');
-            
-            try {
-                console.log('🔧 === DEBUG AZURE START ===');
-                
-                // 1. Tester la route de statut Azure
-                console.log('🔧 Test 1: Vérification /api/speech-status');
-                const statusResponse = await fetch('/api/speech-status');
-                console.log('🔧 Status response:', statusResponse.status, statusResponse.statusText);
-                
-                if (statusResponse.ok) {
-                    const statusData = await statusResponse.json();
-                    console.log('🔧 Status data:', statusData);
-                    
-                    if (!statusData.available) {
-                        updateStatus('❌ Azure non configuré sur le serveur', 'error');
-                        showErrorNotification('Azure Speech Service non configuré. Vérifiez les variables AZURE_SPEECH_KEY et AZURE_SPEECH_REGION sur Render.');
-                        return;
-                    }
-                } else {
-                    updateStatus('❌ Route Azure inaccessible', 'error');
-                    showErrorNotification('Route /api/speech-status introuvable. Vérifiez le déploiement backend.');
-                    return;
-                }
-                
-                // 2. Tester l'enregistrement audio
-                console.log('🔧 Test 2: Vérification MediaRecorder');
-                if (!('MediaRecorder' in window)) {
-                    updateStatus('❌ MediaRecorder non supporté', 'error');
-                    showErrorNotification('Votre navigateur ne supporte pas MediaRecorder. Utilisez Chrome, Firefox ou Edge.');
-                    return;
-                }
-                
-                // 3. Tester l'accès microphone
-                console.log('🔧 Test 3: Test accès microphone');
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    console.log('🔧 Microphone OK');
-                    stream.getTracks().forEach(track => track.stop());
-                } catch (micError) {
-                    updateStatus('❌ Microphone inaccessible', 'error');
-                    showErrorNotification('Accès microphone refusé. Autorisez le microphone dans votre navigateur.');
-                    console.error('🔧 Erreur microphone:', micError);
-                    return;
-                }
-                
-                // 4. Test Azure avec audio factice
-                console.log('🔧 Test 4: Test Azure avec données factices');
-                const fakeBlob = new Blob(['fake audio data'], { type: 'audio/wav' });
-                const formData = new FormData();
-                formData.append('audio', fakeBlob, 'test.wav');
-                formData.append('language', 'fr');
-                formData.append('room_id', userData.room_id);
-                formData.append('user_id', userData.user_id);
-                
-                const testResponse = await fetch('/api/transcribe-audio', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                console.log('🔧 Test Azure response:', testResponse.status, testResponse.statusText);
-                
-                if (testResponse.ok) {
-                    const testData = await testResponse.json();
-                    console.log('🔧 Test Azure data:', testData);
-                    updateStatus('✅ Configuration Azure OK', 'connected');
-                    showErrorNotification('Azure fonctionne ! Le problème vient peut-être du format audio.');
-                } else {
-                    const errorText = await testResponse.text();
-                    console.error('🔧 Erreur test Azure:', errorText);
-                    updateStatus('❌ Azure échoue', 'error');
-                    showErrorNotification('Azure retourne erreur 500. Vérifiez les logs Render et la configuration Azure.');
-                }
-                
-                console.log('🔧 === DEBUG AZURE END ===');
-                
-            } catch (error) {
-                console.error('🔧 Erreur debug Azure:', error);
-                updateStatus('❌ Erreur debug Azure', 'error');
-                showErrorNotification('Erreur pendant le debug: ' + error.message);
-            }
         }
         
         function leaveRoom() {
@@ -1737,12 +1156,6 @@
         
         function startRealTimeUpdates() {
             updateInterval = setInterval(async () => {
-                // Vérifier que l'utilisateur est bien identifié
-                if (!userData.user_id || userData.user_id === 'demo' || userData.nickname === 'Chargement...') {
-                    console.log('⚠️ Utilisateur non identifié, pas de mise à jour');
-                    return;
-                }
-                
                 try {
                     const response = await fetch(`/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`);
                     if (response.ok) {
@@ -1762,23 +1175,11 @@
                                 speakText(data.translated);
                             }
                         }
-                        updateErrorCount = 0; // Reset après succès
-                    } else if (response.status === 403) {
-                        // Utilisateur non autorisé - recharger les données
-                        console.log('🔄 Utilisateur non autorisé - rechargement des données...');
-                        await loadRoomInfo();
                     }
                 } catch (error) {
-                    updateErrorCount++;
                     console.log('Erreur mise à jour:', error);
-                    
-                    // Arrêter après trop d'erreurs pour éviter les boucles
-                    if (updateErrorCount >= maxUpdateErrors) {
-                        console.log('Trop d\'erreurs de mise à jour - arrêt');
-                        clearInterval(updateInterval);
-                    }
                 }
-            }, 3000);
+            }, 2000);
         }
         
         function speakText(text) {
@@ -1813,15 +1214,12 @@
         
         // Heartbeat pour maintenir la session
         setInterval(() => {
-            // Seulement si l'utilisateur est identifié
-            if (userData && userData.user_id && userData.user_id !== 'demo' && userData.nickname !== 'Chargement...') {
-                fetch(`/api/room/${userData.room_id}/heartbeat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.user_id })
-                }).catch(err => console.log('Heartbeat error:', err));
-            }
-        }, 15000);
+            fetch(`/api/room/${userData.room_id}/heartbeat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userData.user_id })
+            }).catch(err => console.log('Heartbeat error:', err));
+        }, 10000);
     </script>
 </body>
 </html>
