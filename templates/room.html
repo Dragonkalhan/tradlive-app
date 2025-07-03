@@ -64,6 +64,40 @@
             font-size: 14px;
         }
         
+        /* QR Code pour l'hôte */
+        .qr-section {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+        }
+        
+        .qr-section.show {
+            display: block;
+        }
+        
+        .qrcode-container {
+            display: inline-block;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px;
+        }
+        
+        .qrcode-container img {
+            width: 150px;
+            height: 150px;
+            display: block;
+        }
+        
+        .qr-caption {
+            font-size: 12px;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+        
         .status {
             text-align: center;
             padding: 15px;
@@ -315,6 +349,11 @@
                 margin: 5px 0;
                 min-width: auto;
             }
+            
+            .qrcode-container img {
+                width: 120px;
+                height: 120px;
+            }
         }
     </style>
 </head>
@@ -329,6 +368,19 @@
                     <div id="voice-method" class="voice-method-indicator">Détection en cours...</div>
                 </div>
                 <button class="leave-button" onclick="leaveRoom()">🚪 Quitter</button>
+            </div>
+        </div>
+        
+        <!-- QR Code pour l'hôte -->
+        <div id="qr-section" class="qr-section">
+            <h3>🔗 Partage de la salle</h3>
+            <p>Scannez ce QR code pour rejoindre directement la salle :</p>
+            <div class="qrcode-container">
+                <img src="/qrcode" alt="QR Code" id="qr-code-image">
+            </div>
+            <div class="qr-caption">
+                Code salle : <strong id="qr-room-code">{{ room_id }}</strong><br>
+                <span id="room-url">Les participants scannent pour rejoindre automatiquement</span>
             </div>
         </div>
         
@@ -867,6 +919,7 @@
             nickname: sessionStorage.getItem('userNickname') || 'Utilisateur'
         };
         let updateInterval;
+        let isHost = false;
         
         // Éléments DOM
         const statusEl = document.getElementById('status');
@@ -882,12 +935,15 @@
         const errorMessage = document.getElementById('error-message');
         const browserInfoEl = document.getElementById('browser-info');
         const userNicknameEl = document.getElementById('user-nickname');
+        const qrSection = document.getElementById('qr-section');
+        const qrCodeImage = document.getElementById('qr-code-image');
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', async function() {
             await initializeVoiceSystem();
             startRealTimeUpdates();
             updateUserDisplay();
+            loadRoomInfo();
         });
         
         async function initializeVoiceSystem() {
@@ -936,6 +992,39 @@
                 updateStatus('💬 Mode texte (erreur init)', 'error');
                 showErrorNotification('Erreur d\'initialisation: ' + error.message);
             }
+        }
+        
+        function loadRoomInfo() {
+            fetch(`/api/room/${userData.room_id}/info`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Vérifier si l'utilisateur est l'hôte
+                        const currentUser = data.room.users.find(u => u.user_id === userData.user_id);
+                        if (currentUser) {
+                            isHost = currentUser.is_host;
+                            
+                            // Afficher le QR code si l'utilisateur est l'hôte
+                            if (isHost) {
+                                qrSection.classList.add('show');
+                                updateQRCode();
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des infos de salle:', error);
+                });
+        }
+        
+        function updateQRCode() {
+            // QR code mène directement à la salle pour rejoindre automatiquement
+            const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
+            qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}&t=${Date.now()}`;
+            document.getElementById('qr-room-code').textContent = userData.room_id;
         }
         
         function updateMethodDisplay(method) {
