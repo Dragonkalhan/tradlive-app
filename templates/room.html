@@ -65,14 +65,6 @@
             text-decoration: none;
         }
         
-        .qr-section {
-            text-align: center;
-            margin: 20px 0;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-        }
-        
         .status {
             text-align: center;
             padding: 15px;
@@ -332,19 +324,21 @@
         <div class="header">
             <h1>🌍 TradLive</h1>
             <div class="room-info">
-                <div class="room-code">Salle : <span id="room-id">{{ room_id }}</span></div>
+                <div class="room-code">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <img id="qr-image" src="" alt="QR Code" style="width: 60px; height: 60px; border-radius: 8px;">
+                        <div>
+                            <div>Salle : <span id="room-id">{{ room_id }}</span></div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">📱 Scannez le QR code pour rejoindre</div>
+                        </div>
+                    </div>
+                </div>
                 <div class="user-info">
                     <span id="user-nickname">Chargement...</span>
                     <div id="voice-method" class="voice-method-indicator">Détection en cours...</div>
                 </div>
                 <button class="leave-button" onclick="leaveRoom()">🚪 Quitter</button>
             </div>
-        </div>
-        
-        <!-- Section QR Code (visible directement) -->
-        <div class="qr-section">
-            <p>📱 <strong>Scannez pour rejoindre la salle :</strong></p>
-            <img id="qr-image" src="" alt="QR Code" style="max-width: 200px; border-radius: 10px; margin: 10px auto; display: block;">
         </div>
         
         <div id="status" class="status info">Initialisation du système vocal...</div>
@@ -356,6 +350,13 @@
             </button>
             <button id="text-mode-button" class="text-mode-button">💬 Mode Texte</button>
             <button id="debug-azure-button" class="text-mode-button" style="background: rgba(255, 152, 0, 0.8);" onclick="debugAzure()">🔧 Test Azure</button>
+            
+            <div id="audio-info" class="browser-info" style="margin-top: 15px; padding: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; font-size: 11px;">
+                <div>📱 <strong>Stratégie audio intelligente :</strong></div>
+                <div>• <strong>Web Speech API :</strong> WebM/Opus (petit, rapide)</div>
+                <div>• <strong>Azure Speech :</strong> WAV (compatible, qualité)</div>
+                <div>• <strong>Qualité vocale :</strong> Identique pour reconnaissance</div>
+            </div>
             
             <div class="wave-animation" id="wave-animation">
                 <div class="wave-bar"></div>
@@ -541,7 +542,7 @@
             }
             
             async selectBestMethod() {
-                // Vérifier Azure d'abord
+                // Vérifier Azure d'abord pour les navigateurs qui en ont besoin
                 await this.checkAzureAvailability();
                 
                 // iOS → Toujours mode texte (limitations Apple)
@@ -552,19 +553,23 @@
                 // Logique de sélection intelligente selon navigateur
                 switch (this.browserInfo.method) {
                     case 'webspeech':
-                        // Chrome/Edge/Opera/Brave → Priorité Web Speech
+                        // Chrome/Edge/Opera/Brave → TOUJOURS Web Speech
                         if (this.isWebSpeechSupported()) {
+                            console.log('🌐 Utilisation Web Speech pour:', this.browserInfo.name);
                             return 'webspeech';
-                        } else if (this.azureAvailable) {
-                            return 'azure';
+                        } else {
+                            // Si Web Speech pas dispo, mode texte plutôt qu'Azure
+                            console.warn('⚠️ Web Speech non supporté, passage en mode texte');
+                            return 'text';
                         }
-                        break;
                         
                     case 'azure':
                         // Firefox/Samsung → Priorité Azure
                         if (this.azureAvailable) {
+                            console.log('☁️ Utilisation Azure pour:', this.browserInfo.name);
                             return 'azure';
                         } else if (this.isWebSpeechSupported()) {
+                            console.log('🌐 Azure indispo, fallback Web Speech pour:', this.browserInfo.name);
                             return 'webspeech';
                         }
                         break;
@@ -645,7 +650,10 @@
                     switch (event.error) {
                         case 'network':
                             errorMsg += 'Problème réseau';
-                            if (this.azureAvailable && this.errorCount < this.maxErrors) {
+                            // Pour les navigateurs Chromium (Chrome/Brave/Edge), ne pas basculer vers Azure
+                            if (this.browserInfo.name === 'Chrome' || this.browserInfo.name === 'Brave' || this.browserInfo.name === 'Edge') {
+                                errorMsg += ' - réessayez ou utilisez le mode texte';
+                            } else if (this.azureAvailable && this.errorCount < this.maxErrors) {
                                 errorMsg += ' - basculement vers Azure';
                                 this.fallbackToAzure();
                                 return;
@@ -734,21 +742,26 @@
                     this.onStatusChange('recording', 'Enregistrement pour Azure...');
                     this.startRecordingTimer();
                     
-                    // Obtenir l'accès au microphone
+                    // Obtenir l'accès au microphone avec paramètres optimisés pour Azure
                     const stream = await navigator.mediaDevices.getUserMedia({
                         audio: {
                             channelCount: 1,
-                            sampleRate: 16000,
+                            sampleRate: 16000,  // Azure préfère 16kHz
                             echoCancellation: true,
-                            noiseSuppression: true
+                            noiseSuppression: true,
+                            autoGainControl: true
                         }
                     });
                     
-                    // Configuration MediaRecorder
+                    // Forcer WAV pour Azure (éviter INVALID_HEADER)
+                    let mimeType = this.getSupportedMimeType(true); // true = pour Azure
+                    
                     const options = {
-                        mimeType: this.getSupportedMimeType(),
-                        audioBitsPerSecond: 128000
+                        mimeType: mimeType,
+                        audioBitsPerSecond: mimeType.includes('wav') ? 16000 : 64000  // WAV = moins de compression
                     };
+                    
+                    console.log('🎤 Configuration MediaRecorder:', options);
                     
                     this.mediaRecorder = new MediaRecorder(stream, options);
                     this.audioChunks = [];
@@ -781,20 +794,42 @@
                 }
             }
             
-            getSupportedMimeType() {
-                const types = [
-                    'audio/webm;codecs=opus',
-                    'audio/webm',
-                    'audio/ogg;codecs=opus',
-                    'audio/mp4',
-                    'audio/wav'
-                ];
-                
-                for (const type of types) {
-                    if (MediaRecorder.isTypeSupported(type)) {
-                        return type;
+            getSupportedMimeType(forAzure = false) {
+                // Stratégie différente selon la destination
+                if (forAzure) {
+                    // Pour Azure : WAV prioritaire pour éviter SPXERR_INVALID_HEADER
+                    const azureTypes = [
+                        'audio/wav',
+                        'audio/mp4',  // Azure supporte aussi MP4
+                        'audio/webm;codecs=opus',  // Tenter quand même WebM
+                        'audio/webm'
+                    ];
+                    
+                    for (const type of azureTypes) {
+                        if (MediaRecorder.isTypeSupported(type)) {
+                            console.log('🎤 Format Azure sélectionné:', type);
+                            return type;
+                        }
+                    }
+                } else {
+                    // Pour Web Speech : Opus prioritaire (meilleure compression)
+                    const webSpeechTypes = [
+                        'audio/webm;codecs=opus',
+                        'audio/webm',
+                        'audio/ogg;codecs=opus',
+                        'audio/wav',
+                        'audio/mp4'
+                    ];
+                    
+                    for (const type of webSpeechTypes) {
+                        if (MediaRecorder.isTypeSupported(type)) {
+                            console.log('🎤 Format Web Speech sélectionné:', type);
+                            return type;
+                        }
                     }
                 }
+                
+                console.warn('⚠️ Aucun format audio supporté, utilisation par défaut');
                 return 'audio/wav';
             }
             
@@ -807,17 +842,25 @@
                 try {
                     this.onStatusChange('processing', 'Envoi vers Azure...');
                     
-                    const audioBlob = new Blob(this.audioChunks, { 
-                        type: this.getSupportedMimeType() 
-                    });
+                    // Créer le blob avec le bon type MIME
+                    let blobType = this.mediaRecorder.mimeType || 'audio/wav';
+                    const audioBlob = new Blob(this.audioChunks, { type: blobType });
                     
                     console.log('📤 Envoi Azure - Taille blob:', audioBlob.size, 'bytes');
-                    console.log('📤 Envoi Azure - Type MIME:', audioBlob.type);
+                    console.log('📤 Envoi Azure - Type MIME:', blobType);
                     console.log('📤 Envoi Azure - Room ID:', this.roomId);
                     console.log('📤 Envoi Azure - User ID:', this.userId);
                     
+                    // Convertir filename selon le format
+                    let filename = 'recording.wav';
+                    if (blobType.includes('webm')) {
+                        filename = 'recording.webm';
+                    } else if (blobType.includes('mp4')) {
+                        filename = 'recording.mp4';
+                    }
+                    
                     const formData = new FormData();
-                    formData.append('audio', audioBlob, 'recording.wav');
+                    formData.append('audio', audioBlob, filename);
                     formData.append('language', this.language);
                     formData.append('room_id', this.roomId);
                     formData.append('user_id', this.userId);
@@ -989,11 +1032,11 @@
             let userLang = sessionStorage.getItem('userLang') || 'fr';
             let userNickname = sessionStorage.getItem('userNickname');
             
-            // Si pas de données, récupérer depuis l'URL ou créer un utilisateur temporaire
+            // Si pas de données, créer un utilisateur temporaire
             if (!userId || !userNickname) {
-                // Générer un ID temporaire
+                // Générer un ID et nickname temporaires
                 userId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-                userNickname = 'Visiteur_' + Math.floor(Math.random() * 1000);
+                userNickname = 'Hôte_' + Math.floor(Math.random() * 1000);
                 
                 // Sauvegarder temporairement
                 sessionStorage.setItem('userId', userId);
@@ -1081,6 +1124,10 @@
             
             voiceMethodEl.textContent = methodNames[method] || method;
             voiceMethodEl.className = `voice-method-indicator ${methodClasses[method] || ''}`;
+        }
+        
+        function updateUserDisplay() {
+            userNicknameEl.textContent = userData.nickname;
         }
         
         function updateBrowserInfo() {
