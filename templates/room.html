@@ -326,10 +326,10 @@
             <div class="room-info">
                 <div class="room-code">
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <img id="qr-image" src="" alt="QR Code" style="width: 60px; height: 60px; border-radius: 8px;">
+                        <img id="qr-image" src="" alt="QR Code" style="width: 60px; height: 60px; border-radius: 8px; display: none;">
                         <div>
                             <div style="font-size: 16px; font-weight: bold;">Salle : <span id="room-id">{{ room_id }}</span></div>
-                            <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">📱 Scannez le QR code pour rejoindre</div>
+                            <div id="qr-caption" style="font-size: 12px; opacity: 0.8; margin-top: 5px; display: none;">📱 Scannez le QR code pour rejoindre</div>
                         </div>
                     </div>
                 </div>
@@ -427,95 +427,55 @@
             
             detectBrowser() {
                 const ua = navigator.userAgent;
-                const isIOS = /iPad|iPhone|iPod/.test(ua);
-                const isSafari = ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('Edge');
+                console.log('🔍 User Agent détecté:', ua);
                 
                 let browser = { name: 'unknown', compatibility: 'unknown', method: 'text' };
                 
-                // iPhone/iPad → Toujours mode texte (limitations Apple)
-                if (isIOS) {
-                    browser = { 
-                        name: 'iOS Safari', 
-                        compatibility: 'poor', 
-                        method: 'text',
-                        description: 'Mode Texte (Limitation iOS)',
-                        limitation: 'Apple bloque Web Speech et MediaRecorder'
-                    };
-                }
-                // Chrome Desktop/Android → Web Speech optimal
-                else if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('Brave')) {
+                if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('Brave')) {
                     browser = { 
                         name: 'Chrome', 
                         compatibility: 'excellent', 
                         method: 'webspeech',
-                        description: 'Web Speech API (Optimal)' 
+                        description: 'Web Speech API (Chrome)' 
                     };
-                }
-                // Edge Chromium → Web Speech optimal
-                else if (ua.includes('Edge')) {
-                    browser = { 
-                        name: 'Edge', 
-                        compatibility: 'excellent', 
-                        method: 'webspeech',
-                        description: 'Web Speech API (Optimal)' 
-                    };
-                }
-                // Brave → Web Speech API (corrigé!)
-                else if (ua.includes('Brave')) {
+                } else if (ua.includes('Brave')) {
                     browser = { 
                         name: 'Brave', 
                         compatibility: 'good', 
                         method: 'webspeech',
                         description: 'Web Speech API (Brave)' 
                     };
-                }
-                // Opera (Chromium) → Web Speech
-                else if (ua.includes('Opera') || ua.includes('OPR')) {
+                } else if (ua.includes('Edge')) {
+                    browser = { 
+                        name: 'Edge', 
+                        compatibility: 'excellent', 
+                        method: 'webspeech',
+                        description: 'Web Speech API (Edge)' 
+                    };
+                } else if (ua.includes('Opera') || ua.includes('OPR')) {
                     browser = { 
                         name: 'Opera', 
                         compatibility: 'good', 
                         method: 'webspeech',
                         description: 'Web Speech API (Opera)' 
                     };
-                }
-                // Firefox → Azure direct (pas de Web Speech)
-                else if (ua.includes('Firefox')) {
+                } else if (ua.includes('Firefox')) {
                     browser = { 
                         name: 'Firefox', 
                         compatibility: 'limited', 
                         method: 'azure',
                         description: 'Azure Speech (Firefox)' 
                     };
-                }
-                // Safari Desktop → Mode texte (bugs Web Speech)
-                else if (isSafari) {
+                } else if (ua.includes('Safari')) {
                     browser = { 
                         name: 'Safari', 
                         compatibility: 'poor', 
                         method: 'text',
-                        description: 'Mode Texte (Bugs Safari)',
-                        limitation: 'Web Speech API buggée sur Safari'
-                    };
-                }
-                // Samsung Internet et autres
-                else if (ua.includes('Samsung')) {
-                    browser = { 
-                        name: 'Samsung Internet', 
-                        compatibility: 'limited', 
-                        method: 'azure',
-                        description: 'Azure Speech (Mobile)' 
-                    };
-                }
-                // Navigateurs inconnus → Azure puis texte
-                else {
-                    browser = { 
-                        name: 'Navigateur inconnu', 
-                        compatibility: 'unknown', 
-                        method: 'azure',
-                        description: 'Azure Speech (Tentative)' 
+                        description: 'Mode Texte (Safari)' 
                     };
                 }
                 
+                console.log('🌐 Navigateur détecté:', browser);
                 return browser;
             }
             
@@ -542,13 +502,10 @@
             }
             
             async selectBestMethod() {
+                console.log('🎯 Sélection de la meilleure méthode...');
+                
                 // Vérifier Azure d'abord pour les navigateurs qui en ont besoin
                 await this.checkAzureAvailability();
-                
-                // iOS → Toujours mode texte (limitations Apple)
-                if (this.browserInfo.method === 'text' && this.browserInfo.limitation) {
-                    return 'text';
-                }
                 
                 // Logique de sélection intelligente selon navigateur
                 switch (this.browserInfo.method) {
@@ -558,8 +515,7 @@
                             console.log('🌐 Utilisation Web Speech pour:', this.browserInfo.name);
                             return 'webspeech';
                         } else {
-                            // Si Web Speech pas dispo, mode texte plutôt qu'Azure
-                            console.warn('⚠️ Web Speech non supporté, passage en mode texte');
+                            console.warn('⚠️ Web Speech non supporté pour', this.browserInfo.name, '- passage en mode texte');
                             return 'text';
                         }
                         
@@ -577,15 +533,29 @@
                     case 'text':
                     default:
                         // Safari/iOS → Mode texte obligatoire
+                        console.log('💬 Mode texte pour:', this.browserInfo.name);
                         return 'text';
                 }
                 
                 // Fallback final
+                console.warn('⚠️ Aucune méthode vocale disponible - mode texte');
                 return 'text';
             }
             
             isWebSpeechSupported() {
-                return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+                const hasWebKit = 'webkitSpeechRecognition' in window;
+                const hasStandard = 'SpeechRecognition' in window;
+                const isSupported = hasWebKit || hasStandard;
+                
+                console.log('🔍 Web Speech Support:', {
+                    webkitSpeechRecognition: hasWebKit,
+                    SpeechRecognition: hasStandard,
+                    supported: isSupported,
+                    protocol: location.protocol,
+                    hostname: location.hostname
+                });
+                
+                return isSupported;
             }
             
             async initialize() {
@@ -716,9 +686,19 @@
                     case 'webspeech':
                         if (this.speechRecognition) {
                             try {
+                                // Vérifier les permissions microphone d'abord
+                                console.log('🎤 Demande permission microphone...');
+                                await navigator.mediaDevices.getUserMedia({ audio: true })
+                                    .then(stream => {
+                                        console.log('✅ Permission microphone accordée');
+                                        stream.getTracks().forEach(track => track.stop()); // Arrêter le stream de test
+                                    });
+                                
+                                console.log('🎤 Démarrage Web Speech Recognition...');
                                 this.speechRecognition.start();
                                 this.startRecordingTimer();
                             } catch (error) {
+                                console.error('❌ Erreur Web Speech startup:', error);
                                 this.onError('Erreur Web Speech: ' + error.message);
                                 this.isListening = false;
                                 this.errorCount++;
@@ -1020,7 +1000,7 @@
         // Initialisation
         document.addEventListener('DOMContentLoaded', async function() {
             await initializeUserData(); // Charge les données de base ET les données backend
-            await initializeQRCode();   // QR code après que les données soient chargées
+            // QR code sera généré dans updateUserDisplay() si c'est l'hôte
             await initializeVoiceSystem();
             startRealTimeUpdates();
         });
@@ -1029,13 +1009,23 @@
             // Récupérer les données de base
             const roomId = '{{ room_id }}';
             
+            // Vérifier si c'est un accès via QR code pour rejoindre
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoJoin = urlParams.get('auto_join');
+            
+            if (autoJoin === 'true') {
+                // Redirection automatique vers la page de join avec room pré-remplie
+                console.log('🔗 Accès via QR code détecté - redirection vers page de join');
+                window.location.href = `/rooms?join=${roomId}`;
+                return;
+            }
+            
             // Essayer de récupérer l'utilisateur depuis sessionStorage ou URL
             let userId = sessionStorage.getItem('userId');
             let userLang = sessionStorage.getItem('userLang') || 'fr';
             
             // Si pas d'userId, essayer les paramètres URL
             if (!userId) {
-                const urlParams = new URLSearchParams(window.location.search);
                 userId = urlParams.get('user_id');
                 userLang = urlParams.get('lang') || 'fr';
             }
@@ -1099,9 +1089,10 @@
                         sessionStorage.setItem('userLang', userData.language);
                         
                     } else {
-                        // Utilisateur pas dans la room
-                        console.warn('⚠️ Utilisateur non trouvé dans la room');
-                        handleUserNotInRoom(roomData.room);
+                        // Utilisateur pas dans la room - rediriger vers page de join
+                        console.warn('⚠️ Utilisateur non trouvé dans la room - redirection');
+                        window.location.href = `/rooms?join=${userData.room_id}`;
+                        return;
                     }
                 } else {
                     throw new Error('Format de réponse invalide');
@@ -1201,12 +1192,18 @@
                 return;
             }
             
-            // Générer l'URL du QR code
-            const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
-            const qrUrl = `/qrcode?url=${encodeURIComponent(roomUrl)}`;
+            // Seul l'hôte devrait avoir le QR code
+            if (userData.role !== 'host') {
+                console.log('👤 Utilisateur participant - pas de QR code nécessaire');
+                return;
+            }
+            
+            // Générer l'URL qui redirige directement vers la page de join
+            const joinUrl = `${window.location.origin}/rooms?join=${userData.room_id}`;
+            const qrUrl = `/qrcode?url=${encodeURIComponent(joinUrl)}`;
             qrImageEl.src = qrUrl;
             
-            console.log('📱 QR Code généré pour:', roomUrl);
+            console.log('📱 QR Code généré pour:', joinUrl);
         }
         
         async function initializeVoiceSystem() {
@@ -1289,6 +1286,22 @@
             const roleEmoji = userData.role === 'host' ? '👑' : '👤';
             const roleText = userData.role === 'host' ? 'Hôte' : 'Participant';
             userNicknameEl.innerHTML = `${roleEmoji} ${userData.nickname} <span style="font-size: 11px; opacity: 0.7;">(${roleText})</span>`;
+            
+            // Afficher le QR code SEULEMENT pour l'hôte
+            const qrImage = document.getElementById('qr-image');
+            const qrCaption = document.getElementById('qr-caption');
+            
+            if (userData.role === 'host') {
+                qrImage.style.display = 'block';
+                qrCaption.style.display = 'block';
+                // Générer le QR code si pas encore fait
+                if (!qrImage.src || qrImage.src === window.location.href) {
+                    initializeQRCode();
+                }
+            } else {
+                qrImage.style.display = 'none';
+                qrCaption.style.display = 'none';
+            }
         }
         
         function showUserNotification() {
