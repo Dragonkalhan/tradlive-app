@@ -328,7 +328,7 @@
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <img id="qr-image" src="" alt="QR Code" style="width: 60px; height: 60px; border-radius: 8px;">
                         <div>
-                            <div>Salle : <span id="room-id">{{ room_id }}</span></div>
+                            <div style="font-size: 16px; font-weight: bold;">Salle : <span id="room-id">{{ room_id }}</span></div>
                             <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">📱 Scannez le QR code pour rejoindre</div>
                         </div>
                     </div>
@@ -349,7 +349,7 @@
                 <div class="recording-timer" id="recording-timer">0s</div>
             </button>
             <button id="text-mode-button" class="text-mode-button">💬 Mode Texte</button>
-            <button id="debug-azure-button" class="text-mode-button" style="background: rgba(255, 152, 0, 0.8);" onclick="debugAzure()">🔧 Test Azure</button>
+            <button id="debug-azure-button" class="text-mode-button" style="background: rgba(255, 152, 0, 0.8); display: none;" onclick="debugAzure()">🔧 Test Azure</button>
             
             <div id="audio-info" class="browser-info" style="margin-top: 15px; padding: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; font-size: 11px;">
                 <div>📱 <strong>Stratégie audio intelligente :</strong></div>
@@ -1019,46 +1019,194 @@
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', async function() {
-            await initializeUserData();
-            await initializeQRCode();
+            await initializeUserData(); // Charge les données de base ET les données backend
+            await initializeQRCode();   // QR code après que les données soient chargées
             await initializeVoiceSystem();
             startRealTimeUpdates();
         });
         
         async function initializeUserData() {
-            // Récupérer les données utilisateur depuis sessionStorage ou URL
+            // Récupérer les données de base
             const roomId = '{{ room_id }}';
+            
+            // Essayer de récupérer l'utilisateur depuis sessionStorage ou URL
             let userId = sessionStorage.getItem('userId');
             let userLang = sessionStorage.getItem('userLang') || 'fr';
-            let userNickname = sessionStorage.getItem('userNickname');
             
-            // Si pas de données, créer un utilisateur temporaire
-            if (!userId || !userNickname) {
-                // Générer un ID et nickname temporaires
-                userId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-                userNickname = 'Hôte_' + Math.floor(Math.random() * 1000);
-                
-                // Sauvegarder temporairement
-                sessionStorage.setItem('userId', userId);
-                sessionStorage.setItem('userNickname', userNickname);
-                sessionStorage.setItem('userLang', userLang);
+            // Si pas d'userId, essayer les paramètres URL
+            if (!userId) {
+                const urlParams = new URLSearchParams(window.location.search);
+                userId = urlParams.get('user_id');
+                userLang = urlParams.get('lang') || 'fr';
             }
             
+            // Initialiser avec les données de base
             userData = {
                 room_id: roomId,
-                user_id: userId,
+                user_id: userId || 'demo', // Fallback temporaire
                 language: userLang,
-                nickname: userNickname
+                nickname: 'Chargement...', // Sera mis à jour par l'API
+                role: 'participant'
             };
             
-            updateUserDisplay();
+            console.log('👤 Données utilisateur initiales:', userData);
+            
+            // Récupérer les vraies données depuis le backend
+            await loadRoomInfo();
+        }
+        
+        async function loadRoomInfo() {
+            try {
+                console.log('🔍 Récupération des données de la room...');
+                
+                const response = await fetch(`/api/room/${userData.room_id}/info`);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        // Room n'existe pas
+                        showErrorNotification('Cette salle n\'existe pas');
+                        setTimeout(() => {
+                            window.location.href = '/rooms';
+                        }, 3000);
+                        return;
+                    }
+                    throw new Error(`Erreur ${response.status}`);
+                }
+                
+                const roomData = await response.json();
+                console.log('📊 Données room reçues:', roomData);
+                
+                if (roomData.success && roomData.room) {
+                    // Chercher l'utilisateur actuel dans la room
+                    const currentUser = findCurrentUser(roomData.room);
+                    
+                    if (currentUser) {
+                        // Utilisateur trouvé - mettre à jour les données
+                        userData.nickname = currentUser.nickname;
+                        userData.role = currentUser.is_host ? 'host' : 'participant';
+                        userData.user_id = currentUser.user_id;
+                        
+                        console.log('✅ Utilisateur trouvé:', {
+                            nickname: userData.nickname,
+                            role: userData.role,
+                            id: userData.user_id
+                        });
+                        
+                        updateUserDisplay();
+                        
+                        // Sauvegarder pour les prochaines visites
+                        sessionStorage.setItem('userId', userData.user_id);
+                        sessionStorage.setItem('userLang', userData.language);
+                        
+                    } else {
+                        // Utilisateur pas dans la room
+                        console.warn('⚠️ Utilisateur non trouvé dans la room');
+                        handleUserNotInRoom(roomData.room);
+                    }
+                } else {
+                    throw new Error('Format de réponse invalide');
+                }
+                
+            } catch (error) {
+                console.error('❌ Erreur lors de la récupération des données room:', error);
+                
+                // Si erreur API, proposer de rejoindre la room
+                userData.nickname = 'Visiteur';
+                userData.role = 'participant';
+                updateUserDisplay();
+                
+                showUserNotification();
+            }
+        }
+        
+        function findCurrentUser(roomData) {
+            // Stratégies pour trouver l'utilisateur actuel :
+            
+            // 1. Par userId exact (si on en a un)
+            if (userData.user_id && userData.user_id !== 'demo') {
+                const userByID = roomData.users?.find(user => user.user_id === userData.user_id);
+                if (userByID) {
+                    console.log('👤 Utilisateur trouvé par ID:', userByID);
+                    return userByID;
+                }
+            }
+            
+            // 2. Si un seul utilisateur (l'hôte), c'est probablement lui
+            if (roomData.users?.length === 1) {
+                console.log('👑 Un seul utilisateur (hôte), sélection automatique');
+                return roomData.users[0];
+            }
+            
+            // 3. Demander à l'utilisateur qui il est (si plusieurs)
+            if (roomData.users?.length > 1) {
+                console.log('👥 Plusieurs utilisateurs détectés');
+                // Pour l'instant, retourner null pour déclencher la redirection
+                return null;
+            }
+            
+            return null;
+        }
+        
+        function handleUserNotInRoom(roomData) {
+            // Afficher les infos de la room
+            const roomName = roomData.room_name || 'Salle inconnue';
+            const hostName = roomData.users?.find(u => u.is_host)?.nickname || 'Hôte inconnu';
+            
+            // Proposer de rejoindre la room
+            const joinDiv = document.createElement('div');
+            joinDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 255, 255, 0.95);
+                color: #333;
+                padding: 30px;
+                border-radius: 15px;
+                max-width: 400px;
+                text-align: center;
+                z-index: 1002;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            `;
+            
+            joinDiv.innerHTML = `
+                <h3 style="margin-top: 0; color: #667eea;">🌍 TradLive</h3>
+                <p><strong>"${roomName}"</strong></p>
+                <p>Créée par <strong>${hostName}</strong></p>
+                <p style="margin: 20px 0;">Voulez-vous rejoindre cette salle ?</p>
+                <button onclick="joinThisRoom()" style="padding: 12px 24px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 5px; font-size: 16px;">
+                    👥 Rejoindre la salle
+                </button>
+                <button onclick="goHome()" style="padding: 12px 24px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 5px; font-size: 16px;">
+                    🏠 Retour à l'accueil
+                </button>
+            `;
+            
+            document.body.appendChild(joinDiv);
+            
+            // Ajouter les fonctions globales
+            window.joinThisRoom = () => {
+                window.location.href = `/rooms?join=${userData.room_id}`;
+            };
+            
+            window.goHome = () => {
+                window.location.href = '/rooms';
+            };
         }
         
         async function initializeQRCode() {
+            // Attendre que userData soit correctement initialisé
+            if (!userData || !userData.room_id) {
+                console.warn('⚠️ userData pas encore initialisé pour QR code');
+                return;
+            }
+            
             // Générer l'URL du QR code
             const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
             const qrUrl = `/qrcode?url=${encodeURIComponent(roomUrl)}`;
             qrImageEl.src = qrUrl;
+            
+            console.log('📱 QR Code généré pour:', roomUrl);
         }
         
         async function initializeVoiceSystem() {
@@ -1101,6 +1249,12 @@
                         updateStatus('💬 Mode texte par défaut', 'info');
                 }
                 
+                // Afficher le bouton debug Azure si nécessaire
+                const debugButton = document.getElementById('debug-azure-button');
+                if (method === 'azure' || voiceManager.browserInfo.method === 'azure') {
+                    debugButton.style.display = 'inline-block';
+                }
+                
             } catch (error) {
                 console.error('Erreur init système vocal:', error);
                 showTextInput();
@@ -1127,7 +1281,48 @@
         }
         
         function updateUserDisplay() {
-            userNicknameEl.textContent = userData.nickname;
+            if (!userData.nickname || userData.nickname === 'Chargement...') {
+                userNicknameEl.textContent = 'Chargement...';
+                return;
+            }
+            
+            const roleEmoji = userData.role === 'host' ? '👑' : '👤';
+            const roleText = userData.role === 'host' ? 'Hôte' : 'Participant';
+            userNicknameEl.innerHTML = `${roleEmoji} ${userData.nickname} <span style="font-size: 11px; opacity: 0.7;">(${roleText})</span>`;
+        }
+        
+        function showUserNotification() {
+            // Avertir que l'utilisateur devrait passer par le processus normal
+            const notifDiv = document.createElement('div');
+            notifDiv.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: rgba(255, 193, 7, 0.9);
+                color: #333;
+                padding: 15px 20px;
+                border-radius: 10px;
+                max-width: 300px;
+                font-size: 14px;
+                z-index: 1001;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            notifDiv.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 8px;">⚠️ Accès direct détecté</div>
+                <div>Impossible de vous identifier. Rejoignez la salle via la page d'accueil pour utiliser toutes les fonctionnalités.</div>
+                <button onclick="window.location.href='/rooms'" style="margin-top: 10px; padding: 5px 10px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    🏠 Aller à l'accueil
+                </button>
+            `;
+            
+            document.body.appendChild(notifDiv);
+            
+            // Retirer après 15 secondes
+            setTimeout(() => {
+                if (notifDiv.parentNode) {
+                    notifDiv.remove();
+                }
+            }, 15000);
         }
         
         function updateBrowserInfo() {
@@ -1263,6 +1458,13 @@
         }
         
         async function sendForTranslation(text) {
+            // Vérifier que l'utilisateur est identifié
+            if (!userData.user_id || userData.user_id === 'demo' || userData.nickname === 'Chargement...') {
+                updateStatus('❌ Utilisateur non identifié', 'error');
+                showErrorNotification('Vous devez rejoindre la salle pour envoyer des messages');
+                return;
+            }
+            
             try {
                 updateStatus('📤 Envoi de la traduction...', 'info');
                 
@@ -1285,6 +1487,11 @@
                     } else {
                         throw new Error(data.error);
                     }
+                } else if (response.status === 403) {
+                    // Utilisateur non autorisé - recharger les données
+                    updateStatus('🔄 Rechargement des données...', 'info');
+                    await loadRoomInfo();
+                    throw new Error('Utilisateur non autorisé - rechargement en cours');
                 } else {
                     throw new Error('Erreur serveur de traduction');
                 }
@@ -1331,6 +1538,96 @@
                 voiceManager.errorCount = 0;
             }
             initializeVoiceSystem();
+        }
+        
+        async function debugAzure() {
+            // Vérifier que l'utilisateur est identifié
+            if (!userData.user_id || userData.user_id === 'demo' || userData.nickname === 'Chargement...') {
+                showErrorNotification('Impossible de tester Azure - utilisateur non identifié');
+                return;
+            }
+            
+            updateStatus('🔧 Test de configuration Azure...', 'info');
+            
+            try {
+                console.log('🔧 === DEBUG AZURE START ===');
+                
+                // 1. Tester la route de statut Azure
+                console.log('🔧 Test 1: Vérification /api/speech-status');
+                const statusResponse = await fetch('/api/speech-status');
+                console.log('🔧 Status response:', statusResponse.status, statusResponse.statusText);
+                
+                if (statusResponse.ok) {
+                    const statusData = await statusResponse.json();
+                    console.log('🔧 Status data:', statusData);
+                    
+                    if (!statusData.available) {
+                        updateStatus('❌ Azure non configuré sur le serveur', 'error');
+                        showErrorNotification('Azure Speech Service non configuré. Vérifiez les variables AZURE_SPEECH_KEY et AZURE_SPEECH_REGION sur Render.');
+                        return;
+                    }
+                } else {
+                    updateStatus('❌ Route Azure inaccessible', 'error');
+                    showErrorNotification('Route /api/speech-status introuvable. Vérifiez le déploiement backend.');
+                    return;
+                }
+                
+                // 2. Tester l'enregistrement audio
+                console.log('🔧 Test 2: Vérification MediaRecorder');
+                if (!('MediaRecorder' in window)) {
+                    updateStatus('❌ MediaRecorder non supporté', 'error');
+                    showErrorNotification('Votre navigateur ne supporte pas MediaRecorder. Utilisez Chrome, Firefox ou Edge.');
+                    return;
+                }
+                
+                // 3. Tester l'accès microphone
+                console.log('🔧 Test 3: Test accès microphone');
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    console.log('🔧 Microphone OK');
+                    stream.getTracks().forEach(track => track.stop());
+                } catch (micError) {
+                    updateStatus('❌ Microphone inaccessible', 'error');
+                    showErrorNotification('Accès microphone refusé. Autorisez le microphone dans votre navigateur.');
+                    console.error('🔧 Erreur microphone:', micError);
+                    return;
+                }
+                
+                // 4. Test Azure avec audio factice
+                console.log('🔧 Test 4: Test Azure avec données factices');
+                const fakeBlob = new Blob(['fake audio data for testing'], { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio', fakeBlob, 'test.wav');
+                formData.append('language', userData.language);
+                formData.append('room_id', userData.room_id);
+                formData.append('user_id', userData.user_id);
+                
+                const testResponse = await fetch('/api/transcribe-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('🔧 Test Azure response:', testResponse.status, testResponse.statusText);
+                
+                if (testResponse.ok) {
+                    const testData = await testResponse.json();
+                    console.log('🔧 Test Azure data:', testData);
+                    updateStatus('✅ Configuration Azure OK', 'connected');
+                    showErrorNotification('Azure fonctionne ! Le problème pourrait venir du format audio réel.');
+                } else {
+                    const errorText = await testResponse.text();
+                    console.error('🔧 Erreur test Azure:', errorText);
+                    updateStatus('❌ Azure échoue', 'error');
+                    showErrorNotification('Azure retourne erreur 500. Vérifiez les logs Render et la configuration Azure.');
+                }
+                
+                console.log('🔧 === DEBUG AZURE END ===');
+                
+            } catch (error) {
+                console.error('🔧 Erreur debug Azure:', error);
+                updateStatus('❌ Erreur debug Azure', 'error');
+                showErrorNotification('Erreur pendant le debug: ' + error.message);
+            }
         }
         
         async function debugAzure() {
@@ -1427,6 +1724,12 @@
         
         function startRealTimeUpdates() {
             updateInterval = setInterval(async () => {
+                // Vérifier que l'utilisateur est bien identifié
+                if (!userData.user_id || userData.user_id === 'demo' || userData.nickname === 'Chargement...') {
+                    console.log('⚠️ Utilisateur non identifié, pas de mise à jour');
+                    return;
+                }
+                
                 try {
                     const response = await fetch(`/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`);
                     if (response.ok) {
@@ -1448,9 +1751,9 @@
                         }
                         updateErrorCount = 0; // Reset après succès
                     } else if (response.status === 403) {
-                        // Utilisateur non autorisé - arrêter les mises à jour
-                        console.log('Utilisateur non autorisé - arrêt des mises à jour');
-                        clearInterval(updateInterval);
+                        // Utilisateur non autorisé - recharger les données
+                        console.log('🔄 Utilisateur non autorisé - rechargement des données...');
+                        await loadRoomInfo();
                     }
                 } catch (error) {
                     updateErrorCount++;
@@ -1497,7 +1800,8 @@
         
         // Heartbeat pour maintenir la session
         setInterval(() => {
-            if (userData) {
+            // Seulement si l'utilisateur est identifié
+            if (userData && userData.user_id && userData.user_id !== 'demo' && userData.nickname !== 'Chargement...') {
                 fetch(`/api/room/${userData.room_id}/heartbeat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
