@@ -390,8 +390,8 @@
                 if (data.success) {
                     showStatus(`Salle créée ! Code : ${data.room_id}`, 'success');
                     
-                    // Sauvegarder les informations dans le localStorage
-                    localStorage.setItem('tradlive_user', JSON.stringify({
+                    // Sauvegarder les informations dans le sessionStorage
+                    sessionStorage.setItem('tradlive_user', JSON.stringify({
                         user_id: data.user_id,
                         room_id: data.room_id,
                         nickname: document.getElementById('create-nickname').value,
@@ -443,8 +443,8 @@
                 if (data.success) {
                     showStatus('Connexion réussie !', 'success');
                     
-                    // Sauvegarder les informations dans le localStorage
-                    localStorage.setItem('tradlive_user', JSON.stringify({
+                    // Sauvegarder les informations dans le sessionStorage
+                    sessionStorage.setItem('tradlive_user', JSON.stringify({
                         user_id: data.user_id,
                         room_id: data.room_id,
                         nickname: document.getElementById('join-nickname').value,

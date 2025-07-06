@@ -912,11 +912,12 @@
         
         // 🚀 INTÉGRATION DANS L'INTERFACE
         let voiceManager;
+        let tradliveUser = JSON.parse(sessionStorage.getItem('tradlive_user'));
         let userData = { 
             room_id: '{{ room_id }}', 
-            user_id: sessionStorage.getItem('userId') || 'demo', 
-            language: sessionStorage.getItem('userLang') || 'fr',
-            nickname: sessionStorage.getItem('userNickname') || 'Utilisateur'
+            user_id: tradliveUser['user_id'] || 'demo', 
+            language: tradliveUser['language'] || 'fr',
+            nickname: tradliveUser['nickname'] || 'Utilisateur'
         };
         let updateInterval;
         let isHost = false;
