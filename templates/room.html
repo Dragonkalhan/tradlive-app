@@ -50,53 +50,9 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .method-webspeech { background: rgba(76, 175, 80, 0.9); }
-        .method-azure { background: rgba(255, 193, 7, 0.9); color: #333; }
+        .method-whisper { background: rgba(76, 175, 80, 0.9); }
+        .method-speech { background: rgba(255, 193, 7, 0.9); color: #333; }
         .method-text { background: rgba(244, 67, 54, 0.9); }
-        
-        .leave-button {
-            padding: 8px 16px;
-            background: rgba(244, 67, 54, 0.8);
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        /* QR Code pour l'hôte */
-        .qr-section {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 15px;
-        }
-        
-        .qr-section.show {
-            display: block;
-        }
-        
-        .qrcode-container {
-            display: inline-block;
-            background: white;
-            padding: 10px;
-            border-radius: 10px;
-            margin: 10px;
-        }
-        
-        .qrcode-container img {
-            width: 150px;
-            height: 150px;
-            display: block;
-        }
-        
-        .qr-caption {
-            font-size: 12px;
-            margin-top: 10px;
-            opacity: 0.8;
-        }
         
         .status {
             text-align: center;
@@ -326,13 +282,6 @@
             transform: translateX(0);
         }
         
-        .browser-info {
-            font-size: 12px;
-            opacity: 0.8;
-            text-align: center;
-            margin-top: 10px;
-        }
-        
         @media (max-width: 600px) {
             .container {
                 margin: 10px;
@@ -349,11 +298,6 @@
                 margin: 5px 0;
                 min-width: auto;
             }
-            
-            .qrcode-container img {
-                width: 120px;
-                height: 120px;
-            }
         }
     </style>
 </head>
@@ -368,19 +312,6 @@
                     <div id="voice-method" class="voice-method-indicator">Détection en cours...</div>
                 </div>
                 <button class="leave-button" onclick="leaveRoom()">🚪 Quitter</button>
-            </div>
-        </div>
-        
-        <!-- QR Code pour l'hôte -->
-        <div id="qr-section" class="qr-section">
-            <h3>🔗 Partage de la salle</h3>
-            <p>Scannez ce QR code pour rejoindre directement la salle :</p>
-            <div class="qrcode-container">
-                <img src="/qrcode" alt="QR Code" id="qr-code-image">
-            </div>
-            <div class="qr-caption">
-                Code salle : <strong id="qr-room-code">{{ room_id }}</strong><br>
-                <span id="room-url">Les participants scannent pour rejoindre automatiquement</span>
             </div>
         </div>
         
@@ -408,8 +339,6 @@
                 <button onclick="hideTextInput()">❌ Fermer</button>
                 <button onclick="tryVoiceAgain()">🎤 Réessayer le micro</button>
             </div>
-            
-            <div id="browser-info" class="browser-info"></div>
         </div>
         
         <div class="translation-area">
@@ -436,319 +365,53 @@
     </div>
     
     <script>
-        // 🧠 GESTIONNAIRE INTELLIGENT PRINCIPAL (WEB SPEECH + AZURE)
-        class VoiceManager {
+        // 🎵 CLASSES COMPLÈTES POUR WHISPER ET FALLBACK
+        class WhisperAudioRecorder {
             constructor(options = {}) {
-                this.roomId = options.roomId;
-                this.userId = options.userId;
+                this.isRecording = false;
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.stream = null;
+                this.recordingTimeout = null;
+                this.recordingStartTime = null;
+                this.maxRecordingTime = options.maxRecordingTime || 30000;
+                this.minRecordingTime = options.minRecordingTime || 1000;
+                this.apiEndpoint = options.apiEndpoint || '/api/transcribe-audio';
                 this.language = options.language || 'fr';
-                this.isHost = options.isHost || false;
+                this.roomId = options.roomId || null;
+                this.userId = options.userId || null;
                 
                 this.onResult = options.onResult || (() => {});
                 this.onError = options.onError || (() => {});
                 this.onStatusChange = options.onStatusChange || (() => {});
-                
-                this.speechRecognition = null;
-                this.currentMethod = null;
-                this.isListening = false;
-                this.recordingTimer = null;
-                this.recordingStartTime = null;
-                
-                this.browserInfo = this.detectBrowser();
-                this.azureAvailable = false;
             }
             
-            detectBrowser() {
-                const ua = navigator.userAgent;
-                const isIOS = /iPad|iPhone|iPod/.test(ua);
-                const isSafari = ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('Edge');
-                
-                let browser = { name: 'unknown', compatibility: 'unknown', method: 'text' };
-                
-                // iPhone/iPad → Toujours mode texte (limitations Apple)
-                if (isIOS) {
-                    browser = { 
-                        name: 'iOS Safari', 
-                        compatibility: 'poor', 
-                        method: 'text',
-                        description: 'Mode Texte (Limitation iOS)',
-                        limitation: 'Apple bloque Web Speech et MediaRecorder pose problème'
-                    };
-                }
-                // Chrome Desktop/Android → Web Speech optimal
-                else if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('Brave')) {
-                    browser = { 
-                        name: 'Chrome', 
-                        compatibility: 'excellent', 
-                        method: 'webspeech',
-                        description: 'Web Speech API (Optimal)' 
-                    };
-                }
-                // Edge Chromium → Web Speech optimal
-                else if (ua.includes('Edge')) {
-                    browser = { 
-                        name: 'Edge', 
-                        compatibility: 'excellent', 
-                        method: 'webspeech',
-                        description: 'Web Speech API (Optimal)' 
-                    };
-                }
-                // Opera (Chromium) → Web Speech
-                else if (ua.includes('Opera') || ua.includes('OPR')) {
-                    browser = { 
-                        name: 'Opera', 
-                        compatibility: 'good', 
-                        method: 'webspeech',
-                        description: 'Web Speech API (Chromium)' 
-                    };
-                }
-                // Brave → Web Speech puis Azure fallback
-                else if (ua.includes('Brave')) {
-                    browser = { 
-                        name: 'Brave', 
-                        compatibility: 'limited', 
-                        method: 'webspeech',
-                        description: 'Web Speech + Azure Fallback' 
-                    };
-                }
-                // Firefox → Azure direct (pas de Web Speech)
-                else if (ua.includes('Firefox')) {
-                    browser = { 
-                        name: 'Firefox', 
-                        compatibility: 'limited', 
-                        method: 'azure',
-                        description: 'Azure Speech (Fallback)' 
-                    };
-                }
-                // Safari Desktop → Mode texte (bugs Web Speech)
-                else if (isSafari) {
-                    browser = { 
-                        name: 'Safari', 
-                        compatibility: 'poor', 
-                        method: 'text',
-                        description: 'Mode Texte (Bugs Safari)',
-                        limitation: 'Web Speech API buggée sur Safari'
-                    };
-                }
-                // Samsung Internet et autres
-                else if (ua.includes('Samsung')) {
-                    browser = { 
-                        name: 'Samsung Internet', 
-                        compatibility: 'limited', 
-                        method: 'azure',
-                        description: 'Azure Speech (Mobile)' 
-                    };
-                }
-                // Navigateurs inconnus → Azure puis texte
-                else {
-                    browser = { 
-                        name: 'Navigateur inconnu', 
-                        compatibility: 'unknown', 
-                        method: 'azure',
-                        description: 'Azure Speech (Tentative)' 
-                    };
-                }
-                
-                return browser;
-            }
-            
-            async checkAzureAvailability() {
-                try {
-                    const response = await fetch('/api/speech-status');
-                    if (response.ok) {
-                        const data = await response.json();
-                        this.azureAvailable = data.available;
-                        return data.available;
-                    }
-                } catch (error) {
-                    console.log('Azure non disponible:', error);
-                }
-                return false;
-            }
-            
-            async selectBestMethod() {
-                // Vérifier Azure d'abord
-                await this.checkAzureAvailability();
-                
-                // iOS → Toujours mode texte (limitations Apple)
-                if (this.browserInfo.method === 'text' && this.browserInfo.limitation) {
-                    return 'text';
-                }
-                
-                // Logique de sélection intelligente selon navigateur
-                switch (this.browserInfo.method) {
-                    case 'webspeech':
-                        // Chrome/Edge/Opera → Priorité Web Speech
-                        if (this.isWebSpeechSupported()) {
-                            return 'webspeech';
-                        } else if (this.azureAvailable) {
-                            return 'azure';
-                        }
-                        break;
-                        
-                    case 'azure':
-                        // Firefox/Samsung → Priorité Azure
-                        if (this.azureAvailable) {
-                            return 'azure';
-                        } else if (this.isWebSpeechSupported()) {
-                            return 'webspeech';
-                        }
-                        break;
-                        
-                    case 'text':
-                    default:
-                        // Safari/iOS → Mode texte obligatoire
-                        return 'text';
-                }
-                
-                // Fallback final
-                return 'text';
-            }
-            
-            isWebSpeechSupported() {
-                return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+            static isSupported() {
+                return 'MediaRecorder' in window && 'mediaDevices' in navigator;
             }
             
             async initialize() {
-                const method = await this.selectBestMethod();
-                this.currentMethod = method;
+                if (!WhisperAudioRecorder.isSupported()) {
+                    throw new Error('MediaRecorder non supporté');
+                }
                 
                 try {
-                    switch (method) {
-                        case 'webspeech':
-                            this.initializeWebSpeech();
-                            break;
-                        case 'azure':
-                            // Azure ne nécessite pas d'initialisation côté client
-                            break;
-                        default:
-                            this.onStatusChange('text', 'Mode texte activé');
-                            break;
-                    }
-                    return method;
-                } catch (error) {
-                    console.error('Erreur initialisation:', error);
-                    this.currentMethod = 'text';
-                    this.onStatusChange('text', 'Mode texte activé (erreur init)');
-                    return 'text';
-                }
-            }
-            
-            initializeWebSpeech() {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                
-                this.speechRecognition = new SpeechRecognition();
-                this.speechRecognition.lang = this.language === 'fr' ? 'fr-FR' : `${this.language}-${this.language.toUpperCase()}`;
-                this.speechRecognition.continuous = false;
-                this.speechRecognition.interimResults = false;
-                this.speechRecognition.maxAlternatives = 1;
-                
-                this.speechRecognition.onstart = () => {
-                    this.onStatusChange('recording', 'Écoute en cours...');
-                };
-                
-                this.speechRecognition.onresult = (event) => {
-                    const lastResult = event.results[event.results.length - 1];
-                    const transcript = lastResult[0].transcript.trim();
-                    const confidence = lastResult[0].confidence || 0.9;
-                    
-                    if (transcript) {
-                        this.onResult({ 
-                            text: transcript, 
-                            confidence: confidence,
-                            service: 'webspeech'
-                        });
-                        this.onStatusChange('success', 'Reconnaissance réussie');
-                    }
-                };
-                
-                this.speechRecognition.onerror = (event) => {
-                    let errorMsg = 'Erreur Web Speech: ';
-                    switch (event.error) {
-                        case 'network':
-                            errorMsg += 'Problème réseau - basculement vers Azure';
-                            this.fallbackToAzure();
-                            break;
-                        case 'not-allowed':
-                            errorMsg += 'Microphone non autorisé';
-                            break;
-                        case 'no-speech':
-                            errorMsg += 'Aucune parole détectée';
-                            break;
-                        default:
-                            errorMsg += event.error;
-                    }
-                    this.onError(errorMsg);
-                };
-                
-                this.speechRecognition.onend = () => {
-                    this.isListening = false;
-                    this.stopRecordingTimer();
-                };
-            }
-            
-            async fallbackToAzure() {
-                if (this.azureAvailable) {
-                    this.currentMethod = 'azure';
-                    this.onStatusChange('info', 'Basculement vers Azure Speech...');
-                } else {
-                    this.currentMethod = 'text';
-                    this.onStatusChange('text', 'Mode texte activé');
-                }
-            }
-            
-            async startListening() {
-                if (this.isListening) return;
-                
-                this.isListening = true;
-                
-                switch (this.currentMethod) {
-                    case 'webspeech':
-                        if (this.speechRecognition) {
-                            try {
-                                this.speechRecognition.start();
-                                this.startRecordingTimer();
-                            } catch (error) {
-                                this.onError('Erreur Web Speech: ' + error.message);
-                                this.isListening = false;
-                            }
-                        }
-                        break;
-                        
-                    case 'azure':
-                        await this.startAzureRecording();
-                        break;
-                        
-                    default:
-                        this.onStatusChange('text', 'Utilisez le mode texte');
-                        this.isListening = false;
-                        break;
-                }
-            }
-            
-            async startAzureRecording() {
-                try {
-                    this.onStatusChange('recording', 'Enregistrement pour Azure...');
-                    this.startRecordingTimer();
-                    
-                    // Obtenir l'accès au microphone
-                    const stream = await navigator.mediaDevices.getUserMedia({
+                    this.stream = await navigator.mediaDevices.getUserMedia({
                         audio: {
                             channelCount: 1,
                             sampleRate: 16000,
                             echoCancellation: true,
-                            noiseSuppression: true
+                            noiseSuppression: true,
+                            autoGainControl: true
                         }
                     });
                     
-                    // Configuration MediaRecorder
                     const options = {
                         mimeType: this.getSupportedMimeType(),
                         audioBitsPerSecond: 128000
                     };
                     
-                    this.mediaRecorder = new MediaRecorder(stream, options);
-                    this.audioChunks = [];
+                    this.mediaRecorder = new MediaRecorder(this.stream, options);
                     
                     this.mediaRecorder.ondataavailable = (event) => {
                         if (event.data.size > 0) {
@@ -757,23 +420,19 @@
                     };
                     
                     this.mediaRecorder.onstop = () => {
-                        this.processAzureRecording();
-                        stream.getTracks().forEach(track => track.stop());
+                        this.processRecording();
                     };
                     
-                    this.mediaRecorder.start(1000);
+                    this.mediaRecorder.onerror = (event) => {
+                        this.onError('Erreur MediaRecorder: ' + event.error);
+                    };
                     
-                    // Auto-stop après 30 secondes
-                    setTimeout(() => {
-                        if (this.isListening && this.mediaRecorder.state === 'recording') {
-                            this.stopListening();
-                        }
-                    }, 30000);
+                    console.log('✅ Whisper MediaRecorder initialisé');
+                    return true;
                     
                 } catch (error) {
-                    this.onError('Erreur Azure: ' + error.message);
-                    this.isListening = false;
-                    this.stopRecordingTimer();
+                    console.error('❌ Erreur init Whisper:', error);
+                    throw error;
                 }
             }
             
@@ -791,29 +450,88 @@
                         return type;
                     }
                 }
-                return 'audio/wav';
+                return '';
             }
             
-            async processAzureRecording() {
-                if (!this.audioChunks || this.audioChunks.length === 0) {
+            async startRecording() {
+                if (this.isRecording) return;
+                
+                try {
+                    if (!this.mediaRecorder) {
+                        await this.initialize();
+                    }
+                    
+                    this.audioChunks = [];
+                    this.recordingStartTime = Date.now();
+                    
+                    this.mediaRecorder.start(1000);
+                    this.isRecording = true;
+                    
+                    this.recordingTimeout = setTimeout(() => {
+                        if (this.isRecording) {
+                            this.stopRecording();
+                        }
+                    }, this.maxRecordingTime);
+                    
+                    this.onStatusChange('recording', 'Enregistrement en cours...');
+                    
+                } catch (error) {
+                    this.onError('Impossible de démarrer l\'enregistrement: ' + error.message);
+                    this.isRecording = false;
+                }
+            }
+            
+            stopRecording() {
+                if (!this.isRecording) return;
+                
+                if (this.recordingTimeout) {
+                    clearTimeout(this.recordingTimeout);
+                    this.recordingTimeout = null;
+                }
+                
+                if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    this.mediaRecorder.stop();
+                }
+                
+                this.isRecording = false;
+                this.onStatusChange('processing', 'Traitement en cours...');
+            }
+            
+            async processRecording() {
+                if (this.audioChunks.length === 0) {
                     this.onError('Aucune donnée audio enregistrée');
                     return;
                 }
                 
                 try {
-                    this.onStatusChange('processing', 'Envoi vers Azure...');
-                    
                     const audioBlob = new Blob(this.audioChunks, { 
-                        type: this.getSupportedMimeType() 
+                        type: this.getSupportedMimeType() || 'audio/wav' 
                     });
+                    
+                    if (audioBlob.size < 1000) {
+                        this.onError('Enregistrement trop court');
+                        return;
+                    }
+                    
+                    await this.sendToServer(audioBlob);
+                    
+                } catch (error) {
+                    this.onError('Erreur de traitement: ' + error.message);
+                }
+            }
+            
+            async sendToServer(audioBlob) {
+                try {
+                    this.onStatusChange('uploading', 'Envoi au serveur...');
                     
                     const formData = new FormData();
                     formData.append('audio', audioBlob, 'recording.wav');
                     formData.append('language', this.language);
-                    formData.append('room_id', this.roomId);
-                    formData.append('user_id', this.userId);
                     
-                    const response = await fetch('/api/transcribe-audio', {
+                    if (this.roomId) formData.append('room_id', this.roomId);
+                    if (this.userId) formData.append('user_id', this.userId);
+                    
+                    const response = await fetch(this.apiEndpoint, {
                         method: 'POST',
                         body: formData
                     });
@@ -824,19 +542,214 @@
                     
                     const data = await response.json();
                     
-                    if (data.success && data.text) {
+                    if (data.success) {
                         this.onResult({
                             text: data.text,
-                            confidence: data.confidence || 0.9,
-                            service: 'azure'
+                            detected_language: data.detected_language,
+                            confidence: data.confidence || 1
                         });
-                        this.onStatusChange('success', 'Transcription Azure réussie');
+                        this.onStatusChange('success', 'Transcription réussie');
                     } else {
-                        throw new Error(data.error || 'Aucun texte détecté');
+                        throw new Error(data.error || 'Erreur de transcription');
                     }
                     
                 } catch (error) {
-                    this.onError('Erreur Azure: ' + error.message);
+                    this.onError('Erreur de communication: ' + error.message);
+                    this.onStatusChange('error', 'Erreur de communication');
+                }
+            }
+            
+            cleanup() {
+                if (this.recordingTimeout) {
+                    clearTimeout(this.recordingTimeout);
+                }
+                
+                if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    this.mediaRecorder.stop();
+                }
+                
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+                
+                this.isRecording = false;
+                this.audioChunks = [];
+            }
+            
+            getRecordingDuration() {
+                if (!this.recordingStartTime) return 0;
+                return Math.floor((Date.now() - this.recordingStartTime) / 1000);
+            }
+        }
+        
+        // 🧠 GESTIONNAIRE INTELLIGENT PRINCIPAL
+        class IntelligentVoiceManager {
+            constructor(options = {}) {
+                this.roomId = options.roomId;
+                this.userId = options.userId;
+                this.language = options.language || 'fr';
+                this.isHost = options.isHost || false;
+                
+                this.onResult = options.onResult || (() => {});
+                this.onError = options.onError || (() => {});
+                this.onStatusChange = options.onStatusChange || (() => {});
+                
+                this.speechRecognition = null;
+                this.whisperRecorder = null;
+                this.currentMethod = null;
+                this.isListening = false;
+                this.recordingTimer = null;
+                
+                this.browserInfo = this.detectBrowser();
+            }
+            
+            detectBrowser() {
+                const ua = navigator.userAgent;
+                let browser = { name: 'unknown', compatibility: 'unknown', recommendation: '' };
+                
+                if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('Brave')) {
+                    browser = { name: 'Chrome', compatibility: 'excellent', recommendation: 'Parfait !' };
+                } else if (ua.includes('Brave')) {
+                    browser = { name: 'Brave', compatibility: 'problematic', recommendation: 'Whisper recommandé' };
+                } else if (ua.includes('Edge')) {
+                    browser = { name: 'Edge', compatibility: 'good', recommendation: 'Très compatible' };
+                } else if (ua.includes('Firefox')) {
+                    browser = { name: 'Firefox', compatibility: 'limited', recommendation: 'Whisper recommandé' };
+                } else if (ua.includes('Safari')) {
+                    browser = { name: 'Safari', compatibility: 'poor', recommendation: 'Mode texte recommandé' };
+                }
+                
+                return browser;
+            }
+            
+            async detectBestMethod() {
+                const capabilities = {
+                    speechRecognition: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
+                    mediaRecorder: WhisperAudioRecorder.isSupported(),
+                    browser: this.browserInfo
+                };
+                
+                // Priorité à Whisper pour Brave et navigateurs problématiques
+                if (capabilities.mediaRecorder && (this.browserInfo.compatibility === 'problematic' || this.browserInfo.compatibility === 'limited')) {
+                    return 'whisper';
+                }
+                
+                // Vérifier si Whisper est disponible côté serveur
+                try {
+                    const response = await fetch('/api/whisper-status');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.available && capabilities.mediaRecorder) {
+                            return 'whisper';
+                        }
+                    }
+                } catch (error) {
+                    console.log('Whisper non disponible côté serveur');
+                }
+                
+                // Fallback sur Speech Recognition si disponible
+                if (capabilities.speechRecognition && this.browserInfo.compatibility !== 'poor') {
+                    return 'speech';
+                }
+                
+                return 'text';
+            }
+            
+            async initialize() {
+                const method = await this.detectBestMethod();
+                this.currentMethod = method;
+                
+                try {
+                    switch (method) {
+                        case 'whisper':
+                            await this.initializeWhisper();
+                            break;
+                        case 'speech':
+                            await this.initializeSpeechRecognition();
+                            break;
+                        default:
+                            this.onStatusChange('text', 'Mode texte activé');
+                            break;
+                    }
+                    return method;
+                } catch (error) {
+                    console.error('Erreur initialisation:', error);
+                    this.currentMethod = 'text';
+                    this.onStatusChange('text', 'Mode texte activé (erreur init)');
+                    return 'text';
+                }
+            }
+            
+            async initializeWhisper() {
+                this.whisperRecorder = new WhisperAudioRecorder({
+                    apiEndpoint: '/api/transcribe-audio',
+                    language: this.language,
+                    roomId: this.roomId,
+                    userId: this.userId,
+                    onResult: this.onResult,
+                    onError: this.onError,
+                    onStatusChange: this.onStatusChange
+                });
+                
+                await this.whisperRecorder.initialize();
+            }
+            
+            async initializeSpeechRecognition() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                
+                this.speechRecognition = new SpeechRecognition();
+                this.speechRecognition.lang = this.language === 'fr' ? 'fr-FR' : `${this.language}-${this.language.toUpperCase()}`;
+                this.speechRecognition.continuous = false;
+                this.speechRecognition.interimResults = true;
+                
+                this.speechRecognition.onresult = (event) => {
+                    const lastResult = event.results[event.results.length - 1];
+                    const transcript = lastResult[0].transcript;
+                    
+                    if (lastResult.isFinal) {
+                        this.onResult({ 
+                            text: transcript, 
+                            confidence: lastResult[0].confidence || 0.9 
+                        });
+                    }
+                };
+                
+                this.speechRecognition.onerror = (event) => {
+                    if (event.error === 'network') {
+                        this.onError('Erreur réseau Speech Recognition - basculement vers Whisper recommandé');
+                    } else {
+                        this.onError('Speech Recognition: ' + event.error);
+                    }
+                };
+            }
+            
+            async startListening() {
+                if (this.isListening) return;
+                
+                this.isListening = true;
+                
+                switch (this.currentMethod) {
+                    case 'whisper':
+                        if (this.whisperRecorder) {
+                            await this.whisperRecorder.startRecording();
+                            this.startRecordingTimer();
+                        }
+                        break;
+                    case 'speech':
+                        if (this.speechRecognition) {
+                            try {
+                                this.speechRecognition.start();
+                            } catch (error) {
+                                this.onError('Erreur Speech Recognition: ' + error.message);
+                                this.isListening = false;
+                            }
+                        }
+                        break;
+                    default:
+                        this.onStatusChange('text', 'Utilisez le mode texte');
+                        this.isListening = false;
+                        break;
                 }
             }
             
@@ -847,22 +760,20 @@
                 this.stopRecordingTimer();
                 
                 switch (this.currentMethod) {
-                    case 'webspeech':
-                        if (this.speechRecognition) {
-                            this.speechRecognition.stop();
+                    case 'whisper':
+                        if (this.whisperRecorder) {
+                            this.whisperRecorder.stopRecording();
                         }
                         break;
-                        
-                    case 'azure':
-                        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-                            this.mediaRecorder.stop();
+                    case 'speech':
+                        if (this.speechRecognition) {
+                            this.speechRecognition.stop();
                         }
                         break;
                 }
             }
             
             startRecordingTimer() {
-                this.recordingStartTime = Date.now();
                 const timerEl = document.getElementById('recording-timer');
                 let seconds = 0;
                 
@@ -889,38 +800,27 @@
             cleanup() {
                 this.stopRecordingTimer();
                 
+                if (this.whisperRecorder) {
+                    this.whisperRecorder.cleanup();
+                }
                 if (this.speechRecognition) {
                     this.speechRecognition = null;
                 }
-                
-                if (this.mediaRecorder) {
-                    this.mediaRecorder = null;
-                }
-                
-                this.isListening = false;
             }
             
             getStatus() {
                 return {
                     method: this.currentMethod,
                     isListening: this.isListening,
-                    browser: this.browserInfo,
-                    azureAvailable: this.azureAvailable
+                    browser: this.browserInfo
                 };
             }
         }
         
         // 🚀 INTÉGRATION DANS L'INTERFACE
         let voiceManager;
-        let tradliveUser = JSON.parse(sessionStorage.getItem('tradlive_user'));
-        let userData = { 
-            room_id: '{{ room_id }}', 
-            user_id: tradliveUser['user_id'] || 'demo', 
-            language: tradliveUser['language'] || 'fr',
-            nickname: tradliveUser['nickname'] || 'Utilisateur'
-        };
+        let userData = { room_id: '{{ room_id }}', user_id: 'demo', language: 'fr' };
         let updateInterval;
-        let isHost = false;
         
         // Éléments DOM
         const statusEl = document.getElementById('status');
@@ -934,25 +834,19 @@
         const voiceMethodEl = document.getElementById('voice-method');
         const errorNotification = document.getElementById('error-notification');
         const errorMessage = document.getElementById('error-message');
-        const browserInfoEl = document.getElementById('browser-info');
-        const userNicknameEl = document.getElementById('user-nickname');
-        const qrSection = document.getElementById('qr-section');
-        const qrCodeImage = document.getElementById('qr-code-image');
         
         // Initialisation
         document.addEventListener('DOMContentLoaded', async function() {
             await initializeVoiceSystem();
             startRealTimeUpdates();
-            updateUserDisplay();
-            loadRoomInfo();
         });
         
         async function initializeVoiceSystem() {
-            voiceManager = new VoiceManager({
+            voiceManager = new IntelligentVoiceManager({
                 roomId: userData.room_id,
                 userId: userData.user_id,
                 language: userData.language,
-                isHost: true, // À adapter selon votre logique
+                isHost: true, // Simulé
                 onResult: handleVoiceResult,
                 onError: handleVoiceError,
                 onStatusChange: handleStatusChange
@@ -961,131 +855,35 @@
             try {
                 const method = await voiceManager.initialize();
                 updateMethodDisplay(method);
-                updateBrowserInfo();
                 
-                // Messages d'initialisation selon la méthode
-                switch (method) {
-                    case 'text':
-                        showTextInput();
-                        updateStatus('💬 Mode texte activé', 'info');
-                        break;
-                        
-                    case 'azure':
-                        micButton.disabled = false;
-                        micButton.textContent = '🎤 Parler (Azure)';
-                        updateStatus('☁️ Azure Speech prêt', 'connected');
-                        break;
-                        
-                    case 'webspeech':
-                        micButton.disabled = false;
-                        micButton.textContent = '🎤 Parler';
-                        updateStatus('✅ Web Speech prêt', 'connected');
-                        break;
-                        
-                    default:
-                        showTextInput();
-                        updateStatus('💬 Mode texte par défaut', 'info');
+                if (method === 'text') {
+                    showTextInput();
+                } else {
+                    micButton.disabled = false;
+                    micButton.textContent = '🎤 Parler';
                 }
                 
             } catch (error) {
                 console.error('Erreur init système vocal:', error);
                 showTextInput();
-                updateStatus('💬 Mode texte (erreur init)', 'error');
-                showErrorNotification('Erreur d\'initialisation: ' + error.message);
             }
-        }
-        
-        function loadRoomInfo() {
-            fetch(`/api/room/${userData.room_id}/info`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        // Vérifier si l'utilisateur est l'hôte
-                        const currentUser = data.room.users.find(u => u.user_id === userData.user_id);
-                        if (currentUser) {
-                            isHost = currentUser.is_host;
-                            
-                            // Afficher le QR code si l'utilisateur est l'hôte
-                            if (isHost) {
-                                qrSection.classList.add('show');
-                                updateQRCode();
-                            }
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur lors du chargement des infos de salle:', error);
-                });
-        }
-        
-        function updateQRCode() {
-            // QR code mène directement à la salle pour rejoindre automatiquement
-            const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
-            qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}&t=${Date.now()}`;
-            document.getElementById('qr-room-code').textContent = userData.room_id;
         }
         
         function updateMethodDisplay(method) {
             const methodNames = {
-                'webspeech': 'Web Speech API',
-                'azure': 'Azure Speech',
+                'whisper': 'Whisper (Serveur)',
+                'speech': 'Speech Recognition',
                 'text': 'Mode Texte'
             };
             
             const methodClasses = {
-                'webspeech': 'method-webspeech',
-                'azure': 'method-azure',  
+                'whisper': 'method-whisper',
+                'speech': 'method-speech',  
                 'text': 'method-text'
             };
             
             voiceMethodEl.textContent = methodNames[method] || method;
             voiceMethodEl.className = `voice-method-indicator ${methodClasses[method] || ''}`;
-        }
-        
-        function updateBrowserInfo() {
-            const info = voiceManager.browserInfo;
-            let infoText = `${info.name} - ${info.description}`;
-            
-            // Ajouter des avertissements spécifiques
-            if (info.limitation) {
-                infoText += ` ⚠️`;
-                showBrowserLimitation(info.limitation);
-            }
-            
-            browserInfoEl.textContent = infoText;
-        }
-        
-        function showBrowserLimitation(limitation) {
-            // Afficher une notification discrète sur les limitations
-            const limitationDiv = document.createElement('div');
-            limitationDiv.style.cssText = `
-                background: rgba(255, 193, 7, 0.8);
-                color: #333;
-                padding: 10px;
-                border-radius: 8px;
-                margin: 10px 0;
-                font-size: 14px;
-                text-align: center;
-            `;
-            limitationDiv.textContent = `ℹ️ ${limitation}`;
-            
-            // L'insérer temporairement
-            const controls = document.getElementById('controls');
-            controls.insertBefore(limitationDiv, controls.firstChild);
-            
-            // Retirer après 10 secondes
-            setTimeout(() => {
-                if (limitationDiv.parentNode) {
-                    limitationDiv.remove();
-                }
-            }, 10000);
-        }
-        
-        function updateUserDisplay() {
-            userNicknameEl.textContent = userData.nickname;
         }
         
         function handleVoiceResult(result) {
@@ -1100,24 +898,24 @@
                 originalTextEl.classList.remove('updating');
             }, 300);
             
-            // Afficher la confiance et le service
+            // Afficher la confiance si disponible
             if (result.confidence && result.confidence < 1) {
-                confidenceDisplay.textContent = `Confiance: ${Math.round(result.confidence * 100)}% (${result.service})`;
+                confidenceDisplay.textContent = `Confiance: ${Math.round(result.confidence * 100)}%`;
                 confidenceDisplay.style.display = 'block';
             } else {
                 confidenceDisplay.style.display = 'none';
             }
             
-            // Envoyer à votre API de traduction
-            sendForTranslation(result.text);
+            // Simuler traduction (remplace par ton API de traduction)
+            simulateTranslation(result.text);
         }
         
         function handleVoiceError(error) {
             console.error('Erreur vocale:', error);
             showErrorNotification(error);
             
-            // Auto-basculement vers mode texte après erreurs critiques
-            if (error.includes('Microphone non autorisé') || error.includes('Safari')) {
+            // Auto-basculement vers mode texte après 3 erreurs
+            if (error.includes('network') || error.includes('communication')) {
                 setTimeout(() => {
                     showTextInput();
                 }, 2000);
@@ -1141,7 +939,7 @@
             switch (status) {
                 case 'recording':
                     micButton.classList.add('recording');
-                    micButton.textContent = '🛑 Arrêter';
+                    micButton.textContent = '🎤 Arrêter';
                     waveAnimation.classList.add('active');
                     break;
                 case 'processing':
@@ -1169,37 +967,21 @@
             }, 5000);
         }
         
-        async function sendForTranslation(text) {
-            try {
-                updateStatus('📤 Envoi de la traduction...', 'info');
+        function simulateTranslation(text) {
+            updateStatus('📤 Traduction en cours...', 'info');
+            
+            // Simuler délai API
+            setTimeout(() => {
+                translatedTextEl.classList.add('updating');
+                translatedTextEl.textContent = `[EN] ${text}`;
+                translatedTextEl.classList.remove('empty-translation');
                 
-                const response = await fetch(`/api/room/${userData.room_id}/translate`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: userData.user_id,
-                        text: text,
-                        source_language: userData.language
-                    })
-                });
+                setTimeout(() => {
+                    translatedTextEl.classList.remove('updating');
+                }, 300);
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success) {
-                        updateStatus('✅ Message envoyé', 'connected');
-                    } else {
-                        throw new Error(data.error);
-                    }
-                } else {
-                    throw new Error('Erreur serveur de traduction');
-                }
-                
-            } catch (error) {
-                updateStatus('❌ Erreur de traduction', 'error');
-                showErrorNotification('Erreur lors de l\'envoi: ' + error.message);
-            }
+                updateStatus('✅ Traduction terminée', 'connected');
+            }, 1000);
         }
         
         // Event listeners
@@ -1225,7 +1007,7 @@
         function sendText() {
             const text = document.getElementById('text-input').value.trim();
             if (text) {
-                handleVoiceResult({ text: text, confidence: 1, service: 'manual' });
+                handleVoiceResult({ text: text, confidence: 1 });
                 document.getElementById('text-input').value = '';
                 hideTextInput();
             }
@@ -1245,45 +1027,11 @@
         }
         
         function startRealTimeUpdates() {
-            updateInterval = setInterval(async () => {
-                try {
-                    const response = await fetch(`/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.success && data.translated) {
-                            // Afficher la nouvelle traduction
-                            translatedTextEl.classList.add('updating');
-                            translatedTextEl.textContent = data.translated;
-                            translatedTextEl.classList.remove('empty-translation');
-                            
-                            setTimeout(() => {
-                                translatedTextEl.classList.remove('updating');
-                            }, 300);
-                            
-                            // Synthèse vocale si activée
-                            if (data.enable_speech && data.translated) {
-                                speakText(data.translated);
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.log('Erreur mise à jour:', error);
-                }
-            }, 2000);
-        }
-        
-        function speakText(text) {
-            try {
-                if ('speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = userData.language === 'fr' ? 'fr-FR' : `${userData.language}-${userData.language.toUpperCase()}`;
-                    utterance.rate = 0.9;
-                    utterance.pitch = 1;
-                    speechSynthesis.speak(utterance);
-                }
-            } catch (error) {
-                console.log('Erreur synthèse vocale:', error);
-            }
+            // Simuler des mises à jour en temps réel
+            updateInterval = setInterval(() => {
+                // Ici tu peux appeler ton API pour récupérer les nouvelles traductions
+                console.log('Vérification des mises à jour...');
+            }, 3000);
         }
         
         // Gestion Entrée pour envoyer
@@ -1301,15 +1049,6 @@
             if (voiceManager) voiceManager.cleanup();
             if (updateInterval) clearInterval(updateInterval);
         });
-        
-        // Heartbeat pour maintenir la session
-        setInterval(() => {
-            fetch(`/api/room/${userData.room_id}/heartbeat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userData.user_id })
-            }).catch(err => console.log('Heartbeat error:', err));
-        }, 10000);
     </script>
 </body>
 </html>
