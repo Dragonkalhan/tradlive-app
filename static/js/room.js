@@ -538,18 +538,19 @@ function loadRoomInfo() {
 }
 
 function setupRoleInterface() {
-    if (isHost) {
-        // Interface hôte
-        showElement(hostControlsEl);
-        showElement(hostInterface);
-        
-        if (qrSection) {
-            qrSection.classList.add('show');
-        }
+   if (isHost) {
+    // Interface hôte
+    showElement('host-controls');
+    showElement('host-interface');
+    
+    const qrSection = document.getElementById('qr-section');
+    if (qrSection) {
+        qrSection.classList.add('show');
+    }
         
         // Animation avec TradLive si disponible
-        animateElement(hostControlsEl, 'slideInUp');
-        animateElement(qrSection, 'slideInDown');
+        animateElement('hostControls', 'slideInUp');
+        animateElement('qr-section', 'slideInDown');
         
         const message = getTranslation('host_status') || 
             'Vous êtes l\'hôte. Parlez en français, la traduction se fera automatiquement vers toutes les langues.';
@@ -558,15 +559,15 @@ function setupRoleInterface() {
         console.log('👑 Interface hôte configurée');
     } else {
         // Interface participant
-        showElement(participantControlsEl);
-        showElement(participantInterface);
+        showElement('participantControls');
+        showElement('participantInterface');
         
         if (participantTargetLanguage) {
             participantTargetLanguage.textContent = getLanguageName(userData.language);
         }
         
         // Animation pour les participants
-        animateElement(participantControlsEl, 'slideInUp');
+        animateElement('participantControls', 'slideInUp');
         
         const message = getTranslation('participant_status') || 
             `Connecté en tant que participant. Vous recevez les traductions en ${getLanguageName(userData.language)}.`;
@@ -576,8 +577,8 @@ function setupRoleInterface() {
     }
     
     // Afficher les contrôles communs
-    showElement(controlsEl);
-    animateElement(controlsEl, 'slideInUp');
+    showElement('controls');
+    animateElement('controls', 'slideInUp');
 }
 
 function handleConnectionError() {
