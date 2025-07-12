@@ -506,7 +506,7 @@ function loadRoomInfo() {
     makeApiRequest(url)
         .then(data => {
             if (data.success) {
-                roomData = data.room;
+                roomData = data.data ? data.data.room : data.room;
                 reconnectAttempts = 0;
                 updateConnectionStatus(true);
                 
