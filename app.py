@@ -133,7 +133,7 @@ def translate_to_french(text, source_lang):
 def index():
     """Route principale - redirige vers la page des salles"""
     update_heartbeat()
-    return redirect(url_for('rooms_page'))
+    return render_template('index.html')
 
 @app.route('/rooms')
 def rooms_page():
