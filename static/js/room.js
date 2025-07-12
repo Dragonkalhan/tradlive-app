@@ -1373,8 +1373,8 @@ function cleanup() {
    FONCTIONS D'AIDE - FINALISÉES
 ======================================== */
 function getTranslation(key, defaultValue = null) {
-    if (window.getTranslation && window.interfaceLanguage) {
-        return window.getTranslation(key, window.interfaceLanguage);
+    if (window.TRADLIVE_TRANSLATIONS && window.interfaceLanguage) {
+        return window.TRADLIVE_TRANSLATIONS[window.interfaceLanguage][key] || defaultValue || key;
     }
     return defaultValue || key;
 }
