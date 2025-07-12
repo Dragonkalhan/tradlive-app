@@ -3,106 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradLive - Salle de traduction</title>
+    <title data-translate="page_title_room">TradLive - Salle de traduction</title>
+    <link rel="stylesheet" href="/static/css/app.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: white;
-        }
-        
-        // 🎯 NOUVELLES FONCTIONS : Interface propre quand micro incompatible
-        function showMicrophoneIncompatibleMessage() {
-            // Créer un message bien visible
-            const messageDiv = document.createElement('div');
-            messageDiv.innerHTML = `
-                <div style="text-align: center; margin: 20px 0;">
-                    <h3 style="color: #e74c3c; margin-bottom: 15px;">🎤 Microphone non compatible</h3>
-                    <p style="font-size: 16px; margin-bottom: 10px;">
-                        Votre navigateur ne peut pas utiliser la reconnaissance vocale avec TradLive.
-                    </p>
-                    <p style="font-size: 14px; opacity: 0.8; margin-bottom: 15px;">
-                        💡 <strong>Solution :</strong> Utilisez la zone de saisie ci-dessous pour écrire vos messages.
-                    </p>
-                </div>
-            `;
-            messageDiv.className = 'status error';
-            messageDiv.style.cssText = `
-                background: rgba(244, 67, 54, 0.9); 
-                color: white; 
-                padding: 20px; 
-                border-radius: 15px; 
-                margin: 20px 0; 
-                border: 2px solid #e74c3c;
-            `;
-            
-            // Placer le message au bon endroit
-            const controlsEl = document.getElementById('controls');
-            if (controlsEl) {
-                controlsEl.insertAdjacentElement('beforebegin', messageDiv);
-                console.log('✅ Message microphone incompatible affiché');
-            }
-        }
-        
-        function cleanInterfaceForTextOnly() {
-            console.log('🧹 Nettoyage interface pour mode texte uniquement...');
-            
-            // 1. Masquer TOUS les boutons micro
-            const micButtons = document.querySelectorAll('.mic-button');
-            micButtons.forEach(btn => {
-                btn.style.display = 'none';
-                console.log('🚫 Bouton micro masqué');
-            });
-            
-            // 2. Masquer les boutons "Mode Texte" (plus besoin)
-            const textModeButtons = document.querySelectorAll('.text-mode-button');
-            textModeButtons.forEach(btn => {
-                btn.style.display = 'none';
-                console.log('🚫 Bouton "Mode Texte" masqué');
-            });
-            
-            // 3. Masquer les animations d'onde
-            const waveAnimations = document.querySelectorAll('.wave-animation');
-            waveAnimations.forEach(wave => {
-                wave.style.display = 'none';
-            });
-            
-            // 4. Afficher directement la zone de saisie selon le rôle
-            setTimeout(() => {
-                if (isHost) {
-                    showTextInput();
-                    console.log('📝 Zone texte hôte affichée automatiquement');
-                    
-                    // Modifier le titre de la zone texte pour être plus clair
-                    const textInputTitle = document.querySelector('#text-input-fallback h4');
-                    if (textInputTitle) {
-                        textInputTitle.textContent = '✍️ Écrivez vos messages en français';
-                    }
-                } else {
-                    showParticipantTextInput();
-                    console.log('📝 Zone texte participant affichée automatiquement');
-                    
-                    // Modifier le titre pour les participants
-                    const participantTextTitle = document.querySelector('#participant-text-input h4');
-                    if (participantTextTitle) {
-                        participantTextTitle.textContent = '✍️ Écrivez vos messages dans votre langue';
-                    }
-                }
-            }, 500);
-            
-            // 5. Mettre à jour le statut
-            setTimeout(() => {
-                if (statusEl) {
-                    statusEl.textContent = 'Mode texte activé. Utilisez la zone de saisie ci-dessous.';
-                    statusEl.className = 'status info';
-                }
-            }, 1000);
-        }
-        
-        .container {
+        /* Styles spécifiques à la salle de traduction */
+        .room-container {
             max-width: 800px;
             margin: 0 auto;
             background: rgba(255, 255, 255, 0.1);
@@ -111,6 +16,14 @@
             padding: 20px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
             border: 1px solid rgba(255, 255, 255, 0.18);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .room-container.loaded {
+            opacity: 1;
+            transform: translateY(0);
         }
         
         .header {
@@ -126,6 +39,7 @@
             align-items: center;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            gap: 15px;
         }
         
         .room-code {
@@ -133,11 +47,37 @@
             font-weight: bold;
             color: #FFD700;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(255, 215, 0, 0.3); }
+            to { text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255, 215, 0, 0.6); }
         }
         
         .user-info {
             font-size: 14px;
             opacity: 0.9;
+            text-align: center;
+        }
+        
+        .connection-status {
+            font-size: 12px;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .connection-status::before {
+            content: '●';
+            color: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
         
         .leave-button {
@@ -148,9 +88,17 @@
             border-radius: 25px;
             cursor: pointer;
             font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
-        /* QR Code pour l'hôte */
+        .leave-button:hover {
+            background: rgba(244, 67, 54, 1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        }
+        
+        /* QR Code pour l'hôte avec animations */
         .qr-section {
             display: none;
             text-align: center;
@@ -158,10 +106,17 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .qr-section.show {
             display: block;
+            animation: slideDown 0.6s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .qrcode-container {
@@ -170,6 +125,12 @@
             padding: 10px;
             border-radius: 10px;
             margin: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .qrcode-container:hover {
+            transform: scale(1.05);
         }
         
         .qrcode-container img {
@@ -184,26 +145,44 @@
             opacity: 0.8;
         }
         
+        /* Status avec animations améliorées */
         .status {
             text-align: center;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
             font-weight: bold;
+            transform: scale(0.95);
+            transition: all 0.3s ease;
+        }
+        
+        .status.show {
+            transform: scale(1);
         }
         
         .status.connected {
             background: rgba(76, 175, 80, 0.8);
+            border-left: 4px solid #4CAF50;
         }
         
         .status.error {
             background: rgba(244, 67, 54, 0.8);
+            border-left: 4px solid #f44336;
+            animation: errorShake 0.6s ease;
         }
         
         .status.info {
             background: rgba(33, 150, 243, 0.8);
+            border-left: 4px solid #2196F3;
         }
         
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        /* Contrôles avec animations avancées */
         .controls {
             text-align: center;
             margin-bottom: 30px;
@@ -220,16 +199,37 @@
             transition: all 0.3s ease;
             margin: 10px;
             min-width: 250px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .mic-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .mic-button:hover::before {
+            left: 100%;
         }
         
         .mic-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
         
         .mic-button.active {
             background: linear-gradient(45deg, #f44336, #da190b);
             animation: pulse 2s infinite;
+        }
+        
+        .mic-button.active::before {
+            display: none;
         }
         
         @keyframes pulse {
@@ -247,18 +247,79 @@
             cursor: pointer;
             font-size: 14px;
             margin: 5px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
+        .text-mode-button:hover {
+            background: rgba(33, 150, 243, 1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+        
+        /* Animation d'onde améliorée */
+        .wave-animation {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            height: 40px;
+            margin: 10px 0;
+        }
+        
+        .wave-animation.active {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .wave-bar {
+            display: inline-block;
+            width: 5px;
+            background: linear-gradient(45deg, #FFD700, #FFA000);
+            margin: 0 3px;
+            border-radius: 2px;
+            animation: waveAnimation 0.5s infinite alternate;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        @keyframes waveAnimation {
+            0% { height: 10px; transform: scaleY(0.5); }
+            100% { height: 30px; transform: scaleY(1); }
+        }
+        
+        .wave-bar:nth-child(1) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.3s; }
+        
+        /* Zone de traduction avec animations */
         .translation-area {
             background: rgba(255, 255, 255, 0.15);
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 20px;
             min-height: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .translation-section {
             margin-bottom: 20px;
+            opacity: 0;
+            animation: slideInUp 0.6s ease forwards;
+        }
+        
+        .translation-section:nth-child(1) { animation-delay: 0.1s; }
+        .translation-section:nth-child(2) { animation-delay: 0.2s; }
+        .translation-section:nth-child(3) { animation-delay: 0.3s; }
+        
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .translation-label {
@@ -266,6 +327,7 @@
             font-weight: bold;
             margin-bottom: 10px;
             color: #FFD700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
         
         .translation-text {
@@ -276,6 +338,19 @@
             border-radius: 10px;
             min-height: 60px;
             word-wrap: break-word;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .translation-text:not(.empty-translation) {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 215, 0, 0.3);
+            animation: textAppear 0.5s ease;
+        }
+        
+        @keyframes textAppear {
+            from { background: rgba(255, 215, 0, 0.2); }
+            to { background: rgba(255, 255, 255, 0.15); }
         }
         
         .empty-translation {
@@ -283,16 +358,78 @@
             font-style: italic;
         }
         
+        /* Mode texte fallback amélioré */
+        .text-input-fallback {
+            display: none;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.4s ease;
+        }
+        
+        .text-input-fallback.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .text-input-fallback h4 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+        
+        .text-input-fallback textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            min-height: 80px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+        
+        .text-input-fallback textarea:focus {
+            outline: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.3);
+        }
+        
+        .text-input-fallback button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .text-input-fallback button:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+        
+        /* Participants avec animations */
         .participants {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 20px;
             margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .participants h3 {
             margin-top: 0;
             color: #FFD700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
         
         .participant {
@@ -301,6 +438,16 @@
             align-items: center;
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            animation: slideInLeft 0.5s ease forwards;
+        }
+        
+        .participant:nth-child(odd) { animation-delay: 0.1s; }
+        .participant:nth-child(even) { animation-delay: 0.2s; }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         
         .participant:last-child {
@@ -316,90 +463,42 @@
             background: rgba(255, 255, 255, 0.2);
             padding: 4px 8px;
             border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
         .host-badge {
-            background: #FFD700;
+            background: linear-gradient(45deg, #FFD700, #FFA000);
             color: #333;
             font-size: 10px;
             padding: 2px 6px;
             border-radius: 8px;
             margin-left: 5px;
+            font-weight: bold;
+            text-shadow: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         
-        .wave-animation {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            height: 40px;
-            margin: 10px 0;
-        }
-        
-        .wave-animation.active {
-            display: flex;
-        }
-        
-        .wave-bar {
-            display: inline-block;
-            width: 5px;
-            background-color: #FFD700;
-            margin: 0 3px;
-            border-radius: 2px;
-            animation: waveAnimation 0.5s infinite alternate;
-        }
-        
-        @keyframes waveAnimation {
-            0% { height: 10px; }
-            100% { height: 30px; }
-        }
-        
-        .wave-bar:nth-child(1) { animation-delay: 0.1s; }
-        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
-        .wave-bar:nth-child(3) { animation-delay: 0.3s; }
-        .wave-bar:nth-child(4) { animation-delay: 0.4s; }
-        .wave-bar:nth-child(5) { animation-delay: 0.3s; }
-        
-        /* Mode texte fallback */
-        .text-input-fallback {
-            display: none;
-            margin: 20px 0;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-        }
-        
-        .text-input-fallback.show {
-            display: block;
-        }
-        
-        .text-input-fallback textarea {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            min-height: 80px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        
-        .text-input-fallback button {
-            padding: 10px 20px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        
-        .connection-status {
-            font-size: 12px;
+        .loading {
+            text-align: center;
+            font-style: italic;
             opacity: 0.8;
         }
         
+        .loading::after {
+            content: '';
+            animation: loadingDots 1.5s infinite;
+        }
+        
+        @keyframes loadingDots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        
+        /* Responsive optimisé */
         @media (max-width: 600px) {
-            .container {
+            .room-container {
                 margin: 10px;
                 padding: 15px;
             }
@@ -407,6 +506,7 @@
             .room-info {
                 flex-direction: column;
                 text-align: center;
+                gap: 10px;
             }
             
             .room-code {
@@ -426,56 +526,60 @@
             }
         }
         
-        .error-message {
-            background: rgba(244, 67, 54, 0.8);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            text-align: center;
+        /* Skeleton loaders */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
         }
         
-        .loading {
-            text-align: center;
-            font-style: italic;
-            opacity: 0.8;
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 </head>
-<body>
-    <div class="container">
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: white;">
+    <div class="room-container">
         <div class="header">
             <h1>🌍 TradLive</h1>
             <div class="room-info">
-                <div class="room-code">Salle : <span id="room-id">{{ room_id }}</span></div>
+                <div class="room-code">
+                    <span data-translate="room_label">Salle :</span> 
+                    <span id="room-id">{{ room_id }}</span>
+                </div>
                 <div class="user-info">
                     <span id="user-nickname">Chargement...</span> 
                     (<span id="user-language">Chargement...</span>)
-                    <div class="connection-status" id="connection-status">Connexion...</div>
+                    <div class="connection-status" id="connection-status" data-translate="connecting">Connexion...</div>
                 </div>
-                <button class="leave-button" onclick="leaveRoom()">🚪 Quitter</button>
+                <button class="leave-button" onclick="leaveRoom()">
+                    🚪 <span data-translate="leave_button">Quitter</span>
+                </button>
             </div>
         </div>
         
         <!-- QR Code pour l'hôte -->
         <div id="qr-section" class="qr-section">
-            <h3>🔗 Partage de la salle</h3>
-            <p>Scannez ce QR code pour rejoindre directement la salle :</p>
+            <h3 data-translate="share_room">🔗 Partage de la salle</h3>
+            <p data-translate="qr_instructions">Scannez ce QR code pour rejoindre directement la salle :</p>
             <div class="qrcode-container">
                 <img src="/qrcode" alt="QR Code" id="qr-code-image">
             </div>
             <div class="qr-caption">
-                Code salle : <strong id="qr-room-code">{{ room_id }}</strong><br>
-                <span id="room-url">Les participants scannent pour rejoindre automatiquement</span>
+                <span data-translate="room_code_label">Code salle :</span> 
+                <strong id="qr-room-code">{{ room_id }}</strong><br>
+                <span id="room-url" data-translate="qr_scan_instruction">Les participants scannent pour rejoindre automatiquement</span>
             </div>
         </div>
         
-        <div id="status" class="status info">Connexion à la salle...</div>
+        <div id="status" class="status info" data-translate="connecting_room">Connexion à la salle...</div>
         
         <div id="controls" class="controls" style="display: none;">
             <!-- Contrôles pour l'hôte -->
             <div id="host-controls" style="display: none;">
-                <button id="mic-button" class="mic-button">🎤 Parler en Français</button>
-                <button id="text-mode-button" class="text-mode-button">💬 Mode Texte</button>
+                <button id="mic-button" class="mic-button" data-translate="speak_french">🎤 Parler en Français</button>
+                <button id="text-mode-button" class="text-mode-button" data-translate="text_mode">💬 Mode Texte</button>
                 
                 <div class="wave-animation" id="wave-animation">
                     <div class="wave-bar"></div>
@@ -487,17 +591,17 @@
                 
                 <!-- Zone de saisie de texte en mode fallback -->
                 <div id="text-input-fallback" class="text-input-fallback">
-                    <h4>✍️ Saisie de texte en français</h4>
-                    <textarea id="text-input" placeholder="Écrivez votre message en français ici..."></textarea>
-                    <button onclick="sendHostText()">📤 Envoyer la traduction</button>
-                    <button onclick="hideTextInput()">❌ Fermer</button>
+                    <h4 data-translate="write_french_messages">✍️ Saisie de texte en français</h4>
+                    <textarea id="text-input" data-translate-placeholder="write_french_placeholder" placeholder="Écrivez votre message en français ici..."></textarea>
+                    <button onclick="sendHostText()" data-translate="send_translation">📤 Envoyer la traduction</button>
+                    <button onclick="hideTextInput()" data-translate="close_button">❌ Fermer</button>
                 </div>
             </div>
             
             <!-- Contrôles pour les participants -->
             <div id="participant-controls" style="display: none;">
-                <button id="participant-mic-button" class="mic-button">🎤 Parler dans votre langue</button>
-                <button id="participant-text-button" class="text-mode-button">💬 Mode Texte</button>
+                <button id="participant-mic-button" class="mic-button" data-translate="speak_your_language">🎤 Parler dans votre langue</button>
+                <button id="participant-text-button" class="text-mode-button" data-translate="text_mode">💬 Mode Texte</button>
                 
                 <div class="wave-animation" id="participant-wave">
                     <div class="wave-bar"></div>
@@ -509,10 +613,10 @@
                 
                 <!-- Zone de saisie pour les participants -->
                 <div id="participant-text-input" class="text-input-fallback">
-                    <h4>✍️ Écrire dans votre langue</h4>
-                    <textarea id="participant-text" placeholder="Écrivez votre message dans votre langue..."></textarea>
-                    <button onclick="sendParticipantText()">📤 Envoyer au français</button>
-                    <button onclick="hideParticipantTextInput()">❌ Fermer</button>
+                    <h4 data-translate="write_your_language_messages">✍️ Écrire dans votre langue</h4>
+                    <textarea id="participant-text" data-translate-placeholder="write_your_language_placeholder" placeholder="Écrivez votre message dans votre langue..."></textarea>
+                    <button onclick="sendParticipantText()" data-translate="send_to_french">📤 Envoyer au français</button>
+                    <button onclick="hideParticipantTextInput()" data-translate="close_button">❌ Fermer</button>
                 </div>
             </div>
         </div>
@@ -521,15 +625,15 @@
             <!-- Interface pour l'hôte -->
             <div id="host-interface" style="display: none;">
                 <div class="translation-section">
-                    <div class="translation-label">📝 Ce que vous dites (Français)</div>
-                    <div id="host-original-text" class="translation-text empty-translation">
+                    <div class="translation-label" data-translate="what_you_say">📝 Ce que vous dites (Français)</div>
+                    <div id="host-original-text" class="translation-text empty-translation" data-translate="waiting_your_message">
                         En attente de votre message...
                     </div>
                 </div>
                 
                 <div class="translation-section">
-                    <div class="translation-label">💬 Réponses des participants (Français)</div>
-                    <div id="host-responses-text" class="translation-text empty-translation">
+                    <div class="translation-label" data-translate="participant_responses">💬 Réponses des participants (Français)</div>
+                    <div id="host-responses-text" class="translation-text empty-translation" data-translate="waiting_responses">
                         En attente des réponses...
                     </div>
                 </div>
@@ -538,29 +642,32 @@
             <!-- Interface pour les participants -->
             <div id="participant-interface" style="display: none;">
                 <div class="translation-section">
-                    <div class="translation-label">📝 Message de l'hôte (Français)</div>
-                    <div id="participant-original-text" class="translation-text empty-translation">
+                    <div class="translation-label" data-translate="host_message">📝 Message de l'hôte (Français)</div>
+                    <div id="participant-original-text" class="translation-text empty-translation" data-translate="waiting_host_message">
                         En attente d'un message de l'hôte...
                     </div>
                 </div>
                 
                 <div class="translation-section">
-                    <div class="translation-label">🌍 Traduction (<span id="participant-target-language">Votre langue</span>)</div>
-                    <div id="participant-translated-text" class="translation-text empty-translation">
+                    <div class="translation-label">
+                        🌍 <span data-translate="translation_label">Traduction</span> 
+                        (<span id="participant-target-language" data-translate="your_language">Votre langue</span>)
+                    </div>
+                    <div id="participant-translated-text" class="translation-text empty-translation" data-translate="waiting_translation">
                         En attente d'une traduction...
                     </div>
                 </div>
                 
                 <div class="translation-section">
-                    <div class="translation-label">💬 Votre message</div>
+                    <div class="translation-label" data-translate="your_message">💬 Votre message</div>
                     <div id="participant-message-area" style="display: none;">
                         <div style="display: flex; gap: 15px;">
                             <div style="flex: 1;">
-                                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;">Dans votre langue :</div>
+                                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;" data-translate="in_your_language">Dans votre langue :</div>
                                 <div id="participant-own-text" class="translation-text" style="min-height: 40px; font-size: 16px;"></div>
                             </div>
                             <div style="flex: 1;">
-                                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;">Traduction française :</div>
+                                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;" data-translate="french_translation">Traduction française :</div>
                                 <div id="participant-french-text" class="translation-text" style="min-height: 40px; font-size: 16px;"></div>
                             </div>
                         </div>
@@ -570,1337 +677,14 @@
         </div>
         
         <div class="participants">
-            <h3>👥 Participants (<span id="participant-count">0</span>)</h3>
-            <div id="participants-list" class="loading">Chargement de la liste...</div>
+            <h3>👥 <span data-translate="participants_title">Participants</span> (<span id="participant-count">0</span>)</h3>
+            <div id="participants-list" class="loading" data-translate="loading_participants">Chargement de la liste...</div>
         </div>
     </div>
     
-    <script>
-        // 🎵 CORRECTION : Fonctions pour la synthèse vocale (anti-spam renforcé)
-        function speakText(text, language = 'fr', translationId = null) {
-            if (!text || text.trim() === '') return;
-            
-            // 🔧 CORRECTION MAJEURE : Système anti-spam renforcé
-            const currentTime = Date.now();
-            const translationKey = translationId || `${text}_${language}`;
-            
-            // Vérifier si c'est exactement la même traduction (même ID)
-            if (translationKey === lastTranslationId) {
-                console.log('🔇 Traduction identique ignorée (même ID):', translationKey);
-                return;
-            }
-            
-            // Double vérification avec le texte ET le délai
-            if (text === lastSpokenText && (currentTime - lastSpokenTimestamp) < 10000) {
-                console.log('🔇 Traduction identique ignorée (délai 10s):', text);
-                return;
-            }
-            
-            if ('speechSynthesis' in window) {
-                // Arrêter toute lecture en cours
-                window.speechSynthesis.cancel();
-                
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = getVoiceLanguageCode(language);
-                utterance.volume = 0.8;
-                utterance.rate = 0.9;
-                utterance.pitch = 1;
-                
-                const voices = window.speechSynthesis.getVoices();
-                const voice = voices.find(v => v.lang.startsWith(utterance.lang.substring(0, 2)));
-                if (voice) {
-                    utterance.voice = voice;
-                }
-                
-                // Event pour savoir quand la lecture est finie
-                utterance.onend = function() {
-                    console.log('🎵 Lecture terminée:', text);
-                };
-                
-                window.speechSynthesis.speak(utterance);
-                console.log('🎵 Audio lancé:', text, 'ID:', translationKey);
-                
-                // 🔧 NOUVEAU : Mémoriser avec ID unique
-                lastSpokenText = text;
-                lastSpokenTimestamp = currentTime;
-                lastTranslationId = translationKey;
-            } else {
-                console.log('❌ Pas de synthèse vocale');
-            }
-        }
-        
-        function getVoiceLanguageCode(langCode) {
-            const voices = {
-                'fr': 'fr-FR', 'en': 'en-US', 'es': 'es-ES', 'de': 'de-DE',
-                'it': 'it-IT', 'pt': 'pt-PT', 'ru': 'ru-RU', 'zh-CN': 'zh-CN',
-                'ja': 'ja-JP', 'ar': 'ar-SA', 'uk': 'uk-UA', 'hi': 'hi-IN',
-                'bn': 'bn-IN', 'te': 'te-IN', 'mr': 'mr-IN'
-            };
-            return voices[langCode] || 'fr-FR';
-        }
-        
-        // 🧠 NOUVEAU SYSTÈME INTELLIGENT DE DÉTECTION NAVIGATEUR
-        class BrowserCompatibilityDetector {
-            constructor() {
-                this.userAgent = navigator.userAgent;
-                this.capabilities = {
-                    microphone: false,
-                    speechRecognition: false,
-                    speechSynthesis: false,
-                    webRTC: false
-                };
-                this.browserInfo = this.detectBrowser();
-                this.compatibility = this.checkCompatibility();
-            }
-            
-            detectBrowser() {
-                const ua = this.userAgent;
-                
-                // Brave (se fait passer pour Chrome, mais a des spécificités)
-                if (ua.includes('Brave')) {
-                    return {
-                        name: 'Brave',
-                        version: this.extractVersion(ua, 'Brave'),
-                        micSupport: 'limited',
-                        message: '⚠️ Brave bloque les APIs Google par défaut. Cliquez sur l\'icône 🛡️ dans la barre d\'adresse et autorisez les APIs.',
-                        showMic: true,
-                        showWarning: true
-                    };
-                }
-                
-                // Chrome et dérivés
-                if (ua.includes('Chrome') && !ua.includes('Edge') && !ua.includes('OPR')) {
-                    return {
-                        name: 'Chrome',
-                        version: this.extractVersion(ua, 'Chrome'),
-                        micSupport: 'excellent',
-                        message: '✅ Chrome est parfaitement compatible avec TradLive !',
-                        showMic: true,
-                        showWarning: false
-                    };
-                }
-                
-                // Edge nouveau (Chromium)
-                if (ua.includes('Edg/')) {
-                    return {
-                        name: 'Edge',
-                        version: this.extractVersion(ua, 'Edg'),
-                        micSupport: 'excellent',
-                        message: '✅ Edge est parfaitement compatible avec TradLive !',
-                        showMic: true,
-                        showWarning: false
-                    };
-                }
-                
-                // Edge Legacy
-                if (ua.includes('Edge/')) {
-                    return {
-                        name: 'Edge Legacy',
-                        version: this.extractVersion(ua, 'Edge'),
-                        micSupport: 'poor',
-                        message: '❌ Edge Legacy n\'est pas compatible. Mettez à jour vers le nouvel Edge ou utilisez Chrome.',
-                        showMic: false,
-                        showWarning: true
-                    };
-                }
-                
-                // Firefox
-                if (ua.includes('Firefox')) {
-                    return {
-                        name: 'Firefox',
-                        version: this.extractVersion(ua, 'Firefox'),
-                        micSupport: 'limited',
-                        message: '⚠️ Firefox a un support limité. Chrome ou Edge sont recommandés pour une meilleure expérience.',
-                        showMic: true,
-                        showWarning: true
-                    };
-                }
-                
-                // Safari
-                if (ua.includes('Safari') && !ua.includes('Chrome')) {
-                    const isMobile = ua.includes('Mobile');
-                    return {
-                        name: isMobile ? 'Safari Mobile' : 'Safari',
-                        version: this.extractVersion(ua, 'Safari'),
-                        micSupport: isMobile ? 'none' : 'poor',
-                        message: isMobile ? 
-                            '❌ Safari Mobile ne supporte pas la reconnaissance vocale. Utilisez Chrome Mobile.' :
-                            '❌ Safari Desktop a un support très limité. Utilisez Chrome ou Edge.',
-                        showMic: false,
-                        showWarning: true
-                    };
-                }
-                
-                // Opera
-                if (ua.includes('OPR/') || ua.includes('Opera')) {
-                    return {
-                        name: 'Opera',
-                        version: this.extractVersion(ua, 'OPR') || this.extractVersion(ua, 'Opera'),
-                        micSupport: 'good',
-                        message: '✅ Opera devrait fonctionner correctement avec TradLive.',
-                        showMic: true,
-                        showWarning: false
-                    };
-                }
-                
-                // Navigateur mobile générique
-                if (ua.includes('Mobile')) {
-                    return {
-                        name: 'Navigateur mobile',
-                        version: 'Inconnu',
-                        micSupport: 'limited',
-                        message: '⚠️ Navigateur mobile détecté. Chrome Mobile est recommandé pour une meilleure expérience.',
-                        showMic: true,
-                        showWarning: true
-                    };
-                }
-                
-                // Navigateur inconnu
-                return {
-                    name: 'Navigateur inconnu',
-                    version: 'Inconnu',
-                    micSupport: 'unknown',
-                    message: '🤔 Navigateur non testé. Chrome ou Edge sont recommandés.',
-                    showMic: true,
-                    showWarning: true
-                };
-            }
-            
-            extractVersion(ua, browserName) {
-                const regex = new RegExp(browserName + '/([\\d.]+)');
-                const match = ua.match(regex);
-                return match ? match[1] : 'Inconnu';
-            }
-            
-            checkCompatibility() {
-                // Test des APIs disponibles
-                this.capabilities.microphone = 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices;
-                this.capabilities.speechRecognition = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
-                this.capabilities.speechSynthesis = 'speechSynthesis' in window;
-                this.capabilities.webRTC = 'RTCPeerConnection' in window;
-                
-                // Calcul du score
-                let score = 0;
-                if (this.capabilities.microphone) score += 40;
-                if (this.capabilities.speechRecognition) score += 40;
-                if (this.capabilities.speechSynthesis) score += 15;
-                if (this.capabilities.webRTC) score += 5;
-                
-                return {
-                    score: score,
-                    level: score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'limited' : 'poor'
-                };
-            }
-            
-            getUserMessage() {
-                return this.browserInfo;
-            }
-        }
-        
-        // 🧠 NOUVELLE FONCTION D'ADAPTATION INTELLIGENTE
-        function adaptToNavigateur() {
-            const detector = new BrowserCompatibilityDetector();
-            const message = detector.getUserMessage();
-            const capabilities = detector.capabilities;
-            
-            console.log('🧪 Navigateur détecté:', message.name, message.version);
-            console.log('🎯 Support micro:', message.micSupport);
-            console.log('🔧 Capacités:', capabilities);
-            
-            // 🔧 RETOUR : Retourner les infos pour affichage séparé
-            return {
-                compatible: message.showMic,
-                browser: message.name,
-                support: message.micSupport,
-                capabilities: capabilities,
-                message: message.message,
-                showWarning: message.showWarning
-            };
-        }
-        
-        // 🎯 NOUVELLE FONCTION : Afficher le message de compatibilité de façon visible
-        function showBrowserCompatibilityMessage(compatibilityInfo) {
-            if (!compatibilityInfo) return;
-            
-            console.log('🎨 Affichage message compatibilité:', compatibilityInfo);
-            
-            // Créer le message de compatibilité
-            const compatDiv = document.createElement('div');
-            
-            let statusClass = 'info';
-            let backgroundColor = 'rgba(33, 150, 243, 0.9)';
-            let icon = '🔍';
-            
-            switch (compatibilityInfo.support) {
-                case 'excellent':
-                    statusClass = 'connected';
-                    backgroundColor = 'rgba(76, 175, 80, 0.9)';
-                    icon = '✅';
-                    break;
-                case 'good':
-                    statusClass = 'info';
-                    backgroundColor = 'rgba(33, 150, 243, 0.9)';
-                    icon = '✅';
-                    break;
-                case 'limited':
-                    statusClass = 'info';
-                    backgroundColor = 'rgba(255, 193, 7, 0.9)';
-                    icon = '⚠️';
-                    break;
-                case 'poor':
-                case 'none':
-                    statusClass = 'error';
-                    backgroundColor = 'rgba(244, 67, 54, 0.9)';
-                    icon = '❌';
-                    break;
-            }
-            
-            compatDiv.innerHTML = `
-                <div style="text-align: center;">
-                    <strong>${icon} ${compatibilityInfo.browser} détecté</strong><br>
-                    <span style="font-size: 14px;">${compatibilityInfo.message}</span>
-                </div>
-            `;
-            
-            compatDiv.className = `status ${statusClass}`;
-            compatDiv.style.cssText = `
-                background: ${backgroundColor}; 
-                color: white; 
-                padding: 15px; 
-                border-radius: 10px; 
-                margin: 15px 0; 
-                font-weight: bold; 
-                font-size: 14px;
-                border: 2px solid rgba(255,255,255,0.3);
-            `;
-            
-            // Placer le message au bon endroit (après le header, avant les contrôles)
-            const header = document.querySelector('.header');
-            const controls = document.getElementById('controls');
-            
-            if (header && controls) {
-                controls.insertAdjacentElement('beforebegin', compatDiv);
-                console.log('✅ Message de compatibilité affiché avec succès');
-            } else if (header) {
-                header.insertAdjacentElement('afterend', compatDiv);
-                console.log('✅ Message de compatibilité affiché (position alternative)');
-            } else {
-                console.log('❌ Impossible de placer le message de compatibilité');
-            }
-            
-            // Instructions spécifiques pour Brave
-            if (compatibilityInfo.browser === 'Brave') {
-                const braveInstructions = document.createElement('div');
-                braveInstructions.innerHTML = `
-                    <h4 style="margin-top: 0; color: #ffc107;">🛡️ Instructions pour Brave :</h4>
-                    <ol style="text-align: left; margin-bottom: 0; font-size: 13px;">
-                        <li>Cliquez sur l'icône 🛡️ dans la barre d'adresse</li>
-                        <li>Cliquez sur "Paramètres avancés"</li>
-                        <li>Mettez "Blocage" sur "Autorisé"</li>
-                        <li>Autorisez "Microphone" et rechargez la page</li>
-                    </ol>
-                `;
-                braveInstructions.style.cssText = `
-                    background: rgba(255, 193, 7, 0.9); 
-                    color: #333; 
-                    padding: 15px; 
-                    margin: 15px 0; 
-                    border-radius: 8px; 
-                    border-left: 4px solid #ffc107;
-                `;
-                
-                compatDiv.insertAdjacentElement('afterend', braveInstructions);
-                console.log('🛡️ Instructions Brave ajoutées');
-            }
-            
-            // Masquer les boutons micro si incompatible
-            if (!compatibilityInfo.compatible) {
-                console.log('❌ Navigateur incompatible, nettoyage interface...');
-                setTimeout(() => {
-                    cleanInterfaceForTextOnly();
-                }, 500);
-            }
-        }
-        
-        // Variables globales
-        let userData = null;
-        let roomData = null;
-        let recognition = null;
-        let participantRecognition = null;
-        let isListening = false;
-        let isParticipantListening = false;
-        let isHost = false;
-        let updateInterval = null;
-        let heartbeatInterval = null;
-        let reconnectAttempts = 0;
-        const maxReconnectAttempts = 5;
-        
-        // 🔧 CORRECTIONS : Variables pour éviter la lecture en boucle
-        let lastSpokenText = '';
-        let lastSpokenTimestamp = 0;
-        let lastTranslationId = null; // NOUVEAU : ID unique de traduction
-        let networkErrorCount = 0; // NOUVEAU : Compteur d'erreurs réseau
-        
-        // Éléments DOM
-        const statusEl = document.getElementById('status');
-        const controlsEl = document.getElementById('controls');
-        const hostControlsEl = document.getElementById('host-controls');
-        const participantControlsEl = document.getElementById('participant-controls');
-        const micButton = document.getElementById('mic-button');
-        const participantMicButton = document.getElementById('participant-mic-button');
-        const textModeButton = document.getElementById('text-mode-button');
-        const participantTextButton = document.getElementById('participant-text-button');
-        const waveAnimation = document.getElementById('wave-animation');
-        const participantWave = document.getElementById('participant-wave');
-        const qrSection = document.getElementById('qr-section');
-        const qrCodeImage = document.getElementById('qr-code-image');
-        const connectionStatus = document.getElementById('connection-status');
-        const textInputFallback = document.getElementById('text-input-fallback');
-        const participantTextInput = document.getElementById('participant-text-input');
-        
-        // Interfaces
-        const hostInterface = document.getElementById('host-interface');
-        const participantInterface = document.getElementById('participant-interface');
-        
-        // Éléments de texte - Hôte
-        const hostOriginalText = document.getElementById('host-original-text');
-        const hostResponsesText = document.getElementById('host-responses-text');
-        
-        // Éléments de texte - Participant
-        const participantOriginalText = document.getElementById('participant-original-text');
-        const participantTranslatedText = document.getElementById('participant-translated-text');
-        const participantMessageArea = document.getElementById('participant-message-area');
-        const participantOwnText = document.getElementById('participant-own-text');
-        const participantFrenchText = document.getElementById('participant-french-text');
-        const participantTargetLanguage = document.getElementById('participant-target-language');
-        
-        const participantsListEl = document.getElementById('participants-list');
-        const participantCountEl = document.getElementById('participant-count');
-        
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeRoom();
-        });
-        
-        function initializeRoom() {
-            // Récupérer les données utilisateur du localStorage
-            const userDataStr = localStorage.getItem('tradlive_user');
-            if (!userDataStr) {
-                showError('Données utilisateur manquantes. Retour à l\'accueil...');
-                setTimeout(() => window.location.href = '/rooms', 2000);
-                return;
-            }
-            
-            userData = JSON.parse(userDataStr);
-            
-            // Vérifier que nous sommes dans la bonne salle
-            const currentRoomId = window.location.pathname.split('/').pop();
-            if (userData.room_id !== currentRoomId) {
-                showError('Incohérence de salle. Retour à l\'accueil...');
-                setTimeout(() => window.location.href = '/rooms', 2000);
-                return;
-            }
-            
-            // Afficher les informations utilisateur
-            document.getElementById('user-nickname').textContent = userData.nickname;
-            document.getElementById('user-language').textContent = getLanguageName(userData.language);
-            document.getElementById('qr-room-code').textContent = userData.room_id;
-            
-            // 🧠 CORRECTION : Adapter l'interface selon le navigateur (au bon moment + plus visible)
-            setTimeout(() => {
-                const compatibilityResult = adaptToNavigateur();
-                console.log('🔍 Résultat compatibilité:', compatibilityResult);
-                
-                // Afficher un message de compatibilité plus visible
-                showBrowserCompatibilityMessage(compatibilityResult);
-            }, 1000); // Augmenter le délai pour être sûr
-            
-            // Initialiser les voix
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.getVoices();
-                window.speechSynthesis.onvoiceschanged = function() {
-                    console.log('🎵 Voix disponibles:', window.speechSynthesis.getVoices().length);
-                };
-            }
-            
-            // Charger les informations de la salle
-            loadRoomInfo();
-            
-            // Démarrer la mise à jour en temps réel
-            startRealTimeUpdates();
-            startHeartbeat();
-            
-            // Configurer la reconnaissance vocale
-            if (window.webkitSpeechRecognition || window.SpeechRecognition) {
-                setupSpeechRecognition();
-            } else {
-                showError('Reconnaissance vocale non supportée. Utilisez le mode texte.');
-            }
-            
-            // Mettre à jour le QR code
-            updateQRCode();
-            
-            // 🔧 AJOUT : Event listeners de secours pour les boutons
-            setupButtonListeners();
-        }
-        
-        function updateQRCode() {
-            // QR code mène directement à la salle pour rejoindre automatiquement
-            const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
-            qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}&t=${Date.now()}`;
-        }
-        
-        // 🔧 NOUVELLE FONCTION : S'assurer que tous les boutons marchent
-        function setupButtonListeners() {
-            console.log('🔧 Configuration des boutons...');
-            
-            // Boutons de l'hôte
-            if (micButton && !micButton.hasAttribute('data-listener')) {
-                micButton.addEventListener('click', toggleHostListening);
-                micButton.setAttribute('data-listener', 'true');
-                console.log('✅ Bouton micro hôte connecté');
-            }
-            
-            if (textModeButton && !textModeButton.hasAttribute('data-listener')) {
-                textModeButton.addEventListener('click', showTextInput);
-                textModeButton.setAttribute('data-listener', 'true');
-                console.log('✅ Bouton texte hôte connecté');
-            }
-            
-            // Boutons des participants
-            if (participantMicButton && !participantMicButton.hasAttribute('data-listener')) {
-                participantMicButton.addEventListener('click', toggleParticipantListening);
-                participantMicButton.setAttribute('data-listener', 'true');
-                console.log('✅ Bouton micro participant connecté');
-            }
-            
-            if (participantTextButton && !participantTextButton.hasAttribute('data-listener')) {
-                participantTextButton.addEventListener('click', showParticipantTextInput);
-                participantTextButton.setAttribute('data-listener', 'true');
-                console.log('✅ Bouton texte participant connecté');
-            }
-        }
-        
-        function loadRoomInfo() {
-            fetch(`/api/room/${userData.room_id}/info`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        roomData = data.room;
-                        reconnectAttempts = 0;
-                        updateConnectionStatus(true);
-                        
-                        // Vérifier si l'utilisateur est l'hôte
-                        const currentUser = roomData.users.find(u => u.user_id === userData.user_id);
-                        if (currentUser) {
-                            isHost = currentUser.is_host;
-                            
-                            // Afficher l'interface appropriée
-                            if (isHost) {
-                                hostControlsEl.style.display = 'block';
-                                hostInterface.style.display = 'block';
-                                qrSection.classList.add('show');
-                                statusEl.textContent = 'Vous êtes l\'hôte. Parlez en français, la traduction se fera automatiquement vers toutes les langues.';
-                                statusEl.className = 'status connected';
-                            } else {
-                                participantControlsEl.style.display = 'block';
-                                participantInterface.style.display = 'block';
-                                participantTargetLanguage.textContent = getLanguageName(userData.language);
-                                statusEl.textContent = `Connecté en tant que participant. Vous recevez les traductions en ${getLanguageName(userData.language)}.`;
-                                statusEl.className = 'status connected';
-                            }
-                            
-                            controlsEl.style.display = 'block';
-                        } else {
-                            showError('Utilisateur non trouvé dans la salle');
-                            return;
-                        }
-                        
-                        // Mettre à jour la liste des participants
-                        updateParticipantsList();
-                        
-                    } else {
-                        throw new Error(data.error || 'Erreur inconnue');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur lors du chargement des infos de salle:', error);
-                    reconnectAttempts++;
-                    updateConnectionStatus(false);
-                    
-                    if (reconnectAttempts < maxReconnectAttempts) {
-                        setTimeout(() => loadRoomInfo(), reconnectAttempts * 1000);
-                    } else {
-                        showError('Impossible de se connecter à la salle');
-                    }
-                });
-        }
-        
-        function updateConnectionStatus(connected) {
-            if (connected) {
-                connectionStatus.textContent = 'Connecté ✅';
-                connectionStatus.style.color = '#4CAF50';
-            } else {
-                connectionStatus.textContent = `Reconnexion... (${reconnectAttempts}/${maxReconnectAttempts})`;
-                connectionStatus.style.color = '#f44336';
-            }
-        }
-        
-        function updateParticipantsList() {
-            if (!roomData || !roomData.users) return;
-            
-            participantCountEl.textContent = roomData.users.length;
-            
-            if (roomData.users.length === 0) {
-                participantsListEl.innerHTML = '<div class="loading">Aucun participant</div>';
-                return;
-            }
-            
-            participantsListEl.innerHTML = roomData.users.map(user => `
-                <div class="participant">
-                    <div>
-                        <span class="participant-name">${user.nickname}</span>
-                        ${user.is_host ? '<span class="host-badge">HÔTE</span>' : ''}
-                    </div>
-                    <span class="participant-language">${getLanguageName(user.language)}</span>
-                </div>
-            `).join('');
-        }
-        
-        function startRealTimeUpdates() {
-            updateInterval = setInterval(() => {
-                fetch(`/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            reconnectAttempts = 0;
-                            updateConnectionStatus(true);
-                            
-                            // Mettre à jour l'affichage selon le rôle
-                            if (isHost) {
-                                // Interface hôte
-                                if (data.original && !data.show_translation) {
-                                    // C'est une réponse d'un participant traduite en français
-                                    hostResponsesText.textContent = data.original;
-                                    hostResponsesText.classList.remove('empty-translation');
-                                }
-                            } else {
-                                // Interface participant - 🎵 CORRECTION ANTI-SPAM
-                                if (data.original && data.show_translation) {
-                                    participantOriginalText.textContent = data.original;
-                                    participantOriginalText.classList.remove('empty-translation');
-                                    
-                                    if (data.translated) {
-                                        participantTranslatedText.textContent = data.translated;
-                                        participantTranslatedText.classList.remove('empty-translation');
-                                        
-                                        // 🔧 CORRECTION MAJEURE : ID unique basé sur timestamp + contenu
-                                        if (data.enable_speech) {
-                                            const translationId = `${data.timestamp}_${data.translated.substring(0, 20)}`;
-                                            console.log('🎵 Tentative lecture traduction:', data.translated, 'ID:', translationId);
-                                            speakText(data.translated, userData.language, translationId);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erreur mise à jour:', error);
-                        reconnectAttempts++;
-                        updateConnectionStatus(false);
-                    });
-                
-                // Recharger les infos de salle moins souvent
-                if (Date.now() % 20000 < 3000) {
-                    loadRoomInfo();
-                }
-            }, 3000);
-        }
-        
-        function startHeartbeat() {
-            heartbeatInterval = setInterval(() => {
-                fetch(`/api/room/${userData.room_id}/heartbeat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.user_id })
-                }).catch(() => {
-                    reconnectAttempts++;
-                    updateConnectionStatus(false);
-                });
-            }, 10000);
-        }
-        
-        function setupSpeechRecognition() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            
-            // 🔧 CORRECTION : Vérifier si vraiment disponible
-            if (!SpeechRecognition) {
-                console.log('❌ Aucune API de reconnaissance vocale disponible');
-                return;
-            }
-            
-            if (isHost) {
-                // Configuration pour l'hôte (français)
-                try {
-                    recognition = new SpeechRecognition();
-                    recognition.lang = 'fr-FR';
-                    recognition.continuous = true;
-                    recognition.interimResults = true;
-                    
-                    console.log('✅ Reconnaissance vocale hôte configurée pour Edge/Chrome');
-                } catch (e) {
-                    console.error('❌ Erreur création reconnaissance hôte:', e);
-                    return;
-                }
-                
-                recognition.onresult = function(event) {
-                    const lastResultIndex = event.results.length - 1;
-                    const transcript = event.results[lastResultIndex][0].transcript;
-                    
-                    if (event.results[lastResultIndex].isFinal) {
-                        sendHostTranslation(transcript);
-                    } else {
-                        hostOriginalText.textContent = transcript;
-                        hostOriginalText.classList.remove('empty-translation');
-                    }
-                };
-                
-                // 🛡️ NOUVELLE GESTION D'ERREUR AMÉLIORÉE
-                recognition.onerror = function(event) {
-                    console.error('Erreur reconnaissance:', event.error);
-                    
-                    if (event.error === 'network') {
-                        console.log('🌐 Problème réseau, réessai...');
-                        statusEl.textContent = 'Problème réseau, nouvelle tentative...';
-                        statusEl.className = 'status info';
-                        
-                        setTimeout(() => {
-                            if (isListening) {
-                                try {
-                                    recognition.start();
-                                } catch (e) {
-                                    showTextInput();
-                                    stopHostListening();
-                                }
-                            }
-                        }, 2000);
-                        
-                    } else if (event.error === 'not-allowed') {
-                        showError('❌ Autorisez le microphone et rechargez la page.');
-                        stopHostListening();
-                    } else if (event.error === 'no-speech') {
-                        console.log('🤫 Pas de parole, on continue...');
-                    } else {
-                        showError('Problème micro. Mode texte activé.');
-                        showTextInput();
-                        stopHostListening();
-                    }
-                };
-                
-                recognition.onend = function() {
-                    if (isListening) {
-                        try {
-                            recognition.start();
-                        } catch (e) {
-                            stopHostListening();
-                        }
-                    }
-                };
-                
-                // Event listeners pour l'hôte
-                if (micButton) {
-                    micButton.addEventListener('click', toggleHostListening);
-                }
-                if (textModeButton) {
-                    textModeButton.addEventListener('click', showTextInput);
-                }
-            } else {
-                // Configuration pour les participants (leur langue)
-                try {
-                    participantRecognition = new SpeechRecognition();
-                    participantRecognition.lang = getRecognitionLanguageCode(userData.language);
-                    participantRecognition.continuous = true;
-                    participantRecognition.interimResults = true;
-                    
-                    console.log('✅ Reconnaissance vocale participant configurée pour', userData.language);
-                } catch (e) {
-                    console.error('❌ Erreur création reconnaissance participant:', e);
-                    return;
-                }
-                
-                participantRecognition.onresult = function(event) {
-                    const lastResultIndex = event.results.length - 1;
-                    const transcript = event.results[lastResultIndex][0].transcript;
-                    
-                    if (event.results[lastResultIndex].isFinal) {
-                        sendParticipantTranslation(transcript);
-                    } else {
-                        // Affichage temporaire pendant la reconnaissance
-                        statusEl.textContent = 'En cours: ' + transcript;
-                    }
-                };
-                
-                // 🛡️ MÊME GESTION D'ERREUR POUR LES PARTICIPANTS
-                participantRecognition.onerror = function(event) {
-                    console.error('Erreur reconnaissance participant:', event.error);
-                    
-                    if (event.error === 'network') {
-                        console.log('🌐 Problème réseau participant, réessai...');
-                        statusEl.textContent = 'Problème réseau, nouvelle tentative...';
-                        statusEl.className = 'status info';
-                        
-                        setTimeout(() => {
-                            if (isParticipantListening) {
-                                try {
-                                    participantRecognition.start();
-                                } catch (e) {
-                                    showParticipantTextInput();
-                                    stopParticipantListening();
-                                }
-                            }
-                        }, 2000);
-                        
-                    } else if (event.error === 'not-allowed') {
-                        showError('❌ Autorisez le microphone et rechargez la page.');
-                        stopParticipantListening();
-                    } else if (event.error === 'no-speech') {
-                        console.log('🤫 Pas de parole participant, on continue...');
-                    } else {
-                        showError('Problème micro. Mode texte activé.');
-                        showParticipantTextInput();
-                        stopParticipantListening();
-                    }
-                };
-                
-                participantRecognition.onend = function() {
-                    if (isParticipantListening) {
-                        try {
-                            participantRecognition.start();
-                        } catch (e) {
-                            stopParticipantListening();
-                        }
-                    }
-                };
-                
-                // Event listeners pour les participants
-                if (participantMicButton) {
-                    participantMicButton.addEventListener('click', toggleParticipantListening);
-                }
-                if (participantTextButton) {
-                    participantTextButton.addEventListener('click', showParticipantTextInput);
-                }
-            }
-        }
-        
-        function toggleHostListening() {
-            console.log('🎤 Toggle micro hôte, isListening:', isListening);
-            if (isListening) {
-                stopHostListening();
-            } else {
-                startHostListening();
-            }
-        }
-        
-        function startHostListening() {
-            console.log('🎤 Démarrage micro hôte...');
-            
-            // 🔧 CORRECTION : Essayer même si recognition n'est pas défini
-            if (!recognition) {
-                console.log('⚠️ Pas de reconnaissance vocale configurée, tentative de création...');
-                
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (SpeechRecognition) {
-                    try {
-                        recognition = new SpeechRecognition();
-                        recognition.lang = 'fr-FR';
-                        recognition.continuous = true;
-                        recognition.interimResults = true;
-                        
-                        // Réajouter les event listeners
-                        recognition.onresult = function(event) {
-                            const lastResultIndex = event.results.length - 1;
-                            const transcript = event.results[lastResultIndex][0].transcript;
-                            
-                            if (event.results[lastResultIndex].isFinal) {
-                                sendHostTranslation(transcript);
-                            } else {
-                                hostOriginalText.textContent = transcript;
-                                hostOriginalText.classList.remove('empty-translation');
-                            }
-                        };
-                        
-                        recognition.onerror = function(event) {
-                            console.error('Erreur reconnaissance:', event.error);
-                            
-                            if (event.error === 'network') {
-                                networkErrorCount++;
-                                console.log(`🌐 Problème réseau (${networkErrorCount}/3), réessai...`);
-                                
-                                // 🔧 CORRECTION : Arrêter après 3 tentatives avec interface propre
-                                if (networkErrorCount >= 3) {
-                                    console.log('❌ Trop d\'erreurs réseau, basculement en mode texte');
-                                    
-                                    // 🎯 NOUVEAU : Message clair + interface propre
-                                    showMicrophoneIncompatibleMessage();
-                                    cleanInterfaceForTextOnly();
-                                    stopHostListening();
-                                    return;
-                                }
-                                
-                                statusEl.textContent = `Problème réseau (${networkErrorCount}/3), nouvelle tentative...`;
-                                statusEl.className = 'status info';
-                                
-                                setTimeout(() => {
-                                    if (isListening) {
-                                        try {
-                                            recognition.start();
-                                        } catch (e) {
-                                            console.log('❌ Impossible de redémarrer, mode texte');
-                                            showTextInput();
-                                            stopHostListening();
-                                        }
-                                    }
-                                }, 2000);
-                                
-                            } else if (event.error === 'not-allowed') {
-                                showError('❌ Autorisez le microphone et rechargez la page.');
-                                stopHostListening();
-                            } else if (event.error === 'no-speech') {
-                                console.log('🤫 Pas de parole, on continue...');
-                                // Ne pas compter comme erreur réseau
-                            } else {
-                                console.log('❌ Erreur autre:', event.error);
-                                showError('Problème micro. Mode texte activé.');
-                                showTextInput();
-                                stopHostListening();
-                            }
-                        };
-                        
-                        recognition.onend = function() {
-                            if (isListening) {
-                                try {
-                                    recognition.start();
-                                } catch (e) {
-                                    stopHostListening();
-                                }
-                            }
-                        };
-                        
-                        console.log('✅ Reconnaissance vocale créée dynamiquement');
-                    } catch (e) {
-                        console.error('❌ Impossible de créer la reconnaissance:', e);
-                        showTextInput();
-                        return;
-                    }
-                } else {
-                    console.log('❌ Aucune API de reconnaissance disponible, mode texte');
-                    showTextInput();
-                    return;
-                }
-            }
-            
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    try {
-                        recognition.start();
-                        isListening = true;
-                        networkErrorCount = 0; // 🔧 RESET compteur d'erreurs
-                        micButton.textContent = '🎤 Arrêter';
-                        micButton.classList.add('active');
-                        waveAnimation.classList.add('active');
-                        statusEl.textContent = 'En écoute... Parlez en français.';
-                        statusEl.className = 'status info';
-                        console.log('✅ Reconnaissance vocale démarrée');
-                    } catch (e) {
-                        console.error('❌ Erreur démarrage reconnaissance:', e);
-                        showError('Erreur démarrage reconnaissance. Mode texte activé.');
-                        showTextInput();
-                    }
-                })
-                .catch(err => {
-                    console.error('Erreur accès micro hôte:', err);
-                    showError('Impossible d\'accéder au microphone. Mode texte activé.');
-                    showTextInput();
-                });
-        }
-        
-        function stopHostListening() {
-            if (recognition) recognition.stop();
-            isListening = false;
-            micButton.textContent = '🎤 Parler en Français';
-            micButton.classList.remove('active');
-            waveAnimation.classList.remove('active');
-            statusEl.textContent = 'Cliquez sur le micro pour parler.';
-            statusEl.className = 'status connected';
-        }
-        
-        function toggleParticipantListening() {
-            console.log('🎤 Toggle micro participant, isParticipantListening:', isParticipantListening);
-            if (isParticipantListening) {
-                stopParticipantListening();
-            } else {
-                startParticipantListening();
-            }
-        }
-        
-        function startParticipantListening() {
-            console.log('🎤 Démarrage micro participant...');
-            
-            // 🔧 CORRECTION : Essayer même si participantRecognition n'est pas défini
-            if (!participantRecognition) {
-                console.log('⚠️ Pas de reconnaissance vocale participant configurée, tentative de création...');
-                
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (SpeechRecognition) {
-                    try {
-                        participantRecognition = new SpeechRecognition();
-                        participantRecognition.lang = getRecognitionLanguageCode(userData.language);
-                        participantRecognition.continuous = true;
-                        participantRecognition.interimResults = true;
-                        
-                        // Réajouter les event listeners
-                        participantRecognition.onresult = function(event) {
-                            const lastResultIndex = event.results.length - 1;
-                            const transcript = event.results[lastResultIndex][0].transcript;
-                            
-                            if (event.results[lastResultIndex].isFinal) {
-                                sendParticipantTranslation(transcript);
-                            } else {
-                                statusEl.textContent = 'En cours: ' + transcript;
-                            }
-                        };
-                        
-                        participantRecognition.onerror = function(event) {
-                            console.error('Erreur reconnaissance participant:', event.error);
-                            
-                            if (event.error === 'network') {
-                                console.log('🌐 Problème réseau participant, réessai...');
-                                statusEl.textContent = 'Problème réseau, nouvelle tentative...';
-                                statusEl.className = 'status info';
-                                
-                                setTimeout(() => {
-                                    if (isParticipantListening) {
-                                        try {
-                                            participantRecognition.start();
-                                        } catch (e) {
-                                            showParticipantTextInput();
-                                            stopParticipantListening();
-                                        }
-                                    }
-                                }, 2000);
-                                
-                            } else if (event.error === 'not-allowed') {
-                                showError('❌ Autorisez le microphone et rechargez la page.');
-                                stopParticipantListening();
-                            } else if (event.error === 'no-speech') {
-                                console.log('🤫 Pas de parole participant, on continue...');
-                            } else {
-                                showError('Problème micro. Mode texte activé.');
-                                showParticipantTextInput();
-                                stopParticipantListening();
-                            }
-                        };
-                        
-                        participantRecognition.onend = function() {
-                            if (isParticipantListening) {
-                                try {
-                                    participantRecognition.start();
-                                } catch (e) {
-                                    stopParticipantListening();
-                                }
-                            }
-                        };
-                        
-                        console.log('✅ Reconnaissance vocale participant créée dynamiquement');
-                    } catch (e) {
-                        console.error('❌ Impossible de créer la reconnaissance participant:', e);
-                        showParticipantTextInput();
-                        return;
-                    }
-                } else {
-                    console.log('❌ Aucune API de reconnaissance disponible, mode texte');
-                    showParticipantTextInput();
-                    return;
-                }
-            }
-            
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    try {
-                        participantRecognition.start();
-                        isParticipantListening = true;
-                        participantMicButton.textContent = '🎤 Arrêter';
-                        participantMicButton.classList.add('active');
-                        participantWave.classList.add('active');
-                        statusEl.textContent = `En écoute... Parlez en ${getLanguageName(userData.language)}.`;
-                        statusEl.className = 'status info';
-                        console.log('✅ Reconnaissance vocale participant démarrée');
-                    } catch (e) {
-                        console.error('❌ Erreur démarrage reconnaissance participant:', e);
-                        showError('Erreur démarrage reconnaissance. Mode texte activé.');
-                        showParticipantTextInput();
-                    }
-                })
-                .catch(err => {
-                    console.error('Erreur accès micro participant:', err);
-                    showError('Impossible d\'accéder au microphone. Mode texte activé.');
-                    showParticipantTextInput();
-                });
-        }
-        
-        function stopParticipantListening() {
-            if (participantRecognition) participantRecognition.stop();
-            isParticipantListening = false;
-            participantMicButton.textContent = `🎤 Parler en ${getLanguageName(userData.language)}`;
-            participantMicButton.classList.remove('active');
-            participantWave.classList.remove('active');
-            statusEl.textContent = 'Cliquez sur le micro pour parler.';
-            statusEl.className = 'status connected';
-        }
-        
-        function sendHostTranslation(text) {
-            if (!text.trim()) return;
-            
-            statusEl.textContent = 'Diffusion de la traduction...';
-            statusEl.className = 'status info';
-            
-            // Afficher le texte de l'hôte
-            hostOriginalText.textContent = text;
-            hostOriginalText.classList.remove('empty-translation');
-            
-            fetch(`/api/room/${userData.room_id}/translate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: userData.user_id,
-                    text: text,
-                    source_language: 'fr'
-                })
-            })
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    statusEl.textContent = 'Message diffusé avec synthèse vocale !';
-                    statusEl.className = 'status connected';
-                } else {
-                    throw new Error(data.error || 'Erreur de traduction');
-                }
-            })
-            .catch(error => {
-                console.error('Erreur envoi traduction hôte:', error);
-                showError('Erreur envoi traduction: ' + error.message);
-            });
-        }
-        
-        function sendParticipantTranslation(text) {
-            if (!text.trim()) return;
-            
-            statusEl.textContent = 'Envoi de votre réponse...';
-            statusEl.className = 'status info';
-            
-            // Afficher le texte du participant
-            participantOwnText.textContent = text;
-            participantMessageArea.style.display = 'block';
-            
-            fetch(`/api/room/${userData.room_id}/translate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: userData.user_id,
-                    text: text,
-                    source_language: userData.language,
-                    target_language: 'fr'
-                })
-            })
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    statusEl.textContent = 'Réponse envoyée à l\'hôte !';
-                    statusEl.className = 'status connected';
-                    
-                    // Simulation de la traduction française (sera remplacée par les updates)
-                    setTimeout(() => {
-                        participantFrenchText.textContent = "Traduction en cours...";
-                    }, 500);
-                } else {
-                    throw new Error(data.error || 'Erreur de traduction');
-                }
-            })
-            .catch(error => {
-                console.error('Erreur envoi traduction participant:', error);
-                showError('Erreur envoi traduction: ' + error.message);
-            });
-        }
-        
-        // Fonctions pour le mode texte
-        function showTextInput() {
-            console.log('📝 Affichage mode texte hôte');
-            if (textInputFallback) {
-                textInputFallback.classList.add('show');
-                const textInput = document.getElementById('text-input');
-                if (textInput) {
-                    textInput.focus();
-                }
-                console.log('✅ Mode texte hôte activé');
-            } else {
-                console.log('❌ Element textInputFallback introuvable');
-            }
-        }
-        
-        function hideTextInput() {
-            console.log('📝 Masquage mode texte hôte');
-            if (textInputFallback) {
-                textInputFallback.classList.remove('show');
-            }
-        }
-        
-        function sendHostText() {
-            const text = document.getElementById('text-input').value.trim();
-            if (text) {
-                sendHostTranslation(text);
-                document.getElementById('text-input').value = '';
-                hideTextInput();
-            }
-        }
-        
-        function showParticipantTextInput() {
-            console.log('📝 Affichage mode texte participant');
-            if (participantTextInput) {
-                participantTextInput.classList.add('show');
-                const textInput = document.getElementById('participant-text');
-                if (textInput) {
-                    textInput.focus();
-                }
-                console.log('✅ Mode texte participant activé');
-            } else {
-                console.log('❌ Element participantTextInput introuvable');
-            }
-        }
-        
-        function hideParticipantTextInput() {
-            console.log('📝 Masquage mode texte participant');
-            if (participantTextInput) {
-                participantTextInput.classList.remove('show');
-            }
-        }
-        
-        function sendParticipantText() {
-            const text = document.getElementById('participant-text').value.trim();
-            if (text) {
-                sendParticipantTranslation(text);
-                document.getElementById('participant-text').value = '';
-                hideParticipantTextInput();
-            }
-        }
-        
-        // Gestion des touches Entrée
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                if (document.getElementById('text-input') === document.activeElement) {
-                    e.preventDefault();
-                    sendHostText();
-                } else if (document.getElementById('participant-text') === document.activeElement) {
-                    e.preventDefault();
-                    sendParticipantText();
-                }
-            }
-        });
-        
-        function leaveRoom() {
-            if (confirm('Êtes-vous sûr de vouloir quitter la salle ?')) {
-                // Arrêter toutes les activités
-                if (updateInterval) clearInterval(updateInterval);
-                if (heartbeatInterval) clearInterval(heartbeatInterval);
-                if (isListening) stopHostListening();
-                if (isParticipantListening) stopParticipantListening();
-                
-                fetch(`/api/room/${userData.room_id}/leave`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userData.user_id })
-                })
-                .finally(() => {
-                    localStorage.removeItem('tradlive_user');
-                    window.location.href = '/rooms';
-                });
-            }
-        }
-        
-        function showError(message) {
-            statusEl.textContent = message;
-            statusEl.className = 'status error';
-        }
-        
-        function getLanguageName(code) {
-            const names = {
-                'fr': 'Français',
-                'en': 'Anglais',
-                'es': 'Espagnol',
-                'de': 'Allemand',
-                'it': 'Italien',
-                'pt': 'Portugais',
-                'ru': 'Russe',
-                'zh-CN': 'Chinois',
-                'ja': 'Japonais',
-                'ar': 'Arabe',
-                'uk': 'Ukrainien',
-                'fa': 'Persan',
-                'hi': 'Hindi',
-                'bn': 'Bengali',
-                'te': 'Télougou',
-                'mr': 'Marathi'
-            };
-            return names[code] || code;
-        }
-        
-        function getRecognitionLanguageCode(code) {
-            const mapping = {
-                'en': 'en-US',
-                'es': 'es-ES',
-                'de': 'de-DE',
-                'it': 'it-IT',
-                'pt': 'pt-PT',
-                'ru': 'ru-RU',
-                'zh-CN': 'zh-CN',
-                'ja': 'ja-JP',
-                'ar': 'ar-SA',
-                'uk': 'uk-UA',
-                'fa': 'fa-IR',
-                'hi': 'hi-IN',
-                'bn': 'bn-IN',
-                'te': 'te-IN',
-                'mr': 'mr-IN',
-                'fr': 'fr-FR'
-            };
-            return mapping[code] || 'en-US';
-        }
-        
-        // Nettoyage à la fermeture
-        window.addEventListener('beforeunload', function() {
-            if (updateInterval) clearInterval(updateInterval);
-            if (heartbeatInterval) clearInterval(heartbeatInterval);
-            if (isListening) stopHostListening();
-            if (isParticipantListening) stopParticipantListening();
-            
-            // Envoyer un signal de déconnexion
-            if (userData) {
-                navigator.sendBeacon(`/api/room/${userData.room_id}/leave`, 
-                    JSON.stringify({ user_id: userData.user_id }));
-            }
-        });
-    </script>
+    <!-- ✅ SCRIPTS EXTERNES UNIQUEMENT - PAS DE JAVASCRIPT INLINE -->
+    <script src="/static/js/translations.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/room.js"></script>
 </body>
 </html>
