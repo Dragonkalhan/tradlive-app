@@ -1456,6 +1456,11 @@ function animateElement(element, animationType = 'fadeIn') {
 }
 
 function showElement(element, addClass = false) {
+    // Si c'est une string, récupérer l'élément par ID
+    if (typeof element === 'string') {
+        element = document.getElementById(element);
+    }
+    
     if (element) {
         element.style.display = 'block';
         if (addClass && element.classList) {
