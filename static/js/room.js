@@ -1210,6 +1210,12 @@ function sendParticipantText() {
    MISES À JOUR TEMPS RÉEL - FINALISÉES
 ======================================== */
 function startRealTimeUpdates() {
+      // CORRECTION : Éviter les intervals multiples
+    if (updateInterval) {
+        clearInterval(updateInterval);
+        updateInterval = null;
+    }
+    
     updateInterval = setInterval(() => {
         const url = `/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`;
         
@@ -1636,21 +1642,26 @@ window.addEventListener('beforeunload', function(e) {
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
         console.log('📱 Page cachée, optimisation batterie');
-        // Réduire la fréquence des mises à jour
+        // CORRECTION : Bien nettoyer l'ancien interval
         if (updateInterval) {
             clearInterval(updateInterval);
-            updateInterval = setInterval(() => {
-                const requestData = { user_id: userData.user_id };
-                makeApiRequest(`/api/room/${userData.room_id}/heartbeat`, 'POST', requestData)
-                    .catch(() => console.warn('⚠️ Heartbeat failed while hidden'));
-            }, 10000);
+            updateInterval = null;
         }
+        // Créer un interval moins fréquent pour heartbeat seulement
+        updateInterval = setInterval(() => {
+            const requestData = { user_id: userData.user_id };
+            makeApiRequest(`/api/room/${userData.room_id}/heartbeat`, 'POST', requestData)
+                .catch(() => console.warn('⚠️ Heartbeat failed while hidden'));
+        }, 10000);
     } else {
         console.log('📱 Page visible, restauration normale');
+        // CORRECTION : Bien nettoyer avant de recréer
         if (updateInterval) {
             clearInterval(updateInterval);
-            startRealTimeUpdates();
+            updateInterval = null;
         }
+        // Redémarrer les mises à jour normales
+        startRealTimeUpdates();
     }
 });
 
