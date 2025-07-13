@@ -1329,12 +1329,12 @@ function setupButtonListeners() {
     const debouncedToggleParticipant = debounce(toggleParticipantListening, 300);
     
     // Boutons hôte
-    addEventListenerOnce(micButton, 'click', debouncedToggleHost);
-    addEventListenerOnce(textModeButton, 'click', showTextInput);
+    if (micBtn) micBtn.addEventListener('click', debouncedToggleHost);
+    if (textBtn) textBtn.addEventListener('click', showTextInput);
     
-    // Boutons participant
-    addEventListenerOnce(participantMicButton, 'click', debouncedToggleParticipant);
-    addEventListenerOnce(participantTextButton, 'click', showParticipantTextInput);
+    // Boutons participant  
+    if (partMicBtn) partMicBtn.addEventListener('click', debouncedToggleParticipant);
+    if (partTextBtn) partTextBtn.addEventListener('click', showParticipantTextInput);
     
     console.log('✅ Événements boutons configurés');
 }
