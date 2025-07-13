@@ -607,25 +607,50 @@ function handleConnectionError() {
 }
 
 function updateConnectionStatus(connected) {
-    if (!connectionStatus) return;
+    // Mettre à jour les DEUX éléments de statut
+    const connectionStatus = document.getElementById('connection-status');
+    const mainStatus = document.getElementById('status');
     
     if (connected) {
         const message = getTranslation('connected') || 'Connecté ✅';
-        connectionStatus.textContent = message;
-        connectionStatus.style.color = '#4CAF50';
         
-        animateElement(connectionStatus, 'pulse');
+        // Petit statut en-tête
+        if (connectionStatus) {
+            connectionStatus.textContent = message;
+            connectionStatus.style.color = '#4CAF50';
+        }
+        
+        // Gros statut principal
+        if (mainStatus) {
+            mainStatus.textContent = message;
+            mainStatus.className = 'status connected show';
+        }
+        
+        animateElement('connection-status', 'pulse');
     } else {
         const message = getTranslation('reconnecting') || 
             `Reconnexion... (${reconnectAttempts}/${maxReconnectAttempts})`;
-        connectionStatus.textContent = message;
-        connectionStatus.style.color = '#f44336';
+            
+        // Petit statut en-tête
+        if (connectionStatus) {
+            connectionStatus.textContent = message;
+            connectionStatus.style.color = '#f44336';
+        }
         
-        animateElement(connectionStatus, 'shake');
+        // Gros statut principal  
+        if (mainStatus) {
+            mainStatus.textContent = message;
+            mainStatus.className = 'status error show';
+        }
+        
+        animateElement('connection-status', 'shake');
     }
 }
 
 function updateParticipantsList() {
+    const participantsListEl = document.getElementById('participants-list');
+    const participantCountEl = document.getElementById('participant-count');
+    
     if (!roomData?.users || !participantsListEl || !participantCountEl) return;
     
     const userCount = roomData.users.length;
@@ -1301,7 +1326,8 @@ function updateQRCode() {
     if (!qrCodeImage) return;
     
     const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
-    qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}&t=${Date.now()}`;
+    // SUPPRESSION du timestamp qui causait les rechargements
+    qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}`;
     
     qrCodeImage.onerror = function() {
         console.warn('⚠️ Erreur chargement QR code');
