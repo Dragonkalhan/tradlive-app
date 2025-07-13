@@ -395,10 +395,16 @@
                 tab.classList.remove('active');
             });
             
-            // Activer l'onglet et le contenu sélectionnés avec animation
+            // Activer l'onglet et le contenu sélectionnés
             setTimeout(() => {
                 document.getElementById(tabName + '-tab').classList.add('active');
-                event.target.classList.add('active');
+                // Trouver le bon onglet à activer
+                const tabs = document.querySelectorAll('.tab');
+                if (tabName === 'create') {
+                    tabs[0].classList.add('active');
+                } else {
+                    tabs[1].classList.add('active');
+                }
             }, 150);
         }
 
