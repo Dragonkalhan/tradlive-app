@@ -538,40 +538,33 @@ function loadRoomInfo() {
 }
 
 function setupRoleInterface() {
-   if (isHost) {
-    // Interface hôte
-    showElement('host-controls');
-    showElement('host-interface');
-    
-    const qrSection = document.getElementById('qr-section');
-    if (qrSection) {
-        qrSection.classList.add('show');
+    // CORRECTION : Éviter les appels multiples
+    const alreadyConfigured = document.querySelector('.role-configured');
+    if (alreadyConfigured) {
+        return; // Interface déjà configurée
     }
+    
+    if (isHost) {
+        // Interface hôte
+        showElement('host-controls');
+        showElement('host-interface');
         
-        // Animation avec TradLive si disponible
-        animateElement('hostControls', 'slideInUp');
-        animateElement('qr-section', 'slideInDown');
+        const qrSection = document.getElementById('qr-section');
+        if (qrSection) {
+            qrSection.classList.add('show');
+        }
         
-        const message = getTranslation('host_status') || 
-            'Vous êtes l\'hôte. Parlez en français, la traduction se fera automatiquement vers toutes les langues.';
-        showStatus(message, 'connected');
+        // Marquer comme configuré
+        document.body.classList.add('role-configured');
         
         console.log('👑 Interface hôte configurée');
     } else {
         // Interface participant
-        showElement('participantControls');
-        showElement('participantInterface');
+        showElement('participant-controls');
+        showElement('participant-interface');
         
-        if (participantTargetLanguage) {
-            participantTargetLanguage.textContent = getLanguageName(userData.language);
-        }
-        
-        // Animation pour les participants
-        animateElement('participantControls', 'slideInUp');
-        
-        const message = getTranslation('participant_status') || 
-            `Connecté en tant que participant. Vous recevez les traductions en ${getLanguageName(userData.language)}.`;
-        showStatus(message, 'connected');
+        // Marquer comme configuré  
+        document.body.classList.add('role-configured');
         
         console.log('👤 Interface participant configurée');
     }
@@ -654,6 +647,13 @@ function updateParticipantsList() {
     if (!roomData?.users || !participantsListEl || !participantCountEl) return;
     
     const userCount = roomData.users.length;
+    
+    // CORRECTION : Éviter la recréation si rien n'a changé
+    const currentCount = participantCountEl.textContent;
+    if (currentCount === userCount.toString() && participantsListEl.children.length > 0) {
+        return; // Liste identique, pas de recréation
+    }
+    
     participantCountEl.textContent = userCount;
     
     if (userCount === 0) {
