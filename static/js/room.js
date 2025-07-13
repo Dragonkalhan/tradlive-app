@@ -1307,16 +1307,22 @@ function setupButtonListeners() {
     console.log('🔧 Configuration des événements boutons...');
 
     // DIAGNOSTIC : Vérifier si les boutons existent
-    console.log('micButton:', micButton);
-    console.log('textModeButton:', textModeButton);
-    console.log('participantMicButton:', participantMicButton);
-    console.log('participantTextButton:', participantTextButton);
+    //console.log('micButton:', micButton);
+    //console.log('textModeButton:', textModeButton);
+    //console.log('participantMicButton:', participantMicButton);
+    //console.log('participantTextButton:', participantTextButton);
 
     // DIAGNOSTIC DIRECT : Chercher les éléments dans le DOM
-    console.log('Direct mic-button:', document.getElementById('mic-button'));
-    console.log('Direct text-mode-button:', document.getElementById('text-mode-button'));
-    console.log('Direct participant-mic-button:', document.getElementById('participant-mic-button'));
-    console.log('Direct participant-text-button:', document.getElementById('participant-text-button'));
+    //console.log('Direct mic-button:', document.getElementById('mic-button'));
+    //console.log('Direct text-mode-button:', document.getElementById('text-mode-button'));
+    //console.log('Direct participant-mic-button:', document.getElementById('participant-mic-button'));
+    //console.log('Direct participant-text-button:', document.getElementById('participant-text-button'));
+
+       // SOLUTION : Utiliser directement getElementById
+    const micBtn = document.getElementById('mic-button');
+    const textBtn = document.getElementById('text-mode-button');
+    const partMicBtn = document.getElementById('participant-mic-button');
+    const partTextBtn = document.getElementById('participant-text-button');
     
     // Debouncing pour éviter les clics multiples
     const debouncedToggleHost = debounce(toggleHostListening, 300);
