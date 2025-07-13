@@ -1305,6 +1305,12 @@ function startHeartbeat() {
 ======================================== */
 function setupButtonListeners() {
     console.log('🔧 Configuration des événements boutons...');
+
+    // DIAGNOSTIC : Vérifier si les boutons existent
+    console.log('micButton:', micButton);
+    console.log('textModeButton:', textModeButton);
+    console.log('participantMicButton:', participantMicButton);
+    console.log('participantTextButton:', participantTextButton);
     
     // Debouncing pour éviter les clics multiples
     const debouncedToggleHost = debounce(toggleHostListening, 300);
