@@ -327,27 +327,6 @@
                         <input type="text" id="create-nickname" data-translate-placeholder="nickname_placeholder" placeholder="Ex: Marie" required>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="create-language" data-translate="your_language">Votre langue</label>
-                        <select id="create-language" required>
-                            <option value="fr" data-translate="lang_french">Français</option>
-                            <option value="en" data-translate="lang_english">English</option>
-                            <option value="es" data-translate="lang_spanish">Español</option>
-                            <option value="de" data-translate="lang_german">Deutsch</option>
-                            <option value="it" data-translate="lang_italian">Italiano</option>
-                            <option value="pt" data-translate="lang_portuguese">Português</option>
-                            <option value="ru" data-translate="lang_russian">Русский</option>
-                            <option value="zh-CN" data-translate="lang_chinese">中文</option>
-                            <option value="ja" data-translate="lang_japanese">日本語</option>
-                            <option value="ar" data-translate="lang_arabic">العربية</option>
-                            <option value="uk" data-translate="lang_ukrainian">Українська</option>
-                            <option value="fa" data-translate="lang_persian">فارسی</option>
-                            <option value="hi" data-translate="lang_hindi">हिन्दी</option>
-                            <option value="bn" data-translate="lang_bengali">বাংলা</option>
-                            <option value="te" data-translate="lang_telugu">తెలుగు</option>
-                            <option value="mr" data-translate="lang_marathi">मराठी</option>
-                        </select>
-                    </div>
                     
                     <div class="form-group">
                         <label for="room-name" data-translate="room_name">Nom de la salle</label>
@@ -380,27 +359,7 @@
                         <input type="text" id="join-nickname" data-translate-placeholder="nickname_placeholder" placeholder="Ex: Pierre" required>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="join-language" data-translate="your_language">Votre langue</label>
-                        <select id="join-language" required>
-                            <option value="fr" data-translate="lang_french">Français</option>
-                            <option value="en" data-translate="lang_english">English</option>
-                            <option value="es" data-translate="lang_spanish">Español</option>
-                            <option value="de" data-translate="lang_german">Deutsch</option>
-                            <option value="it" data-translate="lang_italian">Italiano</option>
-                            <option value="pt" data-translate="lang_portuguese">Português</option>
-                            <option value="ru" data-translate="lang_russian">Русский</option>
-                            <option value="zh-CN" data-translate="lang_chinese">中文</option>
-                            <option value="ja" data-translate="lang_japanese">日本語</option>
-                            <option value="ar" data-translate="lang_arabic">العربية</option>
-                            <option value="uk" data-translate="lang_ukrainian">Українська</option>
-                            <option value="fa" data-translate="lang_persian">فارسی</option>
-                            <option value="hi" data-translate="lang_hindi">हिन्दी</option>
-                            <option value="bn" data-translate="lang_bengali">বাংলা</option>
-                            <option value="te" data-translate="lang_telugu">తెలుగు</option>
-                            <option value="mr" data-translate="lang_marathi">मराठी</option>
-                        </select>
-                    </div>
+                    
                     
                     <div class="form-group">
                         <label for="join-password" data-translate="room_password_if_required">Mot de passe (si requis)</label>
@@ -504,9 +463,6 @@
                 currentLangDisplay.textContent = getLanguageName(currentLanguage);
             }
             
-            // Pré-sélectionner la langue dans les selects
-            document.getElementById('create-language').value = currentLanguage;
-            document.getElementById('join-language').value = currentLanguage;
             
             // Vérifier s'il y a un paramètre join dans l'URL (depuis QR code)
             const urlParams = new URLSearchParams(window.location.search);
@@ -551,7 +507,7 @@
             
             const data = {
                 nickname: document.getElementById('create-nickname').value.trim(),
-                language: document.getElementById('create-language').value,
+                language: currentLanguage,
                 room_name: document.getElementById('room-name').value.trim(),
                 password: document.getElementById('room-password').value.trim() || null
             };
@@ -640,7 +596,7 @@
             const data = {
                 room_id: document.getElementById('join-room-id').value.trim(),
                 nickname: document.getElementById('join-nickname').value.trim(),
-                language: document.getElementById('join-language').value,
+                language: currentLanguage,
                 password: document.getElementById('join-password').value.trim() || null
             };
             
