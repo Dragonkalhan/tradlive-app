@@ -1146,7 +1146,13 @@ function showTextInput() {
         
         const textInput = document.getElementById('text-input');
         if (textInput) {
-            setTimeout(() => textInput.focus(), 300);
+            setTimeout(() => {
+             try {
+                 textInput.focus();
+             } catch (e) {
+                 console.log('Focus interrompu par extension, pas grave');
+             }
+         }, 300);
         }
         
         animateElement(textInputFallback, 'slideInUp');
@@ -1187,7 +1193,13 @@ function showParticipantTextInput() {
         
         const textInput = document.getElementById('participant-text');
         if (textInput) {
-            setTimeout(() => textInput.focus(), 300);
+            setTimeout(() => {
+                try {
+                    textInput.focus();
+                } catch (e) {
+                    console.log('Focus interrompu par extension, pas grave');
+                }
+            }, 300);
         }
         
         animateElement(participantTextInput, 'slideInUp');
