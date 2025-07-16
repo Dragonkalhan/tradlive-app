@@ -1172,14 +1172,23 @@ function hideTextInput() {
 }
 
 function sendHostText() {
+    console.log('🟢 sendHostText() appelée');
+    
     const textInput = document.getElementById('text-input');
+    console.log('🟢 textInput trouvé:', textInput);
+    
     if (!textInput) return;
     
     const text = textInput.value.trim();
+    console.log('🟢 Texte récupéré:', text);
+    
     if (text) {
+        console.log('🟢 Appel sendHostTranslation avec:', text);
         sendHostTranslation(text);
         textInput.value = '';
         hideTextInput();
+    } else {
+        console.log('🔴 Texte vide !');
     }
 }
 
@@ -1219,14 +1228,23 @@ function hideParticipantTextInput() {
 }
 
 function sendParticipantText() {
+    console.log('🟢 sendParticipantText() appelée');
+    
     const textInput = document.getElementById('participant-text');
+    console.log('🟢 textInput trouvé:', textInput);
+    
     if (!textInput) return;
     
     const text = textInput.value.trim();
+    console.log('🟢 Texte récupéré:', text);
+    
     if (text) {
+        console.log('🟢 Appel sendParticipantTranslation avec:', text);
         sendParticipantTranslation(text);
         textInput.value = '';
         hideParticipantTextInput();
+    } else {
+        console.log('🔴 Texte vide !');
     }
 }
 
