@@ -1303,39 +1303,44 @@ function startRealTimeUpdates() {
 }
 
 function processRoomUpdates(data) {
-console.log('🟢 processRoomUpdates appelée avec:', data);
-    console.log('🔍 STRUCTURE COMPLÈTE:', JSON.stringify(data, null, 2)); // ← AJOUTE CETTE LIGNE
+    console.log('🟢 processRoomUpdates appelée avec:', data);
+    
+    // CORRECTION : Accéder aux bonnes données
+    const actualData = data.data || data;
     console.log('🟢 isHost:', isHost);
-    console.log('🟢 data.original:', data.original);
-    console.log('🟢 data.translated:', data.translated);
+    console.log('🟢 actualData.original:', actualData.original);
+    console.log('🟢 actualData.translated:', actualData.translated);
     
     if (isHost) {
         // Interface hôte : afficher les réponses des participants
-        if (data.original && !data.show_translation) {
+        if (actualData.original && !actualData.show_translation) {
+            const hostResponsesText = document.getElementById('host-responses-text');
             if (hostResponsesText) {
-                hostResponsesText.textContent = data.original;
+                hostResponsesText.textContent = actualData.original;
                 hostResponsesText.classList.remove('empty-translation');
                 animateElement(hostResponsesText, 'pulse');
             }
         }
     } else {
         // Interface participant : afficher les messages de l'hôte traduits
-        if (data.original && data.show_translation) {
+        if (actualData.original && actualData.show_translation) {
+            const participantOriginalText = document.getElementById('participant-original-text');
             if (participantOriginalText) {
-                participantOriginalText.textContent = data.original;
+                participantOriginalText.textContent = actualData.original;
                 participantOriginalText.classList.remove('empty-translation');
             }
             
-            if (data.translated && participantTranslatedText) {
-                participantTranslatedText.textContent = data.translated;
+            const participantTranslatedText = document.getElementById('participant-translated-text');
+            if (actualData.translated && participantTranslatedText) {
+                participantTranslatedText.textContent = actualData.translated;
                 participantTranslatedText.classList.remove('empty-translation');
                 animateElement(participantTranslatedText, 'pulse');
                 
                 // Synthèse vocale avec ID unique pour éviter les répétitions
-                if (data.enable_speech) {
-                    const translationId = `${data.timestamp}_${data.translated.substring(0, 20)}`;
-                    console.log('🎵 Lecture traduction:', data.translated.substring(0, 30) + '...');
-                    speakText(data.translated, userData.language, translationId);
+                if (actualData.enable_speech) {
+                    const translationId = `${actualData.timestamp}_${actualData.translated.substring(0, 20)}`;
+                    console.log('🎵 Lecture traduction:', actualData.translated.substring(0, 30) + '...');
+                    speakText(actualData.translated, userData.language, translationId);
                 }
             }
         }
