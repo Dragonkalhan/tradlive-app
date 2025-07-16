@@ -690,6 +690,7 @@ function setupSpeechRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
+       
         console.log('❌ API de reconnaissance vocale non disponible');
         const message = getTranslation('speech_not_supported') || 
             'Reconnaissance vocale non supportée. Utilisez le mode texte.';
@@ -748,7 +749,25 @@ function setupParticipantRecognition(SpeechRecognition) {
     participantRecognition.interimResults = true;
     participantRecognition.maxAlternatives = 1;
     
+    participantRecognition.onstart = function() {
+        console.log('🎤 Reconnaissance démarrée');
+    };
+    
+    participantRecognition.onaudiostart = function() {
+        console.log('🔊 Audio détecté !');
+    };
+    
+    participantRecognition.onsoundstart = function() {
+        console.log('🎵 Son détecté !');
+    };
+    
+    participantRecognition.onspeechstart = function() {
+        console.log('🗣️ Parole détectée !');
+    };
+    
     participantRecognition.onresult = function(event) {
+        console.log('📝 Résultat reçu:', event.results);
+        
         const lastResultIndex = event.results.length - 1;
         const transcript = event.results[lastResultIndex][0].transcript;
         
@@ -1269,13 +1288,13 @@ function startRealTimeUpdates() {
         
             makeApiRequest(url)
     .then(data => {
-        console.log('🟢 Mises à jour reçues:', data);
+      //  console.log('🟢 Mises à jour reçues:', data);
         
         if (data.success) {
             reconnectAttempts = 0;
             updateConnectionStatus(true);
             
-            console.log('🟢 Appel processRoomUpdates avec:', data);
+           // console.log('🟢 Appel processRoomUpdates avec:', data);
             processRoomUpdates(data);
             
             // Émettre événement de mise à jour
@@ -1303,13 +1322,13 @@ function startRealTimeUpdates() {
 }
 
 function processRoomUpdates(data) {
-    console.log('🟢 processRoomUpdates appelée avec:', data);
+ //   console.log('🟢 processRoomUpdates appelée avec:', data);
     
     // CORRECTION : Accéder aux bonnes données
     const actualData = data.data || data;
-    console.log('🟢 isHost:', isHost);
-    console.log('🟢 actualData.original:', actualData.original);
-    console.log('🟢 actualData.translated:', actualData.translated);
+   // console.log('🟢 isHost:', isHost);
+   // console.log('🟢 actualData.original:', actualData.original);
+   // console.log('🟢 actualData.translated:', actualData.translated);
     
     if (isHost) {
         // Interface hôte : afficher les réponses des participants
