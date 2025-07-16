@@ -1267,7 +1267,6 @@ function startRealTimeUpdates() {
     updateInterval = setInterval(() => {
         const url = `/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`;
         
-        makeApiRequest(url)
             makeApiRequest(url)
     .then(data => {
         console.log('🟢 Mises à jour reçues:', data);
@@ -1281,25 +1280,18 @@ function startRealTimeUpdates() {
             
             // Émettre événement de mise à jour
             emitEvent('room:updated', data);
-        } else {
-            console.log('🔴 Pas de données dans les mises à jour');
         }
     })
-                    
-                    // Émettre événement de mise à jour
-                    emitEvent('room:updated', data);
-                }
-            })
-            .catch(error => {
-                console.error('❌ Erreur mise à jour:', error);
-                reconnectAttempts++;
-                updateConnectionStatus(false);
-                
-                // Notification après plusieurs échecs
-                if (reconnectAttempts >= 3) {
-                    notifyWarning('Problème de connexion détecté');
-                }
-            });
+    .catch(error => {
+        console.error('❌ Erreur mise à jour:', error);
+        reconnectAttempts++;
+        updateConnectionStatus(false);
+        
+        // Notification après plusieurs échecs
+        if (reconnectAttempts >= 3) {
+            notifyWarning('Problème de connexion détecté');
+        }
+    });
         
         // Recharger les infos de salle périodiquement
         if (Date.now() % 20000 < 3000) {
