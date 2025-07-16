@@ -1268,11 +1268,23 @@ function startRealTimeUpdates() {
         const url = `/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`;
         
         makeApiRequest(url)
-            .then(data => {
-                if (data.success) {
-                    reconnectAttempts = 0;
-                    updateConnectionStatus(true);
-                    processRoomUpdates(data);
+            makeApiRequest(url)
+    .then(data => {
+        console.log('🟢 Mises à jour reçues:', data);
+        
+        if (data.success) {
+            reconnectAttempts = 0;
+            updateConnectionStatus(true);
+            
+            console.log('🟢 Appel processRoomUpdates avec:', data);
+            processRoomUpdates(data);
+            
+            // Émettre événement de mise à jour
+            emitEvent('room:updated', data);
+        } else {
+            console.log('🔴 Pas de données dans les mises à jour');
+        }
+    })
                     
                     // Émettre événement de mise à jour
                     emitEvent('room:updated', data);
@@ -1299,6 +1311,11 @@ function startRealTimeUpdates() {
 }
 
 function processRoomUpdates(data) {
+    console.log('🟢 processRoomUpdates appelée avec:', data);
+    console.log('🟢 isHost:', isHost);
+    console.log('🟢 data.original:', data.original);
+    console.log('🟢 data.translated:', data.translated);
+    
     if (isHost) {
         // Interface hôte : afficher les réponses des participants
         if (data.original && !data.show_translation) {
