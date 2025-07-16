@@ -1138,6 +1138,10 @@ function updateParticipantFrenchText() {
 ======================================== */
 function showTextInput() {
     console.log('📝 Affichage mode texte hôte');
+   // DIAGNOSTIC : Vérifier les éléments
+    console.log('textInputFallback variable:', textInputFallback);
+    console.log('Direct text-input-fallback:', document.getElementById('text-input-fallback'));
+   
     if (textInputFallback) {
         textInputFallback.classList.add('show');
         
@@ -1173,6 +1177,10 @@ function sendHostText() {
 
 function showParticipantTextInput() {
     console.log('📝 Affichage mode texte participant');
+   // DIAGNOSTIC : Vérifier les éléments
+    console.log('participantTextInput variable:', participantTextInput);
+    console.log('Direct participant-text-input:', document.getElementById('participant-text-input'));
+   
     if (participantTextInput) {
         participantTextInput.classList.add('show');
         
