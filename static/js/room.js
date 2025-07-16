@@ -1138,10 +1138,9 @@ function updateParticipantFrenchText() {
 ======================================== */
 function showTextInput() {
     console.log('📝 Affichage mode texte hôte');
-   // DIAGNOSTIC : Vérifier les éléments
-    console.log('textInputFallback variable:', textInputFallback);
-    console.log('Direct text-input-fallback:', document.getElementById('text-input-fallback'));
-   
+   // SOLUTION : Utiliser directement getElementById
+    const textInputFallback = document.getElementById('text-input-fallback');
+    
     if (textInputFallback) {
         textInputFallback.classList.add('show');
         
@@ -1152,6 +1151,8 @@ function showTextInput() {
         
         animateElement(textInputFallback, 'slideInUp');
         console.log('✅ Mode texte hôte activé');
+    } else {
+        console.log('❌ Élément text-input-fallback introuvable');
     }
 }
 
@@ -1177,10 +1178,9 @@ function sendHostText() {
 
 function showParticipantTextInput() {
     console.log('📝 Affichage mode texte participant');
-   // DIAGNOSTIC : Vérifier les éléments
-    console.log('participantTextInput variable:', participantTextInput);
-    console.log('Direct participant-text-input:', document.getElementById('participant-text-input'));
-   
+// SOLUTION : Utiliser directement getElementById
+    const participantTextInput = document.getElementById('participant-text-input');
+    
     if (participantTextInput) {
         participantTextInput.classList.add('show');
         
@@ -1191,6 +1191,8 @@ function showParticipantTextInput() {
         
         animateElement(participantTextInput, 'slideInUp');
         console.log('✅ Mode texte participant activé');
+    } else {
+        console.log('❌ Élément participant-text-input introuvable');
     }
 }
 
