@@ -1036,8 +1036,13 @@ function sendHostTranslation(text) {
         source_language: 'fr'
     };
     
+    console.log('🟢 Données envoyées:', requestData);
+    console.log('🟢 URL:', `/api/room/${userData.room_id}/translate`);
+    
     makeApiRequest(`/api/room/${userData.room_id}/translate`, 'POST', requestData)
         .then(data => {
+            console.log('🟢 Réponse API reçue:', data);
+            
             if (data.success) {
                 const successMessage = getTranslation('message_sent') || 
                     'Message diffusé avec synthèse vocale !';
@@ -1052,11 +1057,12 @@ function sendHostTranslation(text) {
                     language: 'fr'
                 });
             } else {
+                console.log('🔴 API erreur:', data.error);
                 throw new Error(data.error || 'Erreur de traduction');
             }
         })
         .catch(error => {
-            console.error('❌ Erreur envoi traduction hôte:', error);
+            console.error('🔴 Erreur complète:', error);
             showError('Erreur envoi traduction: ' + error.message);
             notifyError('Erreur d\'envoi');
         });
