@@ -1303,7 +1303,8 @@ function startRealTimeUpdates() {
 }
 
 function processRoomUpdates(data) {
-    console.log('🟢 processRoomUpdates appelée avec:', data);
+console.log('🟢 processRoomUpdates appelée avec:', data);
+    console.log('🔍 STRUCTURE COMPLÈTE:', JSON.stringify(data, null, 2)); // ← AJOUTE CETTE LIGNE
     console.log('🟢 isHost:', isHost);
     console.log('🟢 data.original:', data.original);
     console.log('🟢 data.translated:', data.translated);
