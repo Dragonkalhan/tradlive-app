@@ -15,7 +15,6 @@ let participantRecognition = null;
 let isListening = false;
 let isParticipantListening = false;
 let isHost = false;
-let qrCodeImage = null;
 let updateInterval = null;
 let heartbeatInterval = null;
 let reconnectAttempts = 0;
@@ -481,7 +480,6 @@ function initializeDOMElements() {
         waveAnimation: elements['wave-animation'],
         participantWave: elements['participant-wave'],
         qrSection: elements['qr-section'],
-        qrCodeImage: elements['qr-code-image'],
         connectionStatus: elements['connection-status'],
         textInputFallback: elements['text-input-fallback'],
         participantTextInput: elements['participant-text-input'],
