@@ -476,10 +476,10 @@
             
             if (autoJoin === 'true') {
                 // Extraire le room_id de l'URL path
-                const pathParts = window.location.pathname.split('/');
-                const roomId = pathParts[pathParts.indexOf('room') + 1];
+                const autoJoin = urlParams.get('auto_join');
+                const roomId = urlParams.get('room_id');
                 
-                if (roomId && roomId.length === 4) {
+                if (autoJoin === 'true' && roomId) {
                     // Afficher la notice d'auto-join
                     document.getElementById('auto-join-notice').classList.add('show');
                     
