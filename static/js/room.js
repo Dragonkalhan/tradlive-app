@@ -15,6 +15,7 @@ let participantRecognition = null;
 let isListening = false;
 let isParticipantListening = false;
 let isHost = false;
+let qrCodeImage = null;
 let updateInterval = null;
 let heartbeatInterval = null;
 let reconnectAttempts = 0;
@@ -36,6 +37,8 @@ let hostOriginalText, hostResponsesText;
 let participantOriginalText, participantTranslatedText, participantMessageArea;
 let participantOwnText, participantFrenchText, participantTargetLanguage;
 let participantsListEl, participantCountEl;
+
+
 
 /* ========================================
    NOMS DES LANGUES (MAPPING) - INTÉGRÉ AVEC TRANSLATIONS.JS
@@ -553,6 +556,9 @@ function setupRoleInterface() {
         if (qrSection) {
             qrSection.classList.add('show');
         }
+       // Initialiser le QR code
+      qrCodeImage = document.getElementById('qr-code-image'); // ou l'ID correct
+      console.log('🔍 qrCodeImage initialisé:', qrCodeImage);
         
         // Marquer comme configuré
         document.body.classList.add('role-configured');
