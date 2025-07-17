@@ -1431,7 +1431,7 @@ function addEventListenerOnce(element, event, handler) {
 function updateQRCode() {
     if (!qrCodeImage) return;
     
-    const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
+    const roomUrl = `${window.location.origin}/rooms?auto_join=true&room_id=${userData.room_id}`;
     // SUPPRESSION du timestamp qui causait les rechargements
     qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}`;
     
