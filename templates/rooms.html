@@ -470,26 +470,24 @@
             }
             
             
-            // Vérifier s'il y a un paramètre auto_join dans l'URL (depuis QR code)
-            const urlParams = new URLSearchParams(window.location.search);
-            const autoJoin = urlParams.get('auto_join');
-            
-            if (autoJoin === 'true') {
-                // Extraire le room_id de l'URL path
-                const autoJoin = urlParams.get('auto_join');
-                const roomId = urlParams.get('room_id');
-                
-                if (autoJoin === 'true' && roomId) {
+            // Vérifier localStorage pour auto-join (depuis QR code)
+            const pendingJoin = localStorage.getItem('pending_auto_join');
+            if (pendingJoin) {
+                const data = JSON.parse(pendingJoin);
+                if (data.auto_join && data.room_id) {
                     // Afficher la notice d'auto-join
                     document.getElementById('auto-join-notice').classList.add('show');
                     
                     // Pré-remplir le code de salle et basculer sur l'onglet Rejoindre
-                    document.getElementById('join-room-id').value = roomId;
+                    document.getElementById('join-room-id').value = data.room_id;
                     showTab('join');
                     
                     // Mettre l'onglet rejoindre comme actif
                     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
                     document.querySelector('.tab[onclick*="join"]').classList.add('active');
+                    
+                    // Nettoyer le localStorage
+                    localStorage.removeItem('pending_auto_join');
                     
                     // Mettre le focus sur le champ pseudo
                     setTimeout(() => {
@@ -497,7 +495,7 @@
                     }, 500);
                 }
             }
-
+            
         // Fonction utilitaire pour obtenir le nom de la langue
         function getLanguageName(langCode) {
             const names = {
