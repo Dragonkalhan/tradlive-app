@@ -450,8 +450,15 @@
                 
                 // Redirection avec délai pour l'animation
                 setTimeout(() => {
+                // Vérifier s'il y a un auto-join en attente
+                const pendingJoin = localStorage.getItem('pending_auto_join');
+                if (pendingJoin) {
+                    const data = JSON.parse(pendingJoin);
+                    window.location.href = `/rooms?auto_join=true&room_id=${data.room_id}`;
+                } else {
                     window.location.href = '/rooms';
-                }, 400);
+                }
+            }, 400);
             }
         }
 
