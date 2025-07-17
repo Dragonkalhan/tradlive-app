@@ -1429,6 +1429,10 @@ function addEventListenerOnce(element, event, handler) {
 }
 
 function updateQRCode() {
+       console.log('🔍 updateQRCode() appelée');
+       console.log('🔍 qrCodeImage:', qrCodeImage);
+       console.log('🔍 userData:', userData);
+       console.log('🔍 userData.room_id:', userData.room_id);
     if (!qrCodeImage) return;
     
     const roomUrl = `${window.location.origin}/?auto_join=true&room_id=${userData.room_id}`;
