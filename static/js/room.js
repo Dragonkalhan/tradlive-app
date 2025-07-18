@@ -557,6 +557,7 @@ function setupRoleInterface() {
        // Initialiser le QR code
       qrCodeImage = document.getElementById('qr-code-image'); // ou l'ID correct
       console.log('🔍 qrCodeImage initialisé:', qrCodeImage);
+      updateQRCode();
         
         // Marquer comme configuré
         document.body.classList.add('role-configured');
