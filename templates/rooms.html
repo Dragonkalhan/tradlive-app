@@ -365,7 +365,7 @@
         <!-- Section d'aide contextuelle -->
 <div class="help-section">
     <button id="help-toggle" class="help-toggle" onclick="toggleHelp()">
-        🤔 <span data-translate="need_help">Besoin d'aide ?</span>
+        🤔 <span data-translate="need_help">Besoin d'aide ? Appuyez ici</span>
         <span class="arrow">▼</span>
     </button>
     <div id="help-content" class="help-content">
@@ -455,6 +455,20 @@
     
     <script>
         let currentLanguage = 'fr';
+
+                // Fonction pour basculer l'affichage de l'aide
+                function toggleHelp() {
+                    const content = document.getElementById('help-content');
+                    const arrow = document.querySelector('.arrow');
+                    
+                    if (content.classList.contains('show')) {
+                        content.classList.remove('show');
+                        arrow.textContent = '▼';
+                    } else {
+                        content.classList.add('show');
+                        arrow.textContent = '▲';
+                    }
+                }
 
         // Fonction pour afficher les onglets
         function showTab(tabName) {
@@ -781,20 +795,6 @@
                 e.target.style.boxShadow = '';
             }
         });
-
-        // Fonction pour basculer l'affichage de l'aide
-        function toggleHelp() {
-            const content = document.getElementById('help-content');
-            const arrow = document.querySelector('.arrow');
-            
-            if (content.classList.contains('show')) {
-                content.classList.remove('show');
-                arrow.textContent = '▼';
-            } else {
-                content.classList.add('show');
-                arrow.textContent = '▲';
-            }
-        }
 
         // Amélioration UX : auto-focus sur les champs importants
         document.querySelectorAll('.tab').forEach(tab => {
