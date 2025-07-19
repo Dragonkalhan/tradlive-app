@@ -374,18 +374,15 @@
         const urlParams = new URLSearchParams(window.location.search);
         const autoJoin = urlParams.get('auto_join');
         const roomId = urlParams.get('room_id');
-        
-        alert(`URL: ${window.location.href}`);
-        alert(`autoJoin: ${autoJoin}, roomId: ${roomId}`);
+  
         
         if (autoJoin === 'true' && roomId) {
-            alert('Sauvegarde dans localStorage !');
+    
             // Conserver dans localStorage temporairement
             localStorage.setItem('pending_auto_join', JSON.stringify({
                 auto_join: true,
                 room_id: roomId
             }));
-            alert('localStorage sauvé !');
         }
 
         // Fonction pour sélectionner une langue avec animations fluides
@@ -470,12 +467,10 @@
                 setTimeout(() => {
                 // Vérifier s'il y a un auto-join en attente
                 const pendingJoin = localStorage.getItem('pending_auto_join');
-                alert(`pendingJoin trouvé: ${pendingJoin}`);
                 
                 if (pendingJoin) {
                     const data = JSON.parse(pendingJoin);
                     const finalUrl = `/rooms?auto_join=true&room_id=${data.room_id}`;
-                    alert(`Redirection vers: ${finalUrl}`);
                     window.location.href = finalUrl;
                 } else {
                     window.location.href = '/rooms';
