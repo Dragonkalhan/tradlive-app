@@ -270,6 +270,65 @@
                 width: 100%;
             }
         }
+
+        /* Styles pour la section d'aide contextuelle */
+        .help-section {
+            background: var(--white-10);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            border: 1px solid var(--white-20);
+            animation: slideInUp 0.6s ease 0.2s both;
+        }
+        
+        .help-toggle {
+            background: none;
+            border: none;
+            color: var(--accent-gold);
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            width: 100%;
+            text-align: left;
+            padding: 0;
+            transition: all var(--transition-normal);
+        }
+        
+        .help-toggle:hover {
+            opacity: 0.8;
+            transform: translateX(3px);
+        }
+        
+        .arrow {
+            transition: transform var(--transition-normal);
+            font-size: 14px;
+        }
+        
+        .help-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            margin-top: var(--spacing-md);
+        }
+        
+        .help-content.show {
+            max-height: 200px;
+        }
+        
+        .help-content ul {
+            margin: 0;
+            padding-left: var(--spacing-lg);
+            list-style: none;
+        }
+        
+        .help-content li {
+            margin-bottom: var(--spacing-sm);
+            opacity: 0.9;
+            font-size: 14px;
+        }
         
         /* Animations d'entrée de page */
         .rooms-container {
@@ -303,15 +362,29 @@
             <span data-translate="auto_join_notice">✅ Code de salle détecté ! Remplissez vos informations pour rejoindre automatiquement.</span>
         </div>
         
-        <div class="instructions-card">
-            <h3 data-translate="how_it_works">💡 Comment ça marche ?</h3>
-            <ul class="instructions-list">
-                <li data-translate="instruction_1">Choisissez votre langue ci-dessus</li>
-                <li data-translate="instruction_2">Créez une salle ou rejoignez-en une existante</li>
-                <li data-translate="instruction_3">Parlez dans votre langue, tout le monde comprend !</li>
-                <li data-translate="instruction_4">Jusqu'à 10 personnes peuvent participer simultanément</li>
+        <!-- Section d'aide contextuelle -->
+<div class="help-section">
+    <button id="help-toggle" class="help-toggle">
+        🤔 <span data-translate="need_help">Besoin d'aide ?</span>
+        <span class="arrow">▼</span>
+    </button>
+    <div id="help-content" class="help-content">
+        <div id="help-normal" class="help-normal">
+            <ul>
+                <li data-translate="help_create">• Créer une salle = Vous êtes l'hôte</li>
+                <li data-translate="help_join">• Rejoindre une salle = Vous participez</li>
+                <li data-translate="help_create_name">• Si vous créez = nommez votre salle</li>
+                <li data-translate="help_join_code">• Si vous rejoignez = saisissez le code reçu</li>
             </ul>
         </div>
+        <div id="help-qr" class="help-qr" style="display: none;">
+            <ul>
+                <li data-translate="help_qr_filled">• Code de salle déjà rempli ✓</li>
+                <li data-translate="help_qr_action">• Tapez votre prénom et cliquez "Rejoindre"</li>
+            </ul>
+        </div>
+    </div>
+</div>
         
         <div class="main-tabs">
             <div class="tabs">
@@ -708,6 +781,20 @@
                 e.target.style.boxShadow = '';
             }
         });
+
+        // Fonction pour basculer l'affichage de l'aide
+        function toggleHelp() {
+            const content = document.getElementById('help-content');
+            const arrow = document.querySelector('.arrow');
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                arrow.textContent = '▼';
+            } else {
+                content.classList.add('show');
+                arrow.textContent = '▲';
+            }
+        }
 
         // Amélioration UX : auto-focus sur les champs importants
         document.querySelectorAll('.tab').forEach(tab => {
