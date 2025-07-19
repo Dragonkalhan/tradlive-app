@@ -482,6 +482,23 @@
                     document.getElementById('join-room-id').value = data.room_id;
                     showTab('join');
                     
+                    // NOUVEAU - Masquer l'onglet "Créer une salle" pour QR code
+                    const createTab = document.querySelector('.tab[onclick*="create"]');
+                    const createTabContent = document.getElementById('create-tab');
+                    
+                    if (createTab) {
+                        createTab.style.display = 'none';
+                    }
+                    if (createTabContent) {
+                        createTabContent.style.display = 'none';
+                    }
+                    
+                    // Optionnel : Changer le titre pour être plus clair
+                    const pageHeading = document.querySelector('[data-translate="page_heading"]');
+                    if (pageHeading) {
+                        pageHeading.textContent = '🔗 Rejoindre la salle';
+                    }
+                    
                     // Mettre l'onglet rejoindre comme actif
                     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
                     document.querySelector('.tab[onclick*="join"]').classList.add('active');
