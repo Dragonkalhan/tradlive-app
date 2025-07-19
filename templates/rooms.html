@@ -364,6 +364,35 @@
                 top: -50px;
             }
         }
+        /* Version mobile (click au lieu de hover) */
+        @media (max-width: 768px) {
+            .tooltip-trigger:hover .tooltip {
+                opacity: 0;
+                visibility: hidden;
+            }
+            
+            .tooltip-trigger.active .tooltip {
+                opacity: 1;
+                visibility: visible;
+                top: -50px;
+            }
+        }
+        
+        /* Container pour tab + tooltip */
+        .tab-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .tab-container .tooltip-trigger {
+            margin-left: 8px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+        }
         
     </style>
 </head>
@@ -386,20 +415,20 @@
 
         <div class="main-tabs">
             <div class="tabs">
-                <button class="tab active" onclick="showTab('create')" data-translate="create_tab">
-                    Créer une salle
+                <div class="tab-container">
+                    <button class="tab active" onclick="showTab('create')" data-translate="create_tab">Créer une salle</button>
                     <span class="tooltip-trigger">
                         <div class="help-icon">?</div>
                         <div class="tooltip">Vous serez l'hôte de la conversation</div>
                     </span>
-                </button>
-                <button class="tab" onclick="showTab('join')" data-translate="join_tab">
-                    Rejoindre une salle
+                </div>
+                <div class="tab-container">
+                    <button class="tab" onclick="showTab('join')" data-translate="join_tab">Rejoindre une salle</button>
                     <span class="tooltip-trigger">
                         <div class="help-icon">?</div>
                         <div class="tooltip">Vous participerez à une conversation existante</div>
                     </span>
-                </button>
+                </div>
             </div>
 
             
