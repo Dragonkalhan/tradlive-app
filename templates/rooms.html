@@ -293,6 +293,29 @@
             margin-left: 8px;
         }
         
+        .help-icon {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: help;
+            transition: all 0.2s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+        
+        .help-icon:hover {
+            background: linear-gradient(135deg, #1976D2, #1565C0);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.5);
+        }
+        
         .tooltip {
             position: absolute;
             top: -45px;
@@ -326,33 +349,6 @@
             opacity: 1;
             visibility: visible;
             top: -50px;
-        }
-        
-        /* Version mobile (click au lieu de hover) */
-        @media (max-width: 768px) {
-            .tooltip-trigger:hover .tooltip {
-                opacity: 0;
-                visibility: hidden;
-            }
-            
-            .tooltip-trigger.active .tooltip {
-                opacity: 1;
-                visibility: visible;
-                top: -50px;
-            }
-        }
-        /* Version mobile (click au lieu de hover) */
-        @media (max-width: 768px) {
-            .tooltip-trigger:hover .tooltip {
-                opacity: 0;
-                visibility: hidden;
-            }
-            
-            .tooltip-trigger.active .tooltip {
-                opacity: 1;
-                visibility: visible;
-                top: -50px;
-            }
         }
         
         /* Container pour tab + tooltip */
