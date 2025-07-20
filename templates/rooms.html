@@ -292,6 +292,22 @@
             align-items: center;
             margin-left: 8px;
         }
+
+        /* Container pour label + tooltip alignés horizontalement */
+        .label-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .label-container label {
+            margin: 0;
+            margin-right: 8px;
+        }
+        
+        .label-container .tooltip-trigger {
+            margin-left: 0;
+        }
         
         .help-icon {
             width: 18px;
@@ -359,7 +375,17 @@
         }
         
         .tab-container .tooltip-trigger {
-            margin-left: 8px;
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            margin-left: 0;
+            z-index: 10;
+        }
+        
+        .tab-container .help-icon {
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
         }
         
         .tabs {
