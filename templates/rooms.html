@@ -643,7 +643,7 @@
                     
                    // NOUVEAU - Masquer le tooltip "Rejoindre" avec debug
                     function hideJoinTooltip() {
-                    console.log('🔍 Test couleur tooltip Rejoindre...');
+                    console.log('🔍 Masquage renforcé tooltip Rejoindre...');
                     
                     const joinButton = document.querySelector('button[onclick*="join"]');
                     
@@ -653,16 +653,21 @@
                         if (tabContainer) {
                             const tooltip = tabContainer.querySelector('.tooltip-trigger');
                             if (tooltip) {
-                                // Au lieu de masquer, on colore en ROUGE
-                                tooltip.style.backgroundColor = 'red';
-                                tooltip.style.border = '3px solid yellow';
-                                console.log('✅ Tooltip coloré en rouge !');
+                                // Masquage ultra-renforcé
+                                tooltip.style.display = 'none !important';
+                                tooltip.style.visibility = 'hidden !important';
+                                tooltip.style.opacity = '0 !important';
+                                tooltip.style.width = '0 !important';
+                                tooltip.style.height = '0 !important';
+                                tooltip.style.overflow = 'hidden !important';
+                                
+                                console.log('✅ Tooltip masqué avec force !');
                                 return true;
                             }
                         }
                     }
                     
-                    console.log('❌ Échec coloration');
+                    console.log('❌ Échec masquage');
                     return false;
                 }
                     
