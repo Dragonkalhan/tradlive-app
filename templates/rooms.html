@@ -466,14 +466,26 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="join-nickname" data-translate="your_nickname">Votre pseudo</label>
+                        <div class="label-container">
+                            <label for="join-nickname" data-translate="your_nickname">Votre pseudo</label>
+                            <span class="tooltip-trigger">
+                                <div class="help-icon">?</div>
+                                <div class="tooltip">Tapez votre prénom pour vous identifier</div>
+                            </span>
+                        </div>
                         <input type="text" id="join-nickname" data-translate-placeholder="nickname_placeholder" placeholder="Ex: Pierre" required>
                     </div>
                     
                     
                     
                     <div class="form-group">
-                        <label for="join-password" data-translate="room_password_if_required">Mot de passe (si requis)</label>
+                        <div class="label-container">
+                            <label for="join-password" data-translate="room_password_if_required">Mot de passe (si requis)</label>
+                            <span class="tooltip-trigger">
+                                <div class="help-icon">?</div>
+                                <div class="tooltip">Rentrez le mot de passe fourni par l'hôte</div>
+                            </span>
+                        </div>
                         <input type="password" id="join-password" data-translate-placeholder="password_if_required_placeholder" placeholder="Laissez vide si aucun mot de passe">
                     </div>
                     
