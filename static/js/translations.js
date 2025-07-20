@@ -115,7 +115,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+        // Tooltips d'aide
+        tooltip_create_host: "Vous serez l'hôte de la conversation",
+        tooltip_join_guest: "Vous participerez à une conversation existante",
+        tooltip_nickname: "Tapez votre prénom pour vous identifier", 
+        tooltip_room_name: "Nommez votre salle (ex: Réunion équipe, Cours d'anglais)",
+        tooltip_password_create: "Protégez votre salle avec un mot de passe (facultatif)",
+        tooltip_room_code: "Saisissez le code à 4 chiffres fourni par l'hôte",
+        tooltip_password_join: "Rentrez le mot de passe fourni par l'hôte"
     },
 
     // 🇬🇧 ENGLISH
@@ -223,7 +232,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+        // Help tooltips
+        tooltip_create_host: "You will be the host of the conversation",
+        tooltip_join_guest: "You will participate in an existing conversation",
+        tooltip_nickname: "Type your first name to identify yourself",
+        tooltip_room_name: "Name your room (e.g. Team meeting, English class)",
+        tooltip_password_create: "Protect your room with a password (optional)",
+        tooltip_room_code: "Enter the 4-digit code provided by the host",
+        tooltip_password_join: "Enter the password provided by the host"
     },
 
     // 🇪🇸 ESPAÑOL
@@ -331,8 +349,17 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
-    },
+        lang_marathi: "मराठी",
+
+        // Tooltips de ayuda
+        tooltip_create_host: "Serás el anfitrión de la conversación",
+        tooltip_join_guest: "Participarás en una conversación existente",
+        tooltip_nickname: "Escribe tu nombre para identificarte",
+        tooltip_room_name: "Nombra tu sala (ej: Reunión de equipo, Clase de inglés)",
+        tooltip_password_create: "Protege tu sala con una contraseña (opcional)",
+        tooltip_room_code: "Ingresa el código de 4 dígitos proporcionado por el anfitrión",
+        tooltip_password_join: "Ingresa la contraseña proporcionada por el anfitrión"
+            },
 
     // 🇩🇪 DEUTSCH
     de: {
