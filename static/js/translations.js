@@ -466,7 +466,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+        // Hilfe-Tooltips
+        tooltip_create_host: "Sie werden der Gastgeber des Gesprächs sein",
+        tooltip_join_guest: "Sie werden an einem bestehenden Gespräch teilnehmen",
+        tooltip_nickname: "Geben Sie Ihren Vornamen zur Identifikation ein",
+        tooltip_room_name: "Benennen Sie Ihren Raum (z.B. Team-Meeting, Englischkurs)",
+        tooltip_password_create: "Schützen Sie Ihren Raum mit einem Passwort (optional)",
+        tooltip_room_code: "Geben Sie den 4-stelligen Code des Gastgebers ein",
+        tooltip_password_join: "Geben Sie das vom Gastgeber bereitgestellte Passwort ein"
     },
 
     // 🇮🇹 ITALIANO
@@ -574,7 +583,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+        // Tooltip di aiuto
+        tooltip_create_host: "Sarai l'ospite della conversazione",
+        tooltip_join_guest: "Parteciperai a una conversazione esistente",
+        tooltip_nickname: "Inserisci il tuo nome per identificarti",
+        tooltip_room_name: "Nomina la tua stanza (es: Riunione team, Corso inglese)",
+        tooltip_password_create: "Proteggi la tua stanza con una password (opzionale)",
+        tooltip_room_code: "Inserisci il codice a 4 cifre fornito dall'ospite",
+        tooltip_password_join: "Inserisci la password fornita dall'ospite"
     },
 
     // 🇵🇹 PORTUGUÊS
@@ -682,7 +700,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+        // Tooltips de ajuda
+        tooltip_create_host: "Você será o anfitrião da conversa",
+        tooltip_join_guest: "Você participará de uma conversa existente",
+        tooltip_nickname: "Digite seu nome para se identificar",
+        tooltip_room_name: "Nomeie sua sala (ex: Reunião de equipe, Aula de inglês)",
+        tooltip_password_create: "Proteja sua sala com uma senha (opcional)",
+        tooltip_room_code: "Digite o código de 4 dígitos fornecido pelo anfitrião",
+        tooltip_password_join: "Digite a senha fornecida pelo anfitrião"
     },
 
     // 🇷🇺 РУССКИЙ
@@ -790,7 +817,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+        // Подсказки справки
+        tooltip_create_host: "Вы будете хостом разговора",
+        tooltip_join_guest: "Вы будете участвовать в существующем разговоре",
+        tooltip_nickname: "Введите ваше имя для идентификации",
+        tooltip_room_name: "Назовите вашу комнату (например: Встреча команды, Урок английского)",
+        tooltip_password_create: "Защитите вашу комнату паролем (необязательно)",
+        tooltip_room_code: "Введите 4-значный код, предоставленный хостом",
+        tooltip_password_join: "Введите пароль, предоставленный хостом"
     },
 
     // 🇨🇳 中文
@@ -898,7 +934,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+        // 帮助提示
+        tooltip_create_host: "您将成为对话的主持人",
+        tooltip_join_guest: "您将参与现有的对话",
+        tooltip_nickname: "输入您的姓名以进行身份识别",
+        tooltip_room_name: "为您的房间命名（例如：团队会议，英语课）",
+        tooltip_password_create: "用密码保护您的房间（可选）",
+        tooltip_room_code: "输入主持人提供的4位数代码",
+        tooltip_password_join: "输入主持人提供的密码"
     },
 
     // 🇯🇵 日本語
@@ -1006,7 +1051,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+        / ヘルプツールチップ
+        tooltip_create_host: "あなたが会話のホストになります",
+        tooltip_join_guest: "既存の会話に参加します",
+        tooltip_nickname: "身元確認のためにお名前を入力してください",
+        tooltip_room_name: "ルーム名を入力してください（例：チーム会議、英語クラス）",
+        tooltip_password_create: "ルームをパスワードで保護してください（オプション）",
+        tooltip_room_code: "ホストが提供した4桁のコードを入力してください",
+        tooltip_password_join: "ホストが提供したパスワードを入力してください"
     },
 
     // 🇸🇦 العربية
@@ -1114,7 +1168,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+     // تلميحات المساعدة
+        tooltip_create_host: "ستكون مضيف المحادثة",
+        tooltip_join_guest: "ستشارك في محادثة موجودة",
+        tooltip_nickname: "اكتب اسمك للتعريف بنفسك",
+        tooltip_room_name: "اسم غرفتك (مثال: اجتماع الفريق، درس الإنجليزية)",
+        tooltip_password_create: "احم غرفتك بكلمة مرور (اختياري)",
+        tooltip_room_code: "أدخل الرمز المكون من 4 أرقام المقدم من المضيف",
+        tooltip_password_join: "أدخل كلمة المرور المقدمة من المضيف"       
     },
 
     // 🇺🇦 УКРАЇНСЬКА
@@ -1222,7 +1285,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+     // Підказки допомоги
+        tooltip_create_host: "Ви будете хостом розмови",
+        tooltip_join_guest: "Ви будете брати участь в існуючій розмові",
+        tooltip_nickname: "Введіть ваше ім'я для ідентифікації",
+        tooltip_room_name: "Назвіть вашу кімнату (наприклад: Зустріч команди, Урок англійської)",
+        tooltip_password_create: "Захистіть вашу кімнату паролем (необов'язково)",
+        tooltip_room_code: "Введіть 4-значний код, наданий хостом",
+        tooltip_password_join: "Введіть пароль, наданий хостом"       
     },
 
     // 🇮🇷 فارسی
@@ -1330,7 +1402,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+    // راهنمای ابزارک‌ها
+    tooltip_create_host: "شما میزبان مکالمه خواهید بود",
+    tooltip_join_guest: "شما در مکالمه‌ای موجود شرکت خواهید کرد",
+    tooltip_nickname: "نام خود را برای شناسایی وارد کنید",
+    tooltip_room_name: "اتاق خود را نام‌گذاری کنید (مثال: جلسه تیم، کلاس انگلیسی)",
+    tooltip_password_create: "اتاق خود را با رمز عبور محافظت کنید (اختیاری)",
+    tooltip_room_code: "کد 4 رقمی ارائه شده توسط میزبان را وارد کنید",
+    tooltip_password_join: "رمز عبور ارائه شده توسط میزبان را وارد کنید"        
     },
 
     // 🇮🇳 हिन्दी
@@ -1438,7 +1519,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+    // सहायता टूलटिप्स
+    tooltip_create_host: "आप बातचीत के होस्ट होंगे",
+    tooltip_join_guest: "आप मौजूदा बातचीत में भाग लेंगे",
+    tooltip_nickname: "पहचान के लिए अपना नाम लिखें",
+    tooltip_room_name: "अपने कमरे का नाम रखें (उदाहरण: टीम मीटिंग, अंग्रेजी क्लास)",
+    tooltip_password_create: "अपने कमरे को पासवर्ड से सुरक्षित करें (वैकल्पिक)",
+    tooltip_room_code: "होस्ट द्वारा प्रदान किया गया 4 अंकों का कोड दर्ज करें",
+    tooltip_password_join: "होस्ट द्वारा प्रदान किया गया पासवर्ड दर्ज करें"        
     },
 
     // 🇧🇩 বাংলা
@@ -1546,7 +1636,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+    // সহায়তা টুলটিপস
+    tooltip_create_host: "আপনি কথোপকথনের হোস্ট হবেন",
+    tooltip_join_guest: "আপনি একটি বিদ্যমান কথোপকথনে অংশগ্রহণ করবেন",
+    tooltip_nickname: "পরিচয়ের জন্য আপনার নাম লিখুন",
+    tooltip_room_name: "আপনার রুমের নাম দিন (উদাহরণ: টিম মিটিং, ইংরেজি ক্লাস)",
+    tooltip_password_create: "আপনার রুমকে পাসওয়ার্ড দিয়ে সুরক্ষিত করুন (ঐচ্ছিক)",
+    tooltip_room_code: "হোস্ট প্রদত্ত ৪ সংখ্যার কোড লিখুন",
+    tooltip_password_join: "হোস্ট প্রদত্ত পাসওয়ার্ড লিখুন"        
     },
 
     // 🇮🇳 తెలుగు
@@ -1654,7 +1753,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+     // సహాయ టూల్‌టిప్స్
+    tooltip_create_host: "మీరు సంభాషణకు హోస్ట్ అవుతారు",
+    tooltip_join_guest: "మీరు ఉన్న సంభాషణలో పాల్గొంటారు",
+    tooltip_nickname: "గుర్తింపు కోసం మీ పేరు టైప్ చేయండి",
+    tooltip_room_name: "మీ గదికి పేరు పెట్టండి (ఉదా: టీమ్ మీటింగ్, ఇంగ్లీష్ క్లాస్)",
+    tooltip_password_create: "మీ గదిని పాస్‌వర్డ్‌తో రక్షించండి (ఐచ్ఛికం)",
+    tooltip_room_code: "హోస్ట్ అందించిన 4 అంకెల కోడ్‌ను నమోదు చేయండి",
+    tooltip_password_join: "హోస్ట్ అందించిన పాస్‌వర్డ్‌ను నమోదు చేయండి"       
     },
 
     // 🇮🇳 मराठी
@@ -1762,7 +1870,16 @@ const TRADLIVE_TRANSLATIONS = {
         lang_hindi: "हिन्दी",
         lang_bengali: "বাংলা",
         lang_telugu: "తెలుగు",
-        lang_marathi: "मराठी"
+        lang_marathi: "मराठी",
+
+    // सहाय्य टूलटिप्स
+    tooltip_create_host: "तुम्ही संभाषणाचे होस्ट असाल",
+    tooltip_join_guest: "तुम्ही विद्यमान संभाषणात सहभागी व्हाल",
+    tooltip_nickname: "ओळखीसाठी तुमचे नाव टाइप करा",
+    tooltip_room_name: "तुमच्या खोलीचे नाव द्या (उदा: टीम मीटिंग, इंग्रजी वर्ग)",
+    tooltip_password_create: "तुमची खोली पासवर्डने सुरक्षित करा (पर्यायी)",
+    tooltip_room_code: "होस्टने दिलेला 4 अंकी कोड प्रविष्ट करा",
+    tooltip_password_join: "होस्टने दिलेला पासवर्ड प्रविष्ट करा"        
     }
 };
 
