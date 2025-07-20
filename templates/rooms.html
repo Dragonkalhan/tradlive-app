@@ -631,7 +631,6 @@
                     document.getElementById('join-room-id').value = data.room_id;
                     showTab('join');
                     
-                    // NOUVEAU - Masquer l'onglet "Créer une salle" pour QR code
                     const createTab = document.querySelector('.tab[onclick*="create"]');
                     const createTabContent = document.getElementById('create-tab');
                     
@@ -641,21 +640,22 @@
                     if (createTabContent) {
                         createTabContent.style.display = 'none';
                     }
-
-                    // NOUVEAU - Masquer aussi le tooltip "Rejoindre" car évident depuis QR
-                    const joinTooltip = document.querySelector('.tab[onclick*="join"] .tooltip-trigger');
-                    if (joinTooltip) {
-                        joinTooltip.style.display = 'none';
-                     return true;
+                    
+                    // NOUVEAU - Masquer le tooltip "Rejoindre" avec plusieurs tentatives
+                    function hideJoinTooltip() {
+                        const joinTooltip = document.querySelector('.tab[onclick*="join"] .tooltip-trigger');
+                        if (joinTooltip) {
+                            joinTooltip.style.display = 'none';
+                            return true;
+                        }
+                        return false;
                     }
-                    return false;
-                }
-                
-                // Essayer plusieurs fois avec délais croissants
-                setTimeout(() => hideJoinTooltip(), 200);
-                setTimeout(() => hideJoinTooltip(), 500);
-                setTimeout(() => hideJoinTooltip(), 1000);
-                setTimeout(() => hideJoinTooltip(), 2000);
+                    
+                    // Essayer plusieurs fois avec délais croissants
+                    setTimeout(() => hideJoinTooltip(), 200);
+                    setTimeout(() => hideJoinTooltip(), 500);
+                    setTimeout(() => hideJoinTooltip(), 1000);
+                    setTimeout(() => hideJoinTooltip(), 2000);
                     
                     // Optionnel : Changer le titre pour être plus clair
                     const pageHeading = document.querySelector('[data-translate="page_heading"]');
