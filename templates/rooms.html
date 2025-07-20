@@ -419,14 +419,14 @@
                     <button class="tab active" onclick="showTab('create')" data-translate="create_tab">Créer une salle</button>
                     <span class="tooltip-trigger">
                         <div class="help-icon">?</div>
-                        <div class="tooltip">Vous serez l'hôte de la conversation</div>
+                        <div class="tooltip" data-translate="tooltip_create_host">Vous serez l'hôte de la conversation</div>
                     </span>
                 </div>
                 <div class="tab-container">
                     <button class="tab" onclick="showTab('join')" data-translate="join_tab">Rejoindre une salle</button>
                     <span class="tooltip-trigger">
                         <div class="help-icon">?</div>
-                        <div class="tooltip">Vous participerez à une conversation existante</div>
+                        <div class="tooltip" data-translate="tooltip_join_guest">Vous participerez à une conversation existante</div>
                     </span>
                 </div>
             </div>
@@ -440,7 +440,7 @@
                             <label for="create-nickname" data-translate="your_nickname">Votre pseudo</label>
                             <span class="tooltip-trigger">
                                 <div class="help-icon">?</div>
-                                <div class="tooltip">Tapez votre prénom pour vous identifier</div>
+                                <div class="tooltip" data-translate="tooltip_nickname">Tapez votre prénom pour vous identifier</div>
                             </span>
                         </div>
                         <input type="text" id="create-nickname" data-translate-placeholder="nickname_placeholder" placeholder="Ex: Marie" required>
@@ -452,7 +452,7 @@
                         <label for="room-name" data-translate="room_name">Nom de la salle</label>
                         <span class="tooltip-trigger">
                             <div class="help-icon">?</div>
-                            <div class="tooltip">Nommez votre salle (ex: Réunion équipe, Cours d'anglais)</div>
+                            <div class="tooltip" data-translate="tooltip_room_name">Nommez votre salle (ex: Réunion équipe, Cours d'anglais)</div>
                         </span>
                     </div>
                     <input type="text" id="room-name" data-translate-placeholder="room_name_placeholder" placeholder="Ex: Réunion équipe, Cours d'anglais..." required>
@@ -463,7 +463,7 @@
                         <label for="room-password" data-translate="room_password">Mot de passe (optionnel)</label>
                         <span class="tooltip-trigger">
                             <div class="help-icon">?</div>
-                            <div class="tooltip">Protégez votre salle avec un mot de passe (facultatif)</div>
+                            <div class="tooltip" data-translate="tooltip_password_create">Protégez votre salle avec un mot de passe (facultatif)</div>
                         </span>
                     </div>
                     <input type="password" id="room-password" data-translate-placeholder="password_placeholder" placeholder="Laissez vide pour aucun mot de passe">
@@ -484,7 +484,7 @@
                         <label for="join-room-id" data-translate="room_code">Code de la salle</label>
                         <span class="tooltip-trigger">
                             <div class="help-icon">?</div>
-                            <div class="tooltip">Saisissez le code à 4 chiffres fourni par l'hôte</div>
+                            <div class="tooltip" data-translate="tooltip_room_code">Saisissez le code à 4 chiffres fourni par l'hôte</div>
                         </span>
                     </div>
                     <input type="text" id="join-room-id" data-translate-placeholder="room_code_placeholder" placeholder="Ex: 1234" required maxlength="4" pattern="[0-9]{4}">
@@ -509,7 +509,7 @@
                             <label for="join-password" data-translate="room_password_if_required">Mot de passe (si requis)</label>
                             <span class="tooltip-trigger">
                                 <div class="help-icon">?</div>
-                                <div class="tooltip">Rentrez le mot de passe fourni par l'hôte</div>
+                                <div class="tooltip" data-translate="tooltip_password_join">Rentrez le mot de passe fourni par l'hôte</div>
                             </span>
                         </div>
                         <input type="password" id="join-password" data-translate-placeholder="password_if_required_placeholder" placeholder="Laissez vide si aucun mot de passe">
