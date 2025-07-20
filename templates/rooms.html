@@ -630,6 +630,11 @@
                     // Pré-remplir le code de salle et basculer sur l'onglet Rejoindre
                     document.getElementById('join-room-id').value = data.room_id;
                     showTab('join');
+
+                    // Forcer re-traduction en mode QR après détection
+                    setTimeout(() => {
+                        applyTranslations(currentLanguage);
+                    }, 500);
                     
                     const createTab = document.querySelector('.tab[onclick*="create"]');
                     const createTabContent = document.getElementById('create-tab');
@@ -687,8 +692,8 @@
                     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
                     document.querySelector('.tab[onclick*="join"]').classList.add('active');
                     
-                    // Nettoyer le localStorage
-                    localStorage.removeItem('pending_auto_join');
+                    // Garder le pending_auto_join pour les retours en arrière
+                    //localStorage.removeItem('pending_auto_join');
                     
                     // Mettre le focus sur le champ pseudo
                     setTimeout(() => {
