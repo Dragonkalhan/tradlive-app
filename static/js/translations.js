@@ -1053,7 +1053,7 @@ const TRADLIVE_TRANSLATIONS = {
         lang_telugu: "తెలుగు",
         lang_marathi: "मराठी",
 
-        / ヘルプツールチップ
+        // ヘルプツールチップ
         tooltip_create_host: "あなたが会話のホストになります",
         tooltip_join_guest: "既存の会話に参加します",
         tooltip_nickname: "身元確認のためにお名前を入力してください",
