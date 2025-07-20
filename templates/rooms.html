@@ -646,7 +646,16 @@
                     const joinTooltip = document.querySelector('.tab[onclick*="join"] .tooltip-trigger');
                     if (joinTooltip) {
                         joinTooltip.style.display = 'none';
+                     return true;
                     }
+                    return false;
+                }
+                
+                // Essayer plusieurs fois avec délais croissants
+                setTimeout(() => hideJoinTooltip(), 200);
+                setTimeout(() => hideJoinTooltip(), 500);
+                setTimeout(() => hideJoinTooltip(), 1000);
+                setTimeout(() => hideJoinTooltip(), 2000);
                     
                     // Optionnel : Changer le titre pour être plus clair
                     const pageHeading = document.querySelector('[data-translate="page_heading"]');
