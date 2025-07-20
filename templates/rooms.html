@@ -631,10 +631,21 @@
                     document.getElementById('join-room-id').value = data.room_id;
                     showTab('join');
 
-                    // Forcer re-traduction en mode QR après détection
-                    setTimeout(() => {
-                        applyTranslations(currentLanguage);
-                    }, 500);
+                   // Forcer traduction de la bulle pseudo spécifiquement
+setTimeout(() => {
+    const savedLanguage = window.TradLive?.storage ? 
+        window.TradLive.storage.get('tradlive_language', 'fr') : 
+        localStorage.getItem('tradlive_language') || 'fr';
+    
+    console.log('🌍 Traduction bulle pseudo QR en:', savedLanguage);
+    
+    // Cibler spécifiquement la bulle problématique
+    const pseudoTooltip = document.querySelector('#join-tab .tooltip[data-translate="tooltip_nickname"]');
+    if (pseudoTooltip && TRADLIVE_TRANSLATIONS[savedLanguage]) {
+        pseudoTooltip.textContent = TRADLIVE_TRANSLATIONS[savedLanguage]['tooltip_nickname'];
+        console.log('✅ Bulle pseudo traduite !');
+    }
+}, 1000);
                     
                     const createTab = document.querySelector('.tab[onclick*="create"]');
                     const createTabContent = document.getElementById('create-tab');
