@@ -641,14 +641,36 @@
                         createTabContent.style.display = 'none';
                     }
                     
-                    // NOUVEAU - Masquer le tooltip "Rejoindre" avec plusieurs tentatives
+                   // NOUVEAU - Masquer le tooltip "Rejoindre" avec debug
                     function hideJoinTooltip() {
-                        const joinTooltip = document.querySelector('.tab[onclick*="join"] .tooltip-trigger');
+                        console.log('🔍 Recherche du tooltip Rejoindre...');
+                        
+                        // Essayer plusieurs sélecteurs
+                        let joinTooltip = document.querySelector('.tab[onclick*="join"] .tooltip-trigger');
+                        
+                        if (!joinTooltip) {
+                            joinTooltip = document.querySelector('button[onclick*="join"] .tooltip-trigger');
+                        }
+                        
+                        if (!joinTooltip) {
+                            // Chercher dans tous les containers
+                            const allTooltips = document.querySelectorAll('.tooltip-trigger');
+                            console.log('📊 Nombre total de tooltips:', allTooltips.length);
+                            
+                            // Prendre le deuxième tooltip (1er = Créer, 2e = Rejoindre)
+                            if (allTooltips.length >= 2) {
+                                joinTooltip = allTooltips[1];
+                            }
+                        }
+                        
                         if (joinTooltip) {
                             joinTooltip.style.display = 'none';
+                            console.log('✅ Tooltip Rejoindre masqué !');
                             return true;
+                        } else {
+                            console.log('❌ Tooltip Rejoindre non trouvé');
+                            return false;
                         }
-                        return false;
                     }
                     
                     // Essayer plusieurs fois avec délais croissants
