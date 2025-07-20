@@ -643,35 +643,31 @@
                     
                    // NOUVEAU - Masquer le tooltip "Rejoindre" avec debug
                     function hideJoinTooltip() {
-                        console.log('🔍 Recherche du tooltip Rejoindre...');
+                    console.log('🔍 Recherche du tooltip Rejoindre...');
+                    
+                    // Cibler spécifiquement le container du bouton Rejoindre
+                    const joinButton = document.querySelector('button[onclick*="join"]');
+                    
+                    if (joinButton) {
+                        console.log('✅ Bouton Rejoindre trouvé');
                         
-                        // Essayer plusieurs sélecteurs
-                        let joinTooltip = document.querySelector('.tab[onclick*="join"] .tooltip-trigger');
+                        // Trouver le container parent
+                        const tabContainer = joinButton.closest('.tab-container');
                         
-                        if (!joinTooltip) {
-                            joinTooltip = document.querySelector('button[onclick*="join"] .tooltip-trigger');
-                        }
-                        
-                        if (!joinTooltip) {
-                            // Chercher dans tous les containers
-                            const allTooltips = document.querySelectorAll('.tooltip-trigger');
-                            console.log('📊 Nombre total de tooltips:', allTooltips.length);
-                            
-                            // Prendre le deuxième tooltip (1er = Créer, 2e = Rejoindre)
-                            if (allTooltips.length >= 2) {
-                                joinTooltip = allTooltips[1];
+                        if (tabContainer) {
+                            // Masquer tout le tooltip dans ce container
+                            const tooltip = tabContainer.querySelector('.tooltip-trigger');
+                            if (tooltip) {
+                                tooltip.style.display = 'none';
+                                console.log('✅ Tooltip du bouton Rejoindre masqué !');
+                                return true;
                             }
                         }
-                        
-                        if (joinTooltip) {
-                            joinTooltip.style.display = 'none';
-                            console.log('✅ Tooltip Rejoindre masqué !');
-                            return true;
-                        } else {
-                            console.log('❌ Tooltip Rejoindre non trouvé');
-                            return false;
-                        }
                     }
+                    
+                    console.log('❌ Échec masquage tooltip');
+                    return false;
+                }
                     
                     // Essayer plusieurs fois avec délais croissants
                     setTimeout(() => hideJoinTooltip(), 200);
