@@ -410,20 +410,38 @@
             <div id="create-tab" class="tab-content active">
                 <form id="create-form">
                     <div class="form-group">
-                        <label for="create-nickname" data-translate="your_nickname">Votre pseudo</label>
+                        <div class="label-container">
+                            <label for="create-nickname" data-translate="your_nickname">Votre pseudo</label>
+                            <span class="tooltip-trigger">
+                                <div class="help-icon">?</div>
+                                <div class="tooltip">Tapez votre prénom pour vous identifier</div>
+                            </span>
+                        </div>
                         <input type="text" id="create-nickname" data-translate-placeholder="nickname_placeholder" placeholder="Ex: Marie" required>
                     </div>
                     
                     
-                    <div class="form-group">
+                <div class="form-group">
+                    <div class="label-container">
                         <label for="room-name" data-translate="room_name">Nom de la salle</label>
-                        <input type="text" id="room-name" data-translate-placeholder="room_name_placeholder" placeholder="Ex: Réunion équipe, Cours d'anglais..." required>
+                        <span class="tooltip-trigger">
+                            <div class="help-icon">?</div>
+                            <div class="tooltip">Nommez votre salle (ex: Réunion équipe, Cours d'anglais)</div>
+                        </span>
                     </div>
+                    <input type="text" id="room-name" data-translate-placeholder="room_name_placeholder" placeholder="Ex: Réunion équipe, Cours d'anglais..." required>
+                </div>
                     
-                    <div class="form-group">
+                <div class="form-group">
+                    <div class="label-container">
                         <label for="room-password" data-translate="room_password">Mot de passe (optionnel)</label>
-                        <input type="password" id="room-password" data-translate-placeholder="password_placeholder" placeholder="Laissez vide pour aucun mot de passe">
+                        <span class="tooltip-trigger">
+                            <div class="help-icon">?</div>
+                            <div class="tooltip">Protégez votre salle avec un mot de passe (facultatif)</div>
+                        </span>
                     </div>
+                    <input type="password" id="room-password" data-translate-placeholder="password_placeholder" placeholder="Laissez vide pour aucun mot de passe">
+                </div>
                     
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-large" id="create-btn" data-translate="create_button">🎉 Créer la salle</button>
@@ -435,10 +453,16 @@
             <div id="join-tab" class="tab-content">
                 <form id="join-form">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="join-room-id" data-translate="room_code">Code de la salle</label>
-                            <input type="text" id="join-room-id" data-translate-placeholder="room_code_placeholder" placeholder="Ex: 1234" required maxlength="4" pattern="[0-9]{4}">
-                        </div>
+                <div class="form-group">
+                    <div class="label-container">
+                        <label for="join-room-id" data-translate="room_code">Code de la salle</label>
+                        <span class="tooltip-trigger">
+                            <div class="help-icon">?</div>
+                            <div class="tooltip">Saisissez le code à 4 chiffres fourni par l'hôte</div>
+                        </span>
+                    </div>
+                    <input type="text" id="join-room-id" data-translate-placeholder="room_code_placeholder" placeholder="Ex: 1234" required maxlength="4" pattern="[0-9]{4}">
+                </div>
                     </div>
                     
                     <div class="form-group">
