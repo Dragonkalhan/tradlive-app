@@ -747,7 +747,7 @@
             
             // Validation côté client
             if (!data.nickname || !data.room_name) {
-                showStatus('Veuillez remplir tous les champs requis', 'error');
+                showStatus(getTranslation('fill_required_fields', currentLanguage), 'error');
                 setButtonLoading('create-btn', false);
                 return;
             }
@@ -770,9 +770,9 @@
                         const successMessage = document.createElement('div');
                         successMessage.innerHTML = `
                             <div style="text-align: center;">
-                                <h3 style="margin: 0 0 15px 0;">🎉 Salle créée avec succès !</h3>
+                                <h3 style="margin: 0 0 15px 0;">${getTranslation('room_created_success', currentLanguage)}</h3>
                                 <div class="room-code-display">${data.room_id}</div>
-                                <p style="margin: 15px 0 0 0; opacity: 0.9;">Redirection en cours...</p>
+                                <p style="margin: 15px 0 0 0; opacity: 0.9;">${getTranslation('redirecting', currentLanguage)}</p>
                             </div>
                         `;
                         
@@ -835,13 +835,13 @@
             
             // Validation côté client
             if (!data.room_id || !data.nickname) {
-                showStatus('Veuillez remplir tous les champs requis', 'error');
+                showStatus(getTranslation('fill_required_fields', currentLanguage), 'error');
                 setButtonLoading('join-btn', false);
                 return;
             }
             
             if (!/^\d{4}$/.test(data.room_id)) {
-                showStatus('Le code de salle doit contenir 4 chiffres', 'error');
+                showStatus(getTranslation('room_code_4_digits', currentLanguage), 'error');
                 setButtonLoading('join-btn', false);
                 return;
             }
@@ -860,7 +860,7 @@
                     const data = result.data || result;
                     
                     if (data.success) {
-                        showStatus('✅ Connexion réussie ! Redirection...', 'success');
+                        showStatus(getTranslation('connection_success', currentLanguage), 'success');
                         
                         // Sauvegarder les informations dans le localStorage
                         const userData = {
