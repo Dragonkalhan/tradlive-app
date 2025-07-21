@@ -941,7 +941,7 @@
                     inputs.forEach(input => {
                         input.addEventListener('invalid', function(e) {
                             console.log('❌ Validation échouée sur:', input.id);
-                            e.preventDefault();
+                            //e.preventDefault();
                             
                             let message = getTranslation('validation_required', currentLanguage);
                             console.log('💬 Message:', message);
