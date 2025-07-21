@@ -933,7 +933,7 @@
         });
     }); 
 
-                // Fonction pour personnaliser les messages de validation
+        // Fonction pour personnaliser les messages de validation
                 function setupCustomValidation() {
                     const inputs = document.querySelectorAll('input[required]');
                     
@@ -943,7 +943,6 @@
                             
                             let message = getTranslation('validation_required', currentLanguage);
                             
-                            // Messages spécifiques selon l'input
                             if (input.id.includes('nickname')) {
                                 message = getTranslation('validation_nickname', currentLanguage);
                             } else if (input.id.includes('room-name')) {
@@ -952,7 +951,6 @@
                                 message = getTranslation('validation_room_code', currentLanguage);
                             }
                             
-                            // Vérifier si c'est un problème de pattern
                             if (input.validity.patternMismatch) {
                                 message = getTranslation('validation_pattern', currentLanguage);
                             }
@@ -960,14 +958,12 @@
                             input.setCustomValidity(message);
                         });
                         
-                        // Reset le message quand l'utilisateur tape
                         input.addEventListener('input', function() {
                             input.setCustomValidity('');
                         });
                     });
                 }
-        
-                // Appeler la fonction après l'application des traductions
+                
                 setupCustomValidation();
             });
 </script>
