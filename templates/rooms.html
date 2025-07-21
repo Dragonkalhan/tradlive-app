@@ -632,61 +632,68 @@
                     showTab('join');
 
                    // Forcer traduction de la bulle pseudo spécifiquement
-setTimeout(() => {
-    const savedLanguage = window.TradLive?.storage ? 
-        window.TradLive.storage.get('tradlive_language', 'fr') : 
-        localStorage.getItem('tradlive_language') || 'fr';
-    
-    console.log('🌍 Traduction bulle pseudo QR en:', savedLanguage);
-    
-    // Cibler spécifiquement la bulle problématique
-    const pseudoTooltip = document.querySelector('#join-tab .tooltip[data-translate="tooltip_nickname"]');
-    if (pseudoTooltip && TRADLIVE_TRANSLATIONS[savedLanguage]) {
-        pseudoTooltip.textContent = TRADLIVE_TRANSLATIONS[savedLanguage]['tooltip_nickname'];
-        console.log('✅ Bulle pseudo traduite !');
-    }
-}, 1000);
-                    
-                    const createTab = document.querySelector('.tab[onclick*="create"]');
-                    const createTabContent = document.getElementById('create-tab');
-                    
-                    if (createTab) {
-                        createTab.style.display = 'none';
-                    }
-                    if (createTabContent) {
-                        createTabContent.style.display = 'none';
-                    }
-                    
-                   // NOUVEAU - Masquer le tooltip "Rejoindre" avec debug
-                    function hideJoinTooltip() {
-                    console.log('🔍 Masquage renforcé tooltip Rejoindre...');
-                    
-                    const joinButton = document.querySelector('button[onclick*="join"]');
-                    
-                    if (joinButton) {
-                        const tabContainer = joinButton.closest('.tab-container');
-                        
-                        if (tabContainer) {
-                            const tooltip = tabContainer.querySelector('.tooltip-trigger');
-                            if (tooltip) {
-                                // Masquage ultra-renforcé
-                                tooltip.style.display = 'none !important';
-                                tooltip.style.visibility = 'hidden !important';
-                                tooltip.style.opacity = '0 !important';
-                                tooltip.style.width = '0 !important';
-                                tooltip.style.height = '0 !important';
-                                tooltip.style.overflow = 'hidden !important';
-                                
-                                console.log('✅ Tooltip masqué avec force !');
-                                return true;
-                            }
-                        }
-                    }
-                    
-                    console.log('❌ Échec masquage');
-                    return false;
-                }
-                    
+                    setTimeout(() => {
+        const savedLanguage = window.TradLive?.storage ? 
+            window.TradLive.storage.get('tradlive_language', 'fr') : 
+            localStorage.getItem('tradlive_language') || 'fr';
+        
+        console.log('🔍 DEBUG - Langue:', savedLanguage);
+        
+        // Trouver TOUTES les bulles tooltip_nickname
+        const allNicknameTooltips = document.querySelectorAll('[data-translate="tooltip_nickname"]');
+        console.log('📊 Nombre de bulles nickname trouvées:', allNicknameTooltips.length);
+        
+        allNicknameTooltips.forEach((tooltip, index) => {
+            console.log(`🔍 Bulle ${index}:`, tooltip.textContent, tooltip.parentElement);
+            
+            // Forcer la traduction sur chaque bulle
+            if (TRADLIVE_TRANSLATIONS[savedLanguage]) {
+                tooltip.textContent = TRADLIVE_TRANSLATIONS[savedLanguage]['tooltip_nickname'];
+                console.log(`✅ Bulle ${index} traduite !`);
+            }
+        });
+    }, 1000);
+                                    
+                                    const createTab = document.querySelector('.tab[onclick*="create"]');
+                                    const createTabContent = document.getElementById('create-tab');
+                                    
+                                    if (createTab) {
+                                        createTab.style.display = 'none';
+                                    }
+                                    if (createTabContent) {
+                                        createTabContent.style.display = 'none';
+                                    }
+                                    
+                                   // NOUVEAU - Masquer le tooltip "Rejoindre" avec debug
+                                    function hideJoinTooltip() {
+                                    console.log('🔍 Masquage renforcé tooltip Rejoindre...');
+                                    
+                                    const joinButton = document.querySelector('button[onclick*="join"]');
+                                    
+                                    if (joinButton) {
+                                        const tabContainer = joinButton.closest('.tab-container');
+                                        
+                                        if (tabContainer) {
+                                            const tooltip = tabContainer.querySelector('.tooltip-trigger');
+                                            if (tooltip) {
+                                                // Masquage ultra-renforcé
+                                                tooltip.style.display = 'none !important';
+                                                tooltip.style.visibility = 'hidden !important';
+                                                tooltip.style.opacity = '0 !important';
+                                                tooltip.style.width = '0 !important';
+                                                tooltip.style.height = '0 !important';
+                                                tooltip.style.overflow = 'hidden !important';
+                                                
+                                                console.log('✅ Tooltip masqué avec force !');
+                                                return true;
+                                            }
+                                        }
+                                    }
+                                    
+                                    console.log('❌ Échec masquage');
+                                    return false;
+                                }
+                                    
                     // Essayer plusieurs fois avec délais croissants
                     setTimeout(() => hideJoinTooltip(), 200);
                     setTimeout(() => hideJoinTooltip(), 500);
