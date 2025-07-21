@@ -26,7 +26,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ Code de salle détecté ! Remplissez vos informations pour rejoindre automatiquement.",
         create_tab: "Créer une salle",
         join_tab: "Rejoindre une salle",
-        your_nickname: "Votre pseudo",
+        your_nickname: "Votre prénom",
         room_name: "Nom de la salle",
         room_password: "Mot de passe (optionnel)",
         room_code: "Code de la salle",
@@ -136,7 +136,7 @@ const TRADLIVE_TRANSLATIONS = {
          // Messages de validation HTML5
         validation_required: "Veuillez remplir ce champ",
         validation_pattern: "Le code doit contenir exactement 4 chiffres (ex: 1234)",
-        validation_nickname: "Le pseudo est requis",
+        validation_nickname: "Le prénom est requis",
         validation_room_name: "Le nom de salle est requis", 
         validation_room_code: "Le code de salle est requis"   
     },
@@ -160,7 +160,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ Room code detected! Fill in your information to join automatically.",
         create_tab: "Create a room",
         join_tab: "Join a room",
-        your_nickname: "Your nickname",
+        your_nickname: "Your first name",
         room_name: "Room name",
         room_password: "Password (optional)",
         room_code: "Room code",
@@ -267,7 +267,7 @@ const TRADLIVE_TRANSLATIONS = {
         // HTML5 validation messages
         validation_required: "Please fill out this field",
         validation_pattern: "Code must contain exactly 4 digits (e.g. 1234)",
-        validation_nickname: "Nickname is required",
+        validation_nickname: "First name is required",
         validation_room_name: "Room name is required",
         validation_room_code: "Room code is required"
     },
@@ -291,7 +291,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ ¡Código de sala detectado! Completa tu información para unirte automáticamente.",
         create_tab: "Crear una sala",
         join_tab: "Unirse a una sala",
-        your_nickname: "Tu apodo",
+        your_nickname:"Su nombre",
         room_name: "Nombre de la sala",
         room_password: "Contraseña (opcional)",
         room_code: "Código de la sala",
@@ -393,7 +393,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "Redirigiendo...",
         connection_success: "✅ ¡Conexión exitosa! Redirigiendo...",
         fill_required_fields: "Por favor complete todos los campos requeridos",
-        room_code_4_digits: "El código de sala debe contener 4 dígitos"
+        room_code_4_digits: "El código de sala debe contener 4 dígitos",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Por favor complete este campo",
+        validation_pattern: "El código debe contener exactamente 4 dígitos (ej: 1234)",
+        validation_nickname: "El nombre es requerido",
+        validation_room_name: "El nombre de sala es requerido",
+        validation_room_code: "El código de sala es requerido"
         
             },
 
@@ -416,7 +423,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ Raumcode erkannt! Füllen Sie Ihre Informationen aus, um automatisch beizutreten.",
         create_tab: "Einen Raum erstellen",
         join_tab: "Einem Raum beitreten",
-        your_nickname: "Ihr Spitzname",
+        your_nickname: "Ihr Vorname",
         room_name: "Raumname",
         room_password: "Passwort (optional)",
         room_code: "Raumcode",
@@ -514,13 +521,20 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_password_join: "Geben Sie das vom Gastgeber bereitgestellte Passwort ein",
 
 
-    // Statusmeldungen
-    room_created_success: "🎉 Raum erfolgreich erstellt!",
-    redirecting: "Weiterleitung...",
-    connection_success: "✅ Verbindung erfolgreich! Weiterleitung...",
-    fill_required_fields: "Bitte füllen Sie alle Pflichtfelder aus",
-    room_code_4_digits: "Raumcode muss 4 Ziffern enthalten"
-        
+        // Statusmeldungen
+        room_created_success: "🎉 Raum erfolgreich erstellt!",
+        redirecting: "Weiterleitung...",
+        connection_success: "✅ Verbindung erfolgreich! Weiterleitung...",
+        fill_required_fields: "Bitte füllen Sie alle Pflichtfelder aus",
+        room_code_4_digits: "Raumcode muss 4 Ziffern enthalten",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Bitte füllen Sie dieses Feld aus",
+        validation_pattern: "Code muss genau 4 Ziffern enthalten (z.B. 1234)",
+        validation_nickname: "Vorname ist erforderlich",
+        validation_room_name: "Raumname ist erforderlich",
+        validation_room_code: "Raumcode ist erforderlich"
+            
     },
 
     // 🇮🇹 ITALIANO
@@ -542,7 +556,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ Codice stanza rilevato! Compila le tue informazioni per unirti automaticamente.",
         create_tab: "Crea una stanza",
         join_tab: "Unisciti a una stanza",
-        your_nickname: "Il tuo nickname",
+        your_nickname: "Il tuo nome",
         room_name: "Nome della stanza",
         room_password: "Password (opzionale)",
         room_code: "Codice della stanza",
@@ -644,7 +658,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "Reindirizzamento...",
         connection_success: "✅ Connessione riuscita! Reindirizzamento...",
         fill_required_fields: "Si prega di compilare tutti i campi obbligatori",
-        room_code_4_digits: "Il codice stanza deve contenere 4 cifre"
+        room_code_4_digits: "Il codice stanza deve contenere 4 cifre",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Si prega di compilare questo campo",
+        validation_pattern: "Il codice deve contenere esattamente 4 cifre (es: 1234)",
+        validation_nickname: "Il nome è richiesto",
+        validation_room_name: "Il nome della stanza è richiesto",
+        validation_room_code: "Il codice stanza è richiesto"
         
     },
 
@@ -667,7 +688,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ Código da sala detectado! Preencha suas informações para entrar automaticamente.",
         create_tab: "Criar uma sala",
         join_tab: "Entrar numa sala",
-        your_nickname: "Seu apelido",
+        your_nickname: "Seu nome",
         room_name: "Nome da sala",
         room_password: "Senha (opcional)",
         room_code: "Código da sala",
@@ -769,7 +790,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "Redirecionando...",
         connection_success: "✅ Conexão bem-sucedida! Redirecionando...",
         fill_required_fields: "Por favor, preencha todos os campos obrigatórios",
-        room_code_4_digits: "O código da sala deve conter 4 dígitos"
+        room_code_4_digits: "O código da sala deve conter 4 dígitos",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Por favor, preencha este campo",
+        validation_pattern: "O código deve conter exatamente 4 dígitos (ex: 1234)",
+        validation_nickname: "O nome é obrigatório",
+        validation_room_name: "O nome da sala é obrigatório",
+        validation_room_code: "O código da sala é obrigatório"
         
     },
 
@@ -792,7 +820,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ Код комнаты обнаружен! Заполните информацию для автоматического присоединения.",
         create_tab: "Создать комнату",
         join_tab: "Присоединиться к комнате",
-        your_nickname: "Ваш никнейм",
+        your_nickname: "Ваше имя",
         room_name: "Название комнаты",
         room_password: "Пароль (необязательно)",
         room_code: "Код комнаты",
@@ -894,7 +922,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "Перенаправление...",
         connection_success: "✅ Подключение успешно! Перенаправление...",
         fill_required_fields: "Пожалуйста, заполните все обязательные поля",
-        room_code_4_digits: "Код комнаты должен содержать 4 цифры"
+        room_code_4_digits: "Код комнаты должен содержать 4 цифры",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Пожалуйста, заполните это поле",
+        validation_pattern: "Код должен содержать ровно 4 цифры (например: 1234)",
+        validation_nickname: "Имя обязательно",
+        validation_room_name: "Название комнаты обязательно",
+        validation_room_code: "Код комнаты обязателен"
         
     },
 
@@ -917,7 +952,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ 检测到房间代码！填写您的信息以自动加入。",
         create_tab: "创建房间",
         join_tab: "加入房间",
-        your_nickname: "您的昵称",
+        your_nickname: "您的名字",
         room_name: "房间名称",
         room_password: "密码（可选）",
         room_code: "房间代码",
@@ -1019,7 +1054,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "正在重定向...",
         connection_success: "✅ 连接成功！正在重定向...",
         fill_required_fields: "请填写所有必填字段",
-        room_code_4_digits: "房间代码必须包含4位数字"
+        room_code_4_digits: "房间代码必须包含4位数字",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "请填写此字段",
+        validation_pattern: "代码必须包含4位数字（例如：1234）",
+        validation_nickname: "姓名是必填项",
+        validation_room_name: "房间名称是必填项",
+        validation_room_code: "房间代码是必填项"
         
     },
 
@@ -1042,7 +1084,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ ルームコードが検出されました！情報を入力して自動参加してください。",
         create_tab: "ルームを作成",
         join_tab: "ルームに参加",
-        your_nickname: "あなたのニックネーム",
+        your_nickname: "お名前",
         room_name: "ルーム名",
         room_password: "パスワード（オプション）",
         room_code: "ルームコード",
@@ -1144,7 +1186,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "リダイレクト中...",
         connection_success: "✅ 接続成功！リダイレクト中...",
         fill_required_fields: "すべての必須フィールドに入力してください",
-        room_code_4_digits: "ルームコードは4桁の数字である必要があります"
+        room_code_4_digits: "ルームコードは4桁の数字である必要があります",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "このフィールドを入力してください",
+        validation_pattern: "コードは4桁の数字である必要があります（例：1234）",
+        validation_nickname: "お名前は必須です",
+        validation_room_name: "ルーム名は必須です",
+        validation_room_code: "ルームコードは必須です"
         
     },
 
@@ -1167,7 +1216,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ تم اكتشاف كود الغرفة! املأ معلوماتك للانضمام تلقائياً.",
         create_tab: "إنشاء غرفة",
         join_tab: "الانضمام إلى غرفة",
-        your_nickname: "اسمك المستعار",
+        your_nickname: "اسمك",
         room_name: "اسم الغرفة",
         room_password: "كلمة المرور (اختيارية)",
         room_code: "كود الغرفة",
@@ -1269,7 +1318,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "جاري إعادة التوجيه...",
         connection_success: "✅ تم الاتصال بنجاح! جاري إعادة التوجيه...",
         fill_required_fields: "يرجى ملء جميع الحقول المطلوبة",
-        room_code_4_digits: "يجب أن يحتوي كود الغرفة على 4 أرقام"
+        room_code_4_digits: "يجب أن يحتوي كود الغرفة على 4 أرقام",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "يرجى ملء هذا الحقل",
+        validation_pattern: "يجب أن يحتوي الرمز على 4 أرقام بالضبط (مثال: 1234)",
+        validation_nickname: "الاسم مطلوب",
+        validation_room_name: "اسم الغرفة مطلوب",
+        validation_room_code: "كود الغرفة مطلوب"
         
     },
 
@@ -1292,7 +1348,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ Код кімнати виявлено! Заповніть інформацію для автоматичного приєднання.",
         create_tab: "Створити кімнату",
         join_tab: "Приєднатися до кімнати",
-        your_nickname: "Ваш нікнейм",
+        your_nickname: "Ваше ім'я",
         room_name: "Назва кімнати",
         room_password: "Пароль (необов'язково)",
         room_code: "Код кімнати",
@@ -1394,7 +1450,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "Перенаправлення...",
         connection_success: "✅ Підключення успішне! Перенаправлення...",
         fill_required_fields: "Будь ласка, заповніть всі обов'язкові поля",
-        room_code_4_digits: "Код кімнати повинен містити 4 цифри"
+        room_code_4_digits: "Код кімнати повинен містити 4 цифри",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Будь ласка, заповніть це поле",
+        validation_pattern: "Код повинен містити рівно 4 цифри (наприклад: 1234)",
+        validation_nickname: "Ім'я обов'язкове",
+        validation_room_name: "Назва кімнати обов'язкова",
+        validation_room_code: "Код кімнати обов'язковий"
         
     },
 
@@ -1417,7 +1480,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ کد اتاق شناسایی شد! اطلاعات خود را پر کنید تا خودکار ملحق شوید.",
         create_tab: "ایجاد اتاق",
         join_tab: "پیوستن به اتاق",
-        your_nickname: "نام مستعار شما",
+        your_nickname: "نام شما",
         room_name: "نام اتاق",
         room_password: "رمز عبور (اختیاری)",
         room_code: "کد اتاق",
@@ -1519,7 +1582,14 @@ const TRADLIVE_TRANSLATIONS = {
     redirecting: "در حال هدایت مجدد...",
     connection_success: "✅ اتصال موفق! در حال هدایت مجدد...",
     fill_required_fields: "لطفاً تمام فیلدهای ضروری را پر کنید",
-    room_code_4_digits: "کد اتاق باید شامل 4 رقم باشد"
+    room_code_4_digits: "کد اتاق باید شامل 4 رقم باشد",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "لطفاً این فیلد را پر کنید",
+        validation_pattern: "کد باید دقیقاً شامل 4 رقم باشد (مثال: 1234)",
+        validation_nickname: "نام الزامی است",
+        validation_room_name: "نام اتاق الزامی است",
+        validation_room_code: "کد اتاق الزامی است"
         
     },
 
@@ -1542,7 +1612,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ कमरे का कोड मिला! स्वचालित रूप से शामिल होने के लिए अपनी जानकारी भरें।",
         create_tab: "कमरा बनाएं",
         join_tab: "कमरे में शामिल हों",
-        your_nickname: "आपका उपनाम",
+        your_nickname: "आपका नाम",
         room_name: "कमरे का नाम",
         room_password: "पासवर्ड (वैकल्पिक)",
         room_code: "कमरे का कोड",
@@ -1644,7 +1714,14 @@ const TRADLIVE_TRANSLATIONS = {
     redirecting: "रीडायरेक्ट हो रहा है...",
     connection_success: "✅ कनेक्शन सफल! रीडायरेक्ट हो रहा है...",
     fill_required_fields: "कृपया सभी आवश्यक फ़ील्ड भरें",
-    room_code_4_digits: "कमरे के कोड में 4 अंक होने चाहिए"
+    room_code_4_digits: "कमरे के कोड में 4 अंक होने चाहिए",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "कृपया इस फ़ील्ड को भरें",
+        validation_pattern: "कोड में बिल्कुल 4 अंक होने चाहिए (उदाहरण: 1234)",
+        validation_nickname: "नाम आवश्यक है",
+        validation_room_name: "कमरे का नाम आवश्यक है",
+        validation_room_code: "कमरे का कोड आवश्यक है"
         
     },
 
@@ -1667,7 +1744,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ রুম কোড শনাক্ত করা হয়েছে! স্বয়ংক্রিয়ভাবে যোগ দিতে আপনার তথ্য পূরণ করুন।",
         create_tab: "একটি রুম তৈরি করুন",
         join_tab: "একটি রুমে যোগ দিন",
-        your_nickname: "আপনার নিকনেম",
+        your_nickname: "আপনার নাম",
         room_name: "রুমের নাম",
         room_password: "পাসওয়ার্ড (ঐচ্ছিক)",
         room_code: "রুম কোড",
@@ -1769,7 +1846,14 @@ const TRADLIVE_TRANSLATIONS = {
     redirecting: "পুনর্নির্দেশ করা হচ্ছে...",
     connection_success: "✅ সংযোগ সফল! পুনর্নির্দেশ করা হচ্ছে...",
     fill_required_fields: "দয়া করে সমস্ত প্রয়োজনীয় ক্ষেত্র পূরণ করুন",
-    room_code_4_digits: "রুম কোডে ৪টি সংখ্যা থাকতে হবে"
+    room_code_4_digits: "রুম কোডে ৪টি সংখ্যা থাকতে হবে",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "দয়া করে এই ক্ষেত্রটি পূরণ করুন",
+        validation_pattern: "কোডে ঠিক ৪টি সংখ্যা থাকতে হবে (উদাহরণ: ১২৩৪)",
+        validation_nickname: "নাম আবশ্যক",
+        validation_room_name: "রুমের নাম আবশ্যক",
+        validation_room_code: "রুম কোড আবশ্যক"
         
     },
 
@@ -1792,7 +1876,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ గది కోడ్ గుర్తించబడింది! ఆటోమేటిక్‌గా చేరడానికి మీ సమాచారం నింపండి।",
         create_tab: "గదిని సృష్టించండి",
         join_tab: "గదిలో చేరండి",
-        your_nickname: "మీ మారుపేరు",
+        your_nickname: "మీ పేరు",
         room_name: "గది పేరు",
         room_password: "పాస్‌వర్డ్ (ఐచ్ఛికం)",
         room_code: "గది కోడ్",
@@ -1894,7 +1978,14 @@ const TRADLIVE_TRANSLATIONS = {
     redirecting: "దారి మళ్లిస్తున్నాము...",
     connection_success: "✅ కనెక్షన్ విజయవంతం! దారి మళ్లిస్తున్నాము...",
     fill_required_fields: "దయచేసి అన్ని అవసరమైన ఫీల్డ్‌లను పూరించండి",
-    room_code_4_digits: "గది కోడ్‌లో 4 అంకెలు ఉండాలి"
+    room_code_4_digits: "గది కోడ్‌లో 4 అంకెలు ఉండాలి",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "దయచేసి ఈ ఫీల్డ్‌ను పూరించండి",
+        validation_pattern: "కోడ్‌లో సరిగ్గా 4 అంకెలు ఉండాలి (ఉదాహరణ: 1234)",
+        validation_nickname: "పేరు అవసరం",
+        validation_room_name: "గది పేరు అవసరం",
+        validation_room_code: "గది కోడ్ అవసరం"
         
     },
 
@@ -1917,7 +2008,7 @@ const TRADLIVE_TRANSLATIONS = {
         auto_join_notice: "✅ खोलीचा कोड शोधला! आपोआप सामील होण्यासाठी तुमची माहिती भरा.",
         create_tab: "खोली तयार करा",
         join_tab: "खोलीत सामील व्हा",
-        your_nickname: "तुमचे टोपणनाव",
+        your_nickname: "तुमचे नाव",
         room_name: "खोलीचे नाव",
         room_password: "पासवर्ड (पर्यायी)",
         room_code: "खोलीचा कोड",
@@ -2019,7 +2110,14 @@ const TRADLIVE_TRANSLATIONS = {
     redirecting: "पुनर्निर्देशित करत आहे...",
     connection_success: "✅ कनेक्शन यशस्वी! पुनर्निर्देशित करत आहे...",
     fill_required_fields: "कृपया सर्व आवश्यक फील्ड भरा",
-    room_code_4_digits: "खोलीच्या कोडमध्ये 4 अंक असावेत"
+    room_code_4_digits: "खोलीच्या कोडमध्ये 4 अंक असावेत",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "कृपया हे फील्ड भरा",
+        validation_pattern: "कोडमध्ये नक्की 4 अंक असावेत (उदाहरण: 1234)",
+        validation_nickname: "नाव आवश्यक आहे",
+        validation_room_name: "खोलीचे नाव आवश्यक आहे",
+        validation_room_code: "खोलीचा कोड आवश्यक आहे"
         
     }
 };
