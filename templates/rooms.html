@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -608,6 +608,9 @@
             
             // Appliquer les traductions
             applyTranslations(currentLanguage);
+
+            // Changer la langue du document pour les messages HTML5
+            document.documentElement.lang = currentLanguage;
             
             // Afficher la langue actuelle
             const currentLangDisplay = document.getElementById('current-language');
