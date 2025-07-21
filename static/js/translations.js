@@ -124,7 +124,14 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "Nommez votre salle (ex: Réunion équipe, Cours d'anglais)",
         tooltip_password_create: "Protégez votre salle avec un mot de passe (facultatif)",
         tooltip_room_code: "Saisissez le code à 4 chiffres fourni par l'hôte",
-        tooltip_password_join: "Rentrez le mot de passe fourni par l'hôte"
+        tooltip_password_join: "Rentrez le mot de passe fourni par l'hôte",
+
+        // Messages de statut
+        room_created_success: "🎉 Salle créée avec succès !",
+        redirecting: "Redirection en cours...",
+        connection_success: "✅ Connexion réussie ! Redirection...",
+        fill_required_fields: "Veuillez remplir tous les champs requis",
+        room_code_4_digits: "Le code de salle doit contenir 4 chiffres"
     },
 
     // 🇬🇧 ENGLISH
@@ -241,7 +248,14 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "Name your room (e.g. Team meeting, English class)",
         tooltip_password_create: "Protect your room with a password (optional)",
         tooltip_room_code: "Enter the 4-digit code provided by the host",
-        tooltip_password_join: "Enter the password provided by the host"
+        tooltip_password_join: "Enter the password provided by the host",
+
+        // Status messages
+        room_created_success: "🎉 Room created successfully!",
+        redirecting: "Redirecting...",
+        connection_success: "✅ Connection successful! Redirecting...",
+        fill_required_fields: "Please fill in all required fields",
+        room_code_4_digits: "Room code must contain 4 digits"
     },
 
     // 🇪🇸 ESPAÑOL
@@ -358,7 +372,15 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "Nombra tu sala (ej: Reunión de equipo, Clase de inglés)",
         tooltip_password_create: "Protege tu sala con una contraseña (opcional)",
         tooltip_room_code: "Ingresa el código de 4 dígitos proporcionado por el anfitrión",
-        tooltip_password_join: "Ingresa la contraseña proporcionada por el anfitrión"
+        tooltip_password_join: "Ingresa la contraseña proporcionada por el anfitrión",
+
+        // Mensajes de estado
+        room_created_success: "🎉 ¡Sala creada con éxito!",
+        redirecting: "Redirigiendo...",
+        connection_success: "✅ ¡Conexión exitosa! Redirigiendo...",
+        fill_required_fields: "Por favor complete todos los campos requeridos",
+        room_code_4_digits: "El código de sala debe contener 4 dígitos"
+        
             },
 
     // 🇩🇪 DEUTSCH
@@ -475,7 +497,16 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "Benennen Sie Ihren Raum (z.B. Team-Meeting, Englischkurs)",
         tooltip_password_create: "Schützen Sie Ihren Raum mit einem Passwort (optional)",
         tooltip_room_code: "Geben Sie den 4-stelligen Code des Gastgebers ein",
-        tooltip_password_join: "Geben Sie das vom Gastgeber bereitgestellte Passwort ein"
+        tooltip_password_join: "Geben Sie das vom Gastgeber bereitgestellte Passwort ein",
+
+
+    // Statusmeldungen
+    room_created_success: "🎉 Raum erfolgreich erstellt!",
+    redirecting: "Weiterleitung...",
+    connection_success: "✅ Verbindung erfolgreich! Weiterleitung...",
+    fill_required_fields: "Bitte füllen Sie alle Pflichtfelder aus",
+    room_code_4_digits: "Raumcode muss 4 Ziffern enthalten"
+        
     },
 
     // 🇮🇹 ITALIANO
@@ -592,7 +623,15 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "Nomina la tua stanza (es: Riunione team, Corso inglese)",
         tooltip_password_create: "Proteggi la tua stanza con una password (opzionale)",
         tooltip_room_code: "Inserisci il codice a 4 cifre fornito dall'ospite",
-        tooltip_password_join: "Inserisci la password fornita dall'ospite"
+        tooltip_password_join: "Inserisci la password fornita dall'ospite",
+
+        // Messaggi di stato
+        room_created_success: "🎉 Stanza creata con successo!",
+        redirecting: "Reindirizzamento...",
+        connection_success: "✅ Connessione riuscita! Reindirizzamento...",
+        fill_required_fields: "Si prega di compilare tutti i campi obbligatori",
+        room_code_4_digits: "Il codice stanza deve contenere 4 cifre"
+        
     },
 
     // 🇵🇹 PORTUGUÊS
@@ -709,7 +748,15 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "Nomeie sua sala (ex: Reunião de equipe, Aula de inglês)",
         tooltip_password_create: "Proteja sua sala com uma senha (opcional)",
         tooltip_room_code: "Digite o código de 4 dígitos fornecido pelo anfitrião",
-        tooltip_password_join: "Digite a senha fornecida pelo anfitrião"
+        tooltip_password_join: "Digite a senha fornecida pelo anfitrião",
+
+        // Mensagens de status
+        room_created_success: "🎉 Sala criada com sucesso!",
+        redirecting: "Redirecionando...",
+        connection_success: "✅ Conexão bem-sucedida! Redirecionando...",
+        fill_required_fields: "Por favor, preencha todos os campos obrigatórios",
+        room_code_4_digits: "O código da sala deve conter 4 dígitos"
+        
     },
 
     // 🇷🇺 РУССКИЙ
@@ -826,7 +873,15 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "Назовите вашу комнату (например: Встреча команды, Урок английского)",
         tooltip_password_create: "Защитите вашу комнату паролем (необязательно)",
         tooltip_room_code: "Введите 4-значный код, предоставленный хостом",
-        tooltip_password_join: "Введите пароль, предоставленный хостом"
+        tooltip_password_join: "Введите пароль, предоставленный хостом",
+
+        // Сообщения о статусе
+        room_created_success: "🎉 Комната успешно создана!",
+        redirecting: "Перенаправление...",
+        connection_success: "✅ Подключение успешно! Перенаправление...",
+        fill_required_fields: "Пожалуйста, заполните все обязательные поля",
+        room_code_4_digits: "Код комнаты должен содержать 4 цифры"
+        
     },
 
     // 🇨🇳 中文
@@ -943,7 +998,15 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "为您的房间命名（例如：团队会议，英语课）",
         tooltip_password_create: "用密码保护您的房间（可选）",
         tooltip_room_code: "输入主持人提供的4位数代码",
-        tooltip_password_join: "输入主持人提供的密码"
+        tooltip_password_join: "输入主持人提供的密码",
+
+        // 状态消息
+        room_created_success: "🎉 房间创建成功！",
+        redirecting: "正在重定向...",
+        connection_success: "✅ 连接成功！正在重定向...",
+        fill_required_fields: "请填写所有必填字段",
+        room_code_4_digits: "房间代码必须包含4位数字"
+        
     },
 
     // 🇯🇵 日本語
@@ -1060,7 +1123,15 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "ルーム名を入力してください（例：チーム会議、英語クラス）",
         tooltip_password_create: "ルームをパスワードで保護してください（オプション）",
         tooltip_room_code: "ホストが提供した4桁のコードを入力してください",
-        tooltip_password_join: "ホストが提供したパスワードを入力してください"
+        tooltip_password_join: "ホストが提供したパスワードを入力してください",
+
+        // ステータスメッセージ
+        room_created_success: "🎉 ルームが正常に作成されました！",
+        redirecting: "リダイレクト中...",
+        connection_success: "✅ 接続成功！リダイレクト中...",
+        fill_required_fields: "すべての必須フィールドに入力してください",
+        room_code_4_digits: "ルームコードは4桁の数字である必要があります"
+        
     },
 
     // 🇸🇦 العربية
@@ -1177,7 +1248,15 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "اسم غرفتك (مثال: اجتماع الفريق، درس الإنجليزية)",
         tooltip_password_create: "احم غرفتك بكلمة مرور (اختياري)",
         tooltip_room_code: "أدخل الرمز المكون من 4 أرقام المقدم من المضيف",
-        tooltip_password_join: "أدخل كلمة المرور المقدمة من المضيف"       
+        tooltip_password_join: "أدخل كلمة المرور المقدمة من المضيف",
+
+        // رسائل الحالة
+        room_created_success: "🎉 تم إنشاء الغرفة بنجاح!",
+        redirecting: "جاري إعادة التوجيه...",
+        connection_success: "✅ تم الاتصال بنجاح! جاري إعادة التوجيه...",
+        fill_required_fields: "يرجى ملء جميع الحقول المطلوبة",
+        room_code_4_digits: "يجب أن يحتوي كود الغرفة على 4 أرقام"
+        
     },
 
     // 🇺🇦 УКРАЇНСЬКА
@@ -1294,7 +1373,15 @@ const TRADLIVE_TRANSLATIONS = {
         tooltip_room_name: "Назвіть вашу кімнату (наприклад: Зустріч команди, Урок англійської)",
         tooltip_password_create: "Захистіть вашу кімнату паролем (необов'язково)",
         tooltip_room_code: "Введіть 4-значний код, наданий хостом",
-        tooltip_password_join: "Введіть пароль, наданий хостом"       
+        tooltip_password_join: "Введіть пароль, наданий хостом",
+
+        // Повідомлення про статус
+        room_created_success: "🎉 Кімнату успішно створено!",
+        redirecting: "Перенаправлення...",
+        connection_success: "✅ Підключення успішне! Перенаправлення...",
+        fill_required_fields: "Будь ласка, заповніть всі обов'язкові поля",
+        room_code_4_digits: "Код кімнати повинен містити 4 цифри"
+        
     },
 
     // 🇮🇷 فارسی
@@ -1411,7 +1498,15 @@ const TRADLIVE_TRANSLATIONS = {
     tooltip_room_name: "اتاق خود را نام‌گذاری کنید (مثال: جلسه تیم، کلاس انگلیسی)",
     tooltip_password_create: "اتاق خود را با رمز عبور محافظت کنید (اختیاری)",
     tooltip_room_code: "کد 4 رقمی ارائه شده توسط میزبان را وارد کنید",
-    tooltip_password_join: "رمز عبور ارائه شده توسط میزبان را وارد کنید"        
+    tooltip_password_join: "رمز عبور ارائه شده توسط میزبان را وارد کنید",
+
+     // پیام‌های وضعیت
+    room_created_success: "🎉 اتاق با موفقیت ایجاد شد!",
+    redirecting: "در حال هدایت مجدد...",
+    connection_success: "✅ اتصال موفق! در حال هدایت مجدد...",
+    fill_required_fields: "لطفاً تمام فیلدهای ضروری را پر کنید",
+    room_code_4_digits: "کد اتاق باید شامل 4 رقم باشد"
+        
     },
 
     // 🇮🇳 हिन्दी
@@ -1528,7 +1623,15 @@ const TRADLIVE_TRANSLATIONS = {
     tooltip_room_name: "अपने कमरे का नाम रखें (उदाहरण: टीम मीटिंग, अंग्रेजी क्लास)",
     tooltip_password_create: "अपने कमरे को पासवर्ड से सुरक्षित करें (वैकल्पिक)",
     tooltip_room_code: "होस्ट द्वारा प्रदान किया गया 4 अंकों का कोड दर्ज करें",
-    tooltip_password_join: "होस्ट द्वारा प्रदान किया गया पासवर्ड दर्ज करें"        
+    tooltip_password_join: "होस्ट द्वारा प्रदान किया गया पासवर्ड दर्ज करें",
+
+    // स्थिति संदेश
+    room_created_success: "🎉 कमरा सफलतापूर्वक बनाया गया!",
+    redirecting: "रीडायरेक्ट हो रहा है...",
+    connection_success: "✅ कनेक्शन सफल! रीडायरेक्ट हो रहा है...",
+    fill_required_fields: "कृपया सभी आवश्यक फ़ील्ड भरें",
+    room_code_4_digits: "कमरे के कोड में 4 अंक होने चाहिए"
+        
     },
 
     // 🇧🇩 বাংলা
@@ -1645,7 +1748,15 @@ const TRADLIVE_TRANSLATIONS = {
     tooltip_room_name: "আপনার রুমের নাম দিন (উদাহরণ: টিম মিটিং, ইংরেজি ক্লাস)",
     tooltip_password_create: "আপনার রুমকে পাসওয়ার্ড দিয়ে সুরক্ষিত করুন (ঐচ্ছিক)",
     tooltip_room_code: "হোস্ট প্রদত্ত ৪ সংখ্যার কোড লিখুন",
-    tooltip_password_join: "হোস্ট প্রদত্ত পাসওয়ার্ড লিখুন"        
+    tooltip_password_join: "হোস্ট প্রদত্ত পাসওয়ার্ড লিখুন",
+
+    // অবস্থা বার্তা
+    room_created_success: "🎉 রুম সফলভাবে তৈরি হয়েছে!",
+    redirecting: "পুনর্নির্দেশ করা হচ্ছে...",
+    connection_success: "✅ সংযোগ সফল! পুনর্নির্দেশ করা হচ্ছে...",
+    fill_required_fields: "দয়া করে সমস্ত প্রয়োজনীয় ক্ষেত্র পূরণ করুন",
+    room_code_4_digits: "রুম কোডে ৪টি সংখ্যা থাকতে হবে"
+        
     },
 
     // 🇮🇳 తెలుగు
@@ -1762,7 +1873,15 @@ const TRADLIVE_TRANSLATIONS = {
     tooltip_room_name: "మీ గదికి పేరు పెట్టండి (ఉదా: టీమ్ మీటింగ్, ఇంగ్లీష్ క్లాస్)",
     tooltip_password_create: "మీ గదిని పాస్‌వర్డ్‌తో రక్షించండి (ఐచ్ఛికం)",
     tooltip_room_code: "హోస్ట్ అందించిన 4 అంకెల కోడ్‌ను నమోదు చేయండి",
-    tooltip_password_join: "హోస్ట్ అందించిన పాస్‌వర్డ్‌ను నమోదు చేయండి"       
+    tooltip_password_join: "హోస్ట్ అందించిన పాస్‌వర్డ్‌ను నమోదు చేయండి",
+
+    // స్థితి సందేశాలు
+    room_created_success: "🎉 గది విజయవంతంగా సృష్టించబడింది!",
+    redirecting: "దారి మళ్లిస్తున్నాము...",
+    connection_success: "✅ కనెక్షన్ విజయవంతం! దారి మళ్లిస్తున్నాము...",
+    fill_required_fields: "దయచేసి అన్ని అవసరమైన ఫీల్డ్‌లను పూరించండి",
+    room_code_4_digits: "గది కోడ్‌లో 4 అంకెలు ఉండాలి"
+        
     },
 
     // 🇮🇳 मराठी
@@ -1879,7 +1998,15 @@ const TRADLIVE_TRANSLATIONS = {
     tooltip_room_name: "तुमच्या खोलीचे नाव द्या (उदा: टीम मीटिंग, इंग्रजी वर्ग)",
     tooltip_password_create: "तुमची खोली पासवर्डने सुरक्षित करा (पर्यायी)",
     tooltip_room_code: "होस्टने दिलेला 4 अंकी कोड प्रविष्ट करा",
-    tooltip_password_join: "होस्टने दिलेला पासवर्ड प्रविष्ट करा"        
+    tooltip_password_join: "होस्टने दिलेला पासवर्ड प्रविष्ट करा",
+
+     // स्थिती संदेश
+    room_created_success: "🎉 खोली यशस्वीरित्या तयार केली!",
+    redirecting: "पुनर्निर्देशित करत आहे...",
+    connection_success: "✅ कनेक्शन यशस्वी! पुनर्निर्देशित करत आहे...",
+    fill_required_fields: "कृपया सर्व आवश्यक फील्ड भरा",
+    room_code_4_digits: "खोलीच्या कोडमध्ये 4 अंक असावेत"
+        
     }
 };
 
