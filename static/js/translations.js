@@ -131,7 +131,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "Redirection en cours...",
         connection_success: "✅ Connexion réussie ! Redirection...",
         fill_required_fields: "Veuillez remplir tous les champs requis",
-        room_code_4_digits: "Le code de salle doit contenir 4 chiffres"
+        room_code_4_digits: "Le code de salle doit contenir 4 chiffres",
+
+         // Messages de validation HTML5
+        validation_required: "Veuillez remplir ce champ",
+        validation_pattern: "Le code doit contenir exactement 4 chiffres (ex: 1234)",
+        validation_nickname: "Le pseudo est requis",
+        validation_room_name: "Le nom de salle est requis", 
+        validation_room_code: "Le code de salle est requis"   
     },
 
     // 🇬🇧 ENGLISH
@@ -255,7 +262,14 @@ const TRADLIVE_TRANSLATIONS = {
         redirecting: "Redirecting...",
         connection_success: "✅ Connection successful! Redirecting...",
         fill_required_fields: "Please fill in all required fields",
-        room_code_4_digits: "Room code must contain 4 digits"
+        room_code_4_digits: "Room code must contain 4 digits",
+
+        // HTML5 validation messages
+        validation_required: "Please fill out this field",
+        validation_pattern: "Code must contain exactly 4 digits (e.g. 1234)",
+        validation_nickname: "Nickname is required",
+        validation_room_name: "Room name is required",
+        validation_room_code: "Room code is required"
     },
 
     // 🇪🇸 ESPAÑOL
