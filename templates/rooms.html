@@ -394,10 +394,18 @@
             display: flex;
             gap: 0;
             overflow: visible !important;  ← AJOUTE CETTE LIGNE
+             margin-top: 30px;
+            width: 100%;           /* AJOUTE cette ligne */
         }
+        
+        .tab {
+            flex: 1;               /* AJOUTE cette ligne - chaque bouton prend 50% */
+            width: 50%;            /* AJOUTE cette ligne */
+                }
 
         .logo-container {
             margin-bottom: -50px;
+            text-align: center;
         }
         
         .logo {
