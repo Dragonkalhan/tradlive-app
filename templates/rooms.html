@@ -393,21 +393,35 @@
             gap: 0;
             overflow: visible !important;  ← AJOUTE CETTE LIGNE
         }
+
+        .logo-container {
+            margin-bottom: -50px;
+        }
         
+        .logo {
+            width: 350px;
+            height: auto;
+            margin-bottom: -90px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
     </style>
 </head>
 <body>
     <a href="/" class="back-link" data-translate="back_button">← Retour à l'accueil</a>
     
     <div class="container rooms-container">
-        <div class="page-header">
-            <h1 data-translate="page_heading">🌍 TradLive - Traduction Multi-utilisateurs</h1>
-            <div class="language-indicator">
-                <span data-translate="selected_language">Langue sélectionnée :</span>
-                <strong id="current-language">Français</strong>
-            </div>
+        <!-- Logo header -->
+        <div class="logo-container">
+            <img src="/static/images/TradLive.png" alt="Tradlive" class="logo">
         </div>
         
+      <!-- Langue sélectionnée -->
+        <div class="language-info">
+            <span data-translate="selected_language">Langue sélectionnée :</span>
+            <strong id="current-language">Français</strong>
+        </div>  
+                
         <!-- Notice pour auto-join depuis QR code -->
         <div id="auto-join-notice" class="auto-join-notice">
             <span data-translate="auto_join_notice">✅ Code de salle détecté ! Remplissez vos informations pour rejoindre automatiquement.</span>
