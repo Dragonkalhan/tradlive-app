@@ -934,13 +934,17 @@
 
         // Fonction pour personnaliser les messages de validation
                 function setupCustomValidation() {
+                    console.log('🔧 Setup validation custom...');
                     const inputs = document.querySelectorAll('input[required]');
+                    console.log('📊 Inputs trouvés:', inputs.length);
                     
                     inputs.forEach(input => {
                         input.addEventListener('invalid', function(e) {
+                            console.log('❌ Validation échouée sur:', input.id);
                             e.preventDefault();
                             
                             let message = getTranslation('validation_required', currentLanguage);
+                            console.log('💬 Message:', message);
                             
                             if (input.id.includes('nickname')) {
                                 message = getTranslation('validation_nickname', currentLanguage);
@@ -954,6 +958,7 @@
                                 message = getTranslation('validation_pattern', currentLanguage);
                             }
                             
+                            console.log('✅ Message final:', message);
                             input.setCustomValidity(message);
                         });
                         
