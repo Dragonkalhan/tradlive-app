@@ -450,7 +450,7 @@ function initializeDOMElements() {
     const elementIds = [
         'status', 'controls', 'host-controls', 'participant-controls',
         'mic-button', 'participant-mic-button', 'text-mode-button', 'participant-text-button',
-        'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image', 'connection-status',
+        'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image',
         'text-input-fallback', 'participant-text-input',
         'host-interface', 'participant-interface',
         'host-original-text', 'host-responses-text',
