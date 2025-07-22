@@ -1,1859 +1,2172 @@
 /**
- * 🎤 TradLive - Logique complète de la salle de traduction (VERSION FINALE)
- * Intégration complète avec common.js et translations.js (16 langues)
- * Architecture professionnelle Netflix/Spotify niveau - PRODUCTION READY
- * 🌐 Déployé sur: https://tradlive-app.onrender.com
+ * 🌍 TradLive - Système de traductions d'interface complet
+ * Toutes les 16 langues supportées par l'application
+ * Architecture professionnelle pour maintenir facilement les traductions
  */
 
-/* ========================================
-   VARIABLES GLOBALES DE LA SALLE
-======================================== */
-let userData = null;
-let roomData = null;
-let recognition = null;
-let participantRecognition = null;
-let isListening = false;
-let isParticipantListening = false;
-let isHost = false;
-let updateInterval = null;
-let heartbeatInterval = null;
-let reconnectAttempts = 0;
-const maxReconnectAttempts = 5;
+const TRADLIVE_TRANSLATIONS = {
+    // 🇫🇷 FRANÇAIS (langue de base)
+    fr: {
+        // Page d'accueil
+        page_title_home: "TradLive - Traduction en temps réel",
+        tagline: "Traduction vocale en temps réel pour tous",
+        choose_language: "🌍 Choisissez votre langue",
+        continue_button: "Continuer vers TradLive",
+        how_it_works: "💡 Comment ça marche ?",
+        instruction_1: "Choisissez votre langue ci-dessus",
+        instruction_2: "Créez une salle ou rejoignez-en une existante",
+        instruction_3: "Parlez dans votre langue, tout le monde comprend !",
+        instruction_4: "Jusqu'à 10 personnes peuvent participer simultanément",
 
-// Variables pour éviter la lecture en boucle (CRITIQUE - NE PAS MODIFIER)
-let lastSpokenText = '';
-let lastSpokenTimestamp = 0;
-let lastTranslationId = null;
-let networkErrorCount = 0;
+        // Page des salles
+        page_title_rooms: "TradLive - Salles de traduction",
+        back_button: "← Retour à l'accueil",
+        page_heading: "🌍 TradLive - Traduction Multi-utilisateurs",
+        selected_language: "Langue sélectionnée :",
+        auto_join_notice: "✅ Code de salle détecté ! Remplissez vos informations pour rejoindre automatiquement.",
+        create_tab: "Créer une salle",
+        join_tab: "Rejoindre une salle",
+        your_nickname: "Votre prénom",
+        room_name: "Nom de la salle",
+        room_password: "Mot de passe (optionnel)",
+        room_code: "Code de la salle",
+        room_password_if_required: "Mot de passe (si requis)",
+        create_button: "🎉 Créer la salle",
+        join_button: "🚪 Rejoindre la salle",
+        nickname_placeholder: "Ex: Marie",
+        room_name_placeholder: "Ex: Réunion équipe, Cours d'anglais...",
+        room_code_placeholder: "Ex: 1234",
+        password_placeholder: "Laissez vide pour aucun mot de passe",
+        password_if_required_placeholder: "Laissez vide si aucun mot de passe",
 
-// Éléments DOM (seront initialisés au chargement)
-let statusEl, controlsEl, hostControlsEl, participantControlsEl;
-let micButton, participantMicButton, textModeButton, participantTextButton;
-let waveAnimation, participantWave, qrSection, qrCodeImage, connectionStatus;
-let textInputFallback, participantTextInput;
-let hostInterface, participantInterface;
-let hostOriginalText, hostResponsesText;
-let participantOriginalText, participantTranslatedText, participantMessageArea;
-let participantOwnText, participantFrenchText, participantTargetLanguage;
-let participantsListEl, participantCountEl;
-
-
-
-/* ========================================
-   NOMS DES LANGUES (MAPPING) - INTÉGRÉ AVEC TRANSLATIONS.JS
-======================================== */
-function getLanguageName(code) {
-    // Système unifié avec translations.js
-    if (window.getTranslation && window.interfaceLanguage) {
-        const langKey = `lang_${getLangKey(code)}`;
-        return window.getTranslation(langKey, window.interfaceLanguage);
-    }
-    
-    // Fallback robuste
-    const languageNames = {
-        fr: "Français", en: "English", es: "Español", 
-        de: "Deutsch", it: "Italiano", pt: "Português",
-        ru: "Русский", "zh-CN": "中文", ja: "日本語",
-        ar: "العربية", uk: "Українська", fa: "فارسی",
-        hi: "हिन्दी", bn: "বাংলা", te: "తెలుగు", mr: "मराठी"
-    };
-    return languageNames[code] || code;
-}
-
-function getLangKey(code) {
-    const mapping = {
-        'fr': 'french', 'en': 'english', 'es': 'spanish',
-        'de': 'german', 'it': 'italian', 'pt': 'portuguese',
-        'ru': 'russian', 'zh-CN': 'chinese', 'ja': 'japanese',
-        'ar': 'arabic', 'uk': 'ukrainian', 'fa': 'persian',
-        'hi': 'hindi', 'bn': 'bengali', 'te': 'telugu', 'mr': 'marathi'
-    };
-    return mapping[code] || 'french';
-}
-
-function getRecognitionLanguageCode(code) {
-    const mapping = {
-        'en': 'en-US', 'es': 'es-ES', 'de': 'de-DE', 'it': 'it-IT',
-        'pt': 'pt-PT', 'ru': 'ru-RU', 'zh-CN': 'zh-CN', 'ja': 'ja-JP',
-        'ar': 'ar-SA', 'uk': 'uk-UA', 'fa': 'fa-IR', 'hi': 'hi-IN',
-        'bn': 'bn-IN', 'te': 'te-IN', 'mr': 'mr-IN', 'fr': 'fr-FR'
-    };
-    return mapping[code] || 'fr-FR';
-}
-
-/* ========================================
-   SYNTHÈSE VOCALE (ANTI-SPAM RENFORCÉ) - FINALISÉE
-======================================== */
-function speakText(text, language = 'fr', translationId = null) {
-    if (!text || text.trim() === '') return;
-    
-    // Système anti-spam renforcé (CRITIQUE - NE PAS MODIFIER)
-    const currentTime = Date.now();
-    const translationKey = translationId || `${text.substring(0, 50)}_${language}_${currentTime}`;
-    
-    // Vérifier si c'est exactement la même traduction (même ID)
-    if (translationKey === lastTranslationId) {
-        console.log('🔇 Traduction identique ignorée (même ID):', translationKey);
-        return;
-    }
-    
-    // Double vérification avec le texte ET le délai
-    if (text === lastSpokenText && (currentTime - lastSpokenTimestamp) < 8000) {
-        console.log('🔇 Traduction identique ignorée (délai 8s):', text.substring(0, 30) + '...');
-        return;
-    }
-    
-    if ('speechSynthesis' in window) {
-        // Arrêter toute lecture en cours pour éviter la superposition
-        window.speechSynthesis.cancel();
+        // Page de salle de traduction
+        page_title_room: "TradLive - Salle de traduction",
+        room_label: "Salle :",
+        leave_button: "Quitter",
+        connecting: "Connexion...",
+        share_room: "🔗 Partage de la salle",
+        qr_instructions: "Scannez ce QR code pour rejoindre directement la salle :",
+        room_code_label: "Code salle :",
+        qr_scan_instruction: "Les participants scannent pour rejoindre automatiquement",
+        connecting_room: "Connexion à la salle...",
+        speak_french: "🎤 Appuyez et parlez",
+        speak_your_language: "🎤 Appuyez et parlez",
+        text_mode: "💬 Mode Texte",
+        write_french_messages: "✍️ Saisie de texte en français",
+        write_your_language_messages: "✍️ Écrire dans votre langue",
+        write_french_placeholder: "Écrivez votre message en français ici...",
+        write_your_language_placeholder: "Écrivez votre message dans votre langue...",
+        send_translation: "📤 Envoyer la traduction",
+        send_to_french: "📤 Envoyer au français",
+        close_button: "❌ Fermer",
+        what_you_say: "📝 Ce que vous dites (Français)",
+        participant_responses: "💬 Réponses des participants (Français)",
+        host_message: "📝 Message de l'hôte (Français)",
+        translation_label: "Traduction",
+        your_language: "Votre langue",
+        your_message: "💬 Votre message",
+        in_your_language: "Dans votre langue :",
+        french_translation: "Traduction française :",
+        participants_title: "Participants",
+        loading_participants: "Chargement de la liste...",
+        waiting_your_message: "En attente de votre message...",
+        waiting_responses: "En attente des réponses...",
+        waiting_host_message: "En attente d'un message de l'hôte...",
+        waiting_translation: "En attente d'une traduction...",
         
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = getVoiceLanguageCode(language);
-        utterance.volume = 0.8;
-        utterance.rate = 0.9;
-        utterance.pitch = 1;
+        // Messages système
+        mic_incompatible: "Microphone non compatible",
+        mic_incompatible_message: "Votre navigateur ne peut pas utiliser la reconnaissance vocale avec TradLive.",
+        solution: "Solution :",
+        use_text_mode: "Utilisez la zone de saisie ci-dessous pour écrire vos messages.",
+        text_mode_activated: "Mode texte activé. Utilisez la zone de saisie ci-dessous.",
+        host_badge: "HÔTE",
+        stop_button: "🎤 Arrêter",
+        listening_french: "En écoute... Parlez en français.",
+        listening_your_language: "En écoute... Parlez dans votre langue.",
+        recognizing: "En cours: ",
+        network_problem: "Problème réseau, nouvelle tentative...",
+        mic_permission_error: "❌ Autorisez le microphone et rechargez la page.",
+        mic_problem: "Problème micro. Mode texte activé.",
+        connected: "Connecté ✅",
+        reconnecting: "Reconnexion...",
+        no_participants: "Aucun participant",
+        broadcasting: "Diffusion de la traduction...",
+        message_sent: "Message diffusé avec synthèse vocale !",
+        sending_response: "Envoi de votre réponse...",
+        response_sent: "Réponse envoyée à l'hôte !",
+        translating: "Traduction en cours...",
+        click_mic: "Cliquez sur le micro pour parler.",
+        confirm_leave: "Êtes-vous sûr de vouloir quitter la salle ?",
+
+        // Noms des langues
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+        // Tooltips d'aide
+        tooltip_create_host: "Vous serez l'hôte de la conversation",
+        tooltip_join_guest: "Vous participerez à une conversation existante",
+        tooltip_nickname: "Tapez votre prénom pour vous identifier", 
+        tooltip_room_name: "Nommez votre salle (ex: Réunion équipe, Cours d'anglais)",
+        tooltip_password_create: "Protégez votre salle avec un mot de passe (facultatif)",
+        tooltip_room_code: "Saisissez le code à 4 chiffres fourni par l'hôte",
+        tooltip_password_join: "Rentrez le mot de passe fourni par l'hôte",
+
+        // Messages de statut
+        room_created_success: "🎉 Salle créée avec succès !",
+        redirecting: "Redirection en cours...",
+        connection_success: "✅ Connexion réussie ! Redirection...",
+        fill_required_fields: "Veuillez remplir tous les champs requis",
+        room_code_4_digits: "Le code de salle doit contenir 4 chiffres",
+
+         // Messages de validation HTML5
+        validation_required: "Veuillez remplir ce champ",
+        validation_pattern: "Le code doit contenir exactement 4 chiffres (ex: 1234)",
+        validation_nickname: "Le prénom est requis",
+        validation_room_name: "Le nom de salle est requis", 
+        validation_room_code: "Le code de salle est requis"   
+    },
+
+    // 🇬🇧 ENGLISH
+    en: {
+        page_title_home: "TradLive - Real-time Translation",
+        tagline: "Real-time voice translation for everyone",
+        choose_language: "🌍 Choose your language",
+        continue_button: "Continue to TradLive",
+        how_it_works: "💡 How it works?",
+        instruction_1: "Choose your language above",
+        instruction_2: "Create a room or join an existing one",
+        instruction_3: "Speak in your language, everyone understands!",
+        instruction_4: "Up to 10 people can participate simultaneously",
+
+        page_title_rooms: "TradLive - Translation Rooms",
+        back_button: "← Back to home",
+        page_heading: "🌍 TradLive - Multi-user Translation",
+        selected_language: "Selected language:",
+        auto_join_notice: "✅ Room code detected! Fill in your information to join automatically.",
+        create_tab: "Create a room",
+        join_tab: "Join a room",
+        your_nickname: "Your first name",
+        room_name: "Room name",
+        room_password: "Password (optional)",
+        room_code: "Room code",
+        room_password_if_required: "Password (if required)",
+        create_button: "🎉 Create room",
+        join_button: "🚪 Join room",
+        nickname_placeholder: "Ex: Marie",
+        room_name_placeholder: "Ex: Team meeting, English class...",
+        room_code_placeholder: "Ex: 1234",
+        password_placeholder: "Leave empty for no password",
+        password_if_required_placeholder: "Leave empty if no password",
+
+        page_title_room: "TradLive - Translation Room",
+        room_label: "Room:",
+        leave_button: "Leave",
+        connecting: "Connecting...",
+        share_room: "🔗 Share room",
+        qr_instructions: "Scan this QR code to join the room directly:",
+        room_code_label: "Room code:",
+        qr_scan_instruction: "Participants scan to join automatically",
+        connecting_room: "Connecting to room...",
+        speak_french: "🎤 Press and speak",
+        speak_your_language: "🎤 Press and speak",
+        text_mode: "💬 Text Mode",
+        write_french_messages: "✍️ Write in French",
+        write_your_language_messages: "✍️ Write in your language",
+        write_french_placeholder: "Write your message in French here...",
+        write_your_language_placeholder: "Write your message in your language...",
+        send_translation: "📤 Send translation",
+        send_to_french: "📤 Send to French",
+        close_button: "❌ Close",
+        what_you_say: "📝 What you say (French)",
+        participant_responses: "💬 Participant responses (French)",
+        host_message: "📝 Host message (French)",
+        translation_label: "Translation",
+        your_language: "Your language",
+        your_message: "💬 Your message",
+        in_your_language: "In your language:",
+        french_translation: "French translation:",
+        participants_title: "Participants",
+        loading_participants: "Loading list...",
+        waiting_your_message: "Waiting for your message...",
+        waiting_responses: "Waiting for responses...",
+        waiting_host_message: "Waiting for host message...",
+        waiting_translation: "Waiting for translation...",
+
+        mic_incompatible: "Microphone incompatible",
+        mic_incompatible_message: "Your browser cannot use voice recognition with TradLive.",
+        solution: "Solution:",
+        use_text_mode: "Use the text input below to write your messages.",
+        text_mode_activated: "Text mode activated. Use the text input below.",
+        host_badge: "HOST",
+        stop_button: "🎤 Stop",
+        listening_french: "Listening... Speak in French.",
+        listening_your_language: "Listening... Speak in your language.",
+        recognizing: "Recognizing: ",
+        network_problem: "Network problem, retrying...",
+        mic_permission_error: "❌ Allow microphone access and reload the page.",
+        mic_problem: "Microphone problem. Text mode activated.",
+        connected: "Connected ✅",
+        reconnecting: "Reconnecting...",
+        no_participants: "No participants",
+        broadcasting: "Broadcasting translation...",
+        message_sent: "Message broadcast with voice synthesis!",
+        sending_response: "Sending your response...",
+        response_sent: "Response sent to host!",
+        translating: "Translating...",
+        click_mic: "Click the microphone to speak.",
+        confirm_leave: "Are you sure you want to leave the room?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+        // Help tooltips
+        tooltip_create_host: "You will be the host of the conversation",
+        tooltip_join_guest: "You will participate in an existing conversation",
+        tooltip_nickname: "Type your first name to identify yourself",
+        tooltip_room_name: "Name your room (e.g. Team meeting, English class)",
+        tooltip_password_create: "Protect your room with a password (optional)",
+        tooltip_room_code: "Enter the 4-digit code provided by the host",
+        tooltip_password_join: "Enter the password provided by the host",
+
+        // Status messages
+        room_created_success: "🎉 Room created successfully!",
+        redirecting: "Redirecting...",
+        connection_success: "✅ Connection successful! Redirecting...",
+        fill_required_fields: "Please fill in all required fields",
+        room_code_4_digits: "Room code must contain 4 digits",
+
+        // HTML5 validation messages
+        validation_required: "Please fill out this field",
+        validation_pattern: "Code must contain exactly 4 digits (e.g. 1234)",
+        validation_nickname: "First name is required",
+        validation_room_name: "Room name is required",
+        validation_room_code: "Room code is required"
+    },
+
+    // 🇪🇸 ESPAÑOL
+    es: {
+        page_title_home: "TradLive - Traducción en tiempo real",
+        tagline: "Traducción de voz en tiempo real para todos",
+        choose_language: "🌍 Elige tu idioma",
+        continue_button: "Continuar a TradLive",
+        how_it_works: "💡 ¿Cómo funciona?",
+        instruction_1: "Elige tu idioma arriba",
+        instruction_2: "Crea una sala o únete a una existente",
+        instruction_3: "¡Habla en tu idioma, todos entienden!",
+        instruction_4: "Hasta 10 personas pueden participar simultáneamente",
+
+        page_title_rooms: "TradLive - Salas de traducción",
+        back_button: "← Volver al inicio",
+        page_heading: "🌍 TradLive - Traducción Multi-usuario",
+        selected_language: "Idioma seleccionado:",
+        auto_join_notice: "✅ ¡Código de sala detectado! Completa tu información para unirte automáticamente.",
+        create_tab: "Crear una sala",
+        join_tab: "Unirse a una sala",
+        your_nickname:"Su nombre",
+        room_name: "Nombre de la sala",
+        room_password: "Contraseña (opcional)",
+        room_code: "Código de la sala",
+        room_password_if_required: "Contraseña (si es requerida)",
+        create_button: "🎉 Crear sala",
+        join_button: "🚪 Unirse a sala",
+        nickname_placeholder: "Ej: María",
+        room_name_placeholder: "Ej: Reunión de equipo, Clase de inglés...",
+        room_code_placeholder: "Ej: 1234",
+        password_placeholder: "Dejar vacío para ninguna contraseña",
+        password_if_required_placeholder: "Dejar vacío si no hay contraseña",
+
+        page_title_room: "TradLive - Sala de traducción",
+        room_label: "Sala:",
+        leave_button: "Salir",
+        connecting: "Conectando...",
+        share_room: "🔗 Compartir sala",
+        qr_instructions: "Escanea este código QR para unirte directamente a la sala:",
+        room_code_label: "Código de sala:",
+        qr_scan_instruction: "Los participantes escanean para unirse automáticamente",
+        connecting_room: "Conectando a la sala...",
+        speak_french: "🎤 Presiona y habla",
+        speak_your_language: "🎤 Presiona y habla",
+        text_mode: "💬 Modo Texto",
+        write_french_messages: "✍️ Escribir en francés",
+        write_your_language_messages: "✍️ Escribir en tu idioma",
+        write_french_placeholder: "Escribe tu mensaje en francés aquí...",
+        write_your_language_placeholder: "Escribe tu mensaje en tu idioma...",
+        send_translation: "📤 Enviar traducción",
+        send_to_french: "📤 Enviar al francés",
+        close_button: "❌ Cerrar",
+        what_you_say: "📝 Lo que dices (Francés)",
+        participant_responses: "💬 Respuestas de participantes (Francés)",
+        host_message: "📝 Mensaje del anfitrión (Francés)",
+        translation_label: "Traducción",
+        your_language: "Tu idioma",
+        your_message: "💬 Tu mensaje",
+        in_your_language: "En tu idioma:",
+        french_translation: "Traducción francesa:",
+        participants_title: "Participantes",
+        loading_participants: "Cargando lista...",
+        waiting_your_message: "Esperando tu mensaje...",
+        waiting_responses: "Esperando respuestas...",
+        waiting_host_message: "Esperando mensaje del anfitrión...",
+        waiting_translation: "Esperando traducción...",
+
+        mic_incompatible: "Micrófono incompatible",
+        mic_incompatible_message: "Tu navegador no puede usar reconocimiento de voz con TradLive.",
+        solution: "Solución:",
+        use_text_mode: "Usa el campo de texto de abajo para escribir tus mensajes.",
+        text_mode_activated: "Modo texto activado. Usa el campo de texto de abajo.",
+        host_badge: "ANFITRIÓN",
+        stop_button: "🎤 Parar",
+        listening_french: "Escuchando... Habla en francés.",
+        listening_your_language: "Escuchando... Habla en tu idioma.",
+        recognizing: "Reconociendo: ",
+        network_problem: "Problema de red, reintentando...",
+        mic_permission_error: "❌ Permite acceso al micrófono y recarga la página.",
+        mic_problem: "Problema de micrófono. Modo texto activado.",
+        connected: "Conectado ✅",
+        reconnecting: "Reconectando...",
+        no_participants: "Sin participantes",
+        broadcasting: "Difundiendo traducción...",
+        message_sent: "¡Mensaje difundido con síntesis de voz!",
+        sending_response: "Enviando tu respuesta...",
+        response_sent: "¡Respuesta enviada al anfitrión!",
+        translating: "Traduciendo...",
+        click_mic: "Haz clic en el micrófono para hablar.",
+        confirm_leave: "¿Estás seguro de que quieres salir de la sala?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+        // Tooltips de ayuda
+        tooltip_create_host: "Serás el anfitrión de la conversación",
+        tooltip_join_guest: "Participarás en una conversación existente",
+        tooltip_nickname: "Escribe tu nombre para identificarte",
+        tooltip_room_name: "Nombra tu sala (ej: Reunión de equipo, Clase de inglés)",
+        tooltip_password_create: "Protege tu sala con una contraseña (opcional)",
+        tooltip_room_code: "Ingresa el código de 4 dígitos proporcionado por el anfitrión",
+        tooltip_password_join: "Ingresa la contraseña proporcionada por el anfitrión",
+
+        // Mensajes de estado
+        room_created_success: "🎉 ¡Sala creada con éxito!",
+        redirecting: "Redirigiendo...",
+        connection_success: "✅ ¡Conexión exitosa! Redirigiendo...",
+        fill_required_fields: "Por favor complete todos los campos requeridos",
+        room_code_4_digits: "El código de sala debe contener 4 dígitos",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Por favor complete este campo",
+        validation_pattern: "El código debe contener exactamente 4 dígitos (ej: 1234)",
+        validation_nickname: "El nombre es requerido",
+        validation_room_name: "El nombre de sala es requerido",
+        validation_room_code: "El código de sala es requerido"
         
-        // Sélection intelligente de la voix
-        const voices = window.speechSynthesis.getVoices();
-        const voice = voices.find(v => 
-            v.lang.startsWith(utterance.lang.substring(0, 2)) && 
-            (v.localService || v.default)
-        );
-        if (voice) {
-            utterance.voice = voice;
-        }
-        
-        utterance.onend = function() {
-            console.log('🎵 Lecture terminée:', text.substring(0, 30) + '...');
-        };
-        
-        utterance.onerror = function(error) {
-            console.warn('⚠️ Erreur synthèse vocale:', error);
-        };
-        
-        try {
-            window.speechSynthesis.speak(utterance);
-            console.log('🎵 Audio lancé:', text.substring(0, 30) + '...', 'Langue:', language);
+            },
+
+    // 🇩🇪 DEUTSCH
+    de: {
+        page_title_home: "TradLive - Echtzeit-Übersetzung",
+        tagline: "Echtzeit-Sprachübersetzung für alle",
+        choose_language: "🌍 Wählen Sie Ihre Sprache",
+        continue_button: "Weiter zu TradLive",
+        how_it_works: "💡 Wie funktioniert es?",
+        instruction_1: "Wählen Sie oben Ihre Sprache",
+        instruction_2: "Erstellen Sie einen Raum oder treten Sie einem bei",
+        instruction_3: "Sprechen Sie in Ihrer Sprache, alle verstehen!",
+        instruction_4: "Bis zu 10 Personen können gleichzeitig teilnehmen",
+
+        page_title_rooms: "TradLive - Übersetzungsräume",
+        back_button: "← Zurück zur Startseite",
+        page_heading: "🌍 TradLive - Mehrbenutzer-Übersetzung",
+        selected_language: "Ausgewählte Sprache:",
+        auto_join_notice: "✅ Raumcode erkannt! Füllen Sie Ihre Informationen aus, um automatisch beizutreten.",
+        create_tab: "Einen Raum erstellen",
+        join_tab: "Einem Raum beitreten",
+        your_nickname: "Ihr Vorname",
+        room_name: "Raumname",
+        room_password: "Passwort (optional)",
+        room_code: "Raumcode",
+        room_password_if_required: "Passwort (falls erforderlich)",
+        create_button: "🎉 Raum erstellen",
+        join_button: "🚪 Raum beitreten",
+        nickname_placeholder: "Z.B: Marie",
+        room_name_placeholder: "Z.B: Team-Meeting, Englischkurs...",
+        room_code_placeholder: "Z.B: 1234",
+        password_placeholder: "Leer lassen für kein Passwort",
+        password_if_required_placeholder: "Leer lassen wenn kein Passwort",
+
+        page_title_room: "TradLive - Übersetzungsraum",
+        room_label: "Raum:",
+        leave_button: "Verlassen",
+        connecting: "Verbinden...",
+        share_room: "🔗 Raum teilen",
+        qr_instructions: "Scannen Sie diesen QR-Code, um dem Raum direkt beizutreten:",
+        room_code_label: "Raumcode:",
+        qr_scan_instruction: "Teilnehmer scannen zum automatischen Beitritt",
+        connecting_room: "Verbindung zum Raum...",
+        speak_french: "🎤 Drücken und sprechen",
+        speak_your_language: "🎤 Drücken und sprechen",
+        text_mode: "💬 Textmodus",
+        write_french_messages: "✍️ Auf Französisch schreiben",
+        write_your_language_messages: "✍️ In Ihrer Sprache schreiben",
+        write_french_placeholder: "Schreiben Sie hier Ihre Nachricht auf Französisch...",
+        write_your_language_placeholder: "Schreiben Sie hier Ihre Nachricht in Ihrer Sprache...",
+        send_translation: "📤 Übersetzung senden",
+        send_to_french: "📤 Auf Französisch senden",
+        close_button: "❌ Schließen",
+        what_you_say: "📝 Was Sie sagen (Französisch)",
+        participant_responses: "💬 Teilnehmerantworten (Französisch)",
+        host_message: "📝 Host-Nachricht (Französisch)",
+        translation_label: "Übersetzung",
+        your_language: "Ihre Sprache",
+        your_message: "💬 Ihre Nachricht",
+        in_your_language: "In Ihrer Sprache:",
+        french_translation: "Französische Übersetzung:",
+        participants_title: "Teilnehmer",
+        loading_participants: "Liste wird geladen...",
+        waiting_your_message: "Warten auf Ihre Nachricht...",
+        waiting_responses: "Warten auf Antworten...",
+        waiting_host_message: "Warten auf Host-Nachricht...",
+        waiting_translation: "Warten auf Übersetzung...",
+
+        mic_incompatible: "Mikrofon nicht kompatibel",
+        mic_incompatible_message: "Ihr Browser kann keine Spracherkennung mit TradLive verwenden.",
+        solution: "Lösung:",
+        use_text_mode: "Verwenden Sie das Texteingabefeld unten, um Ihre Nachrichten zu schreiben.",
+        text_mode_activated: "Textmodus aktiviert. Verwenden Sie das Texteingabefeld unten.",
+        host_badge: "HOST",
+        stop_button: "🎤 Stoppen",
+        listening_french: "Zuhören... Sprechen Sie auf Französisch.",
+        listening_your_language: "Zuhören... Sprechen Sie in Ihrer Sprache.",
+        recognizing: "Erkennung: ",
+        network_problem: "Netzwerkproblem, erneuter Versuch...",
+        mic_permission_error: "❌ Mikrofonzugriff erlauben und Seite neu laden.",
+        mic_problem: "Mikrofonproblem. Textmodus aktiviert.",
+        connected: "Verbunden ✅",
+        reconnecting: "Neuverbindung...",
+        no_participants: "Keine Teilnehmer",
+        broadcasting: "Übersetzung wird übertragen...",
+        message_sent: "Nachricht mit Sprachsynthese übertragen!",
+        sending_response: "Ihre Antwort wird gesendet...",
+        response_sent: "Antwort an Host gesendet!",
+        translating: "Übersetzen...",
+        click_mic: "Klicken Sie auf das Mikrofon zum Sprechen.",
+        confirm_leave: "Sind Sie sicher, dass Sie den Raum verlassen möchten?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+        // Hilfe-Tooltips
+        tooltip_create_host: "Sie werden der Gastgeber des Gesprächs sein",
+        tooltip_join_guest: "Sie werden an einem bestehenden Gespräch teilnehmen",
+        tooltip_nickname: "Geben Sie Ihren Vornamen zur Identifikation ein",
+        tooltip_room_name: "Benennen Sie Ihren Raum (z.B. Team-Meeting, Englischkurs)",
+        tooltip_password_create: "Schützen Sie Ihren Raum mit einem Passwort (optional)",
+        tooltip_room_code: "Geben Sie den 4-stelligen Code des Gastgebers ein",
+        tooltip_password_join: "Geben Sie das vom Gastgeber bereitgestellte Passwort ein",
+
+
+        // Statusmeldungen
+        room_created_success: "🎉 Raum erfolgreich erstellt!",
+        redirecting: "Weiterleitung...",
+        connection_success: "✅ Verbindung erfolgreich! Weiterleitung...",
+        fill_required_fields: "Bitte füllen Sie alle Pflichtfelder aus",
+        room_code_4_digits: "Raumcode muss 4 Ziffern enthalten",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Bitte füllen Sie dieses Feld aus",
+        validation_pattern: "Code muss genau 4 Ziffern enthalten (z.B. 1234)",
+        validation_nickname: "Vorname ist erforderlich",
+        validation_room_name: "Raumname ist erforderlich",
+        validation_room_code: "Raumcode ist erforderlich"
             
-            // Mémoriser avec ID unique (CRITIQUE)
-            lastSpokenText = text;
-            lastSpokenTimestamp = currentTime;
-            lastTranslationId = translationKey;
-        } catch (error) {
-            console.error('❌ Erreur lancement audio:', error);
-        }
-    } else {
-        console.log('❌ Synthèse vocale non disponible');
-    }
-}
+    },
 
-function getVoiceLanguageCode(langCode) {
-    const voices = {
-        'fr': 'fr-FR', 'en': 'en-US', 'es': 'es-ES', 'de': 'de-DE',
-        'it': 'it-IT', 'pt': 'pt-PT', 'ru': 'ru-RU', 'zh-CN': 'zh-CN',
-        'ja': 'ja-JP', 'ar': 'ar-SA', 'uk': 'uk-UA', 'hi': 'hi-IN',
-        'bn': 'bn-IN', 'te': 'te-IN', 'mr': 'mr-IN', 'fa': 'fa-IR'
-    };
-    return voices[langCode] || 'fr-FR';
-}
+    // 🇮🇹 ITALIANO
+    it: {
+        page_title_home: "TradLive - Traduzione in tempo reale",
+        tagline: "Traduzione vocale in tempo reale per tutti",
+        choose_language: "🌍 Scegli la tua lingua",
+        continue_button: "Continua su TradLive",
+        how_it_works: "💡 Come funziona?",
+        instruction_1: "Scegli la tua lingua sopra",
+        instruction_2: "Crea una stanza o unisciti a una esistente",
+        instruction_3: "Parla nella tua lingua, tutti capiscono!",
+        instruction_4: "Fino a 10 persone possono partecipare simultaneamente",
 
-/* ========================================
-   GESTION D'INCOMPATIBILITÉ MICRO - FINALISÉE
-======================================== */
-function showMicrophoneIncompatibleMessage() {
-    console.log('🎤 Affichage message d\'incompatibilité microphone');
-    
-    // Utiliser le système TradLive si disponible
-    if (window.TradLive?.notifications) {
-        const message = getTranslation('mic_incompatible_message') || 
-            'Votre navigateur ne peut pas utiliser la reconnaissance vocale avec TradLive.';
+        page_title_rooms: "TradLive - Stanze di traduzione",
+        back_button: "← Torna alla home",
+        page_heading: "🌍 TradLive - Traduzione Multi-utente",
+        selected_language: "Lingua selezionata:",
+        auto_join_notice: "✅ Codice stanza rilevato! Compila le tue informazioni per unirti automaticamente.",
+        create_tab: "Crea una stanza",
+        join_tab: "Unisciti a una stanza",
+        your_nickname: "Il tuo nome",
+        room_name: "Nome della stanza",
+        room_password: "Password (opzionale)",
+        room_code: "Codice della stanza",
+        room_password_if_required: "Password (se richiesta)",
+        create_button: "🎉 Crea stanza",
+        join_button: "🚪 Unisciti alla stanza",
+        nickname_placeholder: "Es: Maria",
+        room_name_placeholder: "Es: Riunione team, Corso inglese...",
+        room_code_placeholder: "Es: 1234",
+        password_placeholder: "Lascia vuoto per nessuna password",
+        password_if_required_placeholder: "Lascia vuoto se nessuna password",
+
+        page_title_room: "TradLive - Stanza di traduzione",
+        room_label: "Stanza:",
+        leave_button: "Esci",
+        connecting: "Connessione...",
+        share_room: "🔗 Condividi stanza",
+        qr_instructions: "Scansiona questo codice QR per unirti direttamente alla stanza:",
+        room_code_label: "Codice stanza:",
+        qr_scan_instruction: "I partecipanti scansionano per unirsi automaticamente",
+        connecting_room: "Connessione alla stanza...",
+        speak_french: "🎤 Premi e parla",
+        speak_your_language: "🎤 Premi e parla",
+        text_mode: "💬 Modalità Testo",
+        write_french_messages: "✍️ Scrivi in francese",
+        write_your_language_messages: "✍️ Scrivi nella tua lingua",
+        write_french_placeholder: "Scrivi qui il tuo messaggio in francese...",
+        write_your_language_placeholder: "Scrivi qui il tuo messaggio nella tua lingua...",
+        send_translation: "📤 Invia traduzione",
+        send_to_french: "📤 Invia in francese",
+        close_button: "❌ Chiudi",
+        what_you_say: "📝 Cosa dici (Francese)",
+        participant_responses: "💬 Risposte partecipanti (Francese)",
+        host_message: "📝 Messaggio dell'host (Francese)",
+        translation_label: "Traduzione",
+        your_language: "La tua lingua",
+        your_message: "💬 Il tuo messaggio",
+        in_your_language: "Nella tua lingua:",
+        french_translation: "Traduzione francese:",
+        participants_title: "Partecipanti",
+        loading_participants: "Caricamento lista...",
+        waiting_your_message: "In attesa del tuo messaggio...",
+        waiting_responses: "In attesa di risposte...",
+        waiting_host_message: "In attesa del messaggio dell'host...",
+        waiting_translation: "In attesa di traduzione...",
+
+        mic_incompatible: "Microfono incompatibile",
+        mic_incompatible_message: "Il tuo browser non può usare il riconoscimento vocale con TradLive.",
+        solution: "Soluzione:",
+        use_text_mode: "Usa il campo di testo qui sotto per scrivere i tuoi messaggi.",
+        text_mode_activated: "Modalità testo attivata. Usa il campo di testo qui sotto.",
+        host_badge: "HOST",
+        stop_button: "🎤 Ferma",
+        listening_french: "In ascolto... Parla in francese.",
+        listening_your_language: "In ascolto... Parla nella tua lingua.",
+        recognizing: "Riconoscimento: ",
+        network_problem: "Problema di rete, nuovo tentativo...",
+        mic_permission_error: "❌ Consenti accesso al microfono e ricarica la pagina.",
+        mic_problem: "Problema microfono. Modalità testo attivata.",
+        connected: "Connesso ✅",
+        reconnecting: "Riconnessione...",
+        no_participants: "Nessun partecipante",
+        broadcasting: "Trasmissione traduzione...",
+        message_sent: "Messaggio trasmesso con sintesi vocale!",
+        sending_response: "Invio della tua risposta...",
+        response_sent: "Risposta inviata all'host!",
+        translating: "Traduzione...",
+        click_mic: "Clicca sul microfono per parlare.",
+        confirm_leave: "Sei sicuro di voler lasciare la stanza?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+        // Tooltip di aiuto
+        tooltip_create_host: "Sarai l'ospite della conversazione",
+        tooltip_join_guest: "Parteciperai a una conversazione esistente",
+        tooltip_nickname: "Inserisci il tuo nome per identificarti",
+        tooltip_room_name: "Nomina la tua stanza (es: Riunione team, Corso inglese)",
+        tooltip_password_create: "Proteggi la tua stanza con una password (opzionale)",
+        tooltip_room_code: "Inserisci il codice a 4 cifre fornito dall'ospite",
+        tooltip_password_join: "Inserisci la password fornita dall'ospite",
+
+        // Messaggi di stato
+        room_created_success: "🎉 Stanza creata con successo!",
+        redirecting: "Reindirizzamento...",
+        connection_success: "✅ Connessione riuscita! Reindirizzamento...",
+        fill_required_fields: "Si prega di compilare tutti i campi obbligatori",
+        room_code_4_digits: "Il codice stanza deve contenere 4 cifre",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Si prega di compilare questo campo",
+        validation_pattern: "Il codice deve contenere esattamente 4 cifre (es: 1234)",
+        validation_nickname: "Il nome è richiesto",
+        validation_room_name: "Il nome della stanza è richiesto",
+        validation_room_code: "Il codice stanza è richiesto"
         
-        window.TradLive.notifications.show(message, 'warning', { duration: 8000 });
+    },
+
+    // 🇵🇹 PORTUGUÊS
+    pt: {
+        page_title_home: "TradLive - Tradução em tempo real",
+        tagline: "Tradução de voz em tempo real para todos",
+        choose_language: "🌍 Escolha seu idioma",
+        continue_button: "Continuar para TradLive",
+        how_it_works: "💡 Como funciona?",
+        instruction_1: "Escolha seu idioma acima",
+        instruction_2: "Crie uma sala ou junte-se a uma existente",
+        instruction_3: "Fale no seu idioma, todos entendem!",
+        instruction_4: "Até 10 pessoas podem participar simultaneamente",
+
+        page_title_rooms: "TradLive - Salas de tradução",
+        back_button: "← Voltar ao início",
+        page_heading: "🌍 TradLive - Tradução Multi-usuário",
+        selected_language: "Idioma selecionado:",
+        auto_join_notice: "✅ Código da sala detectado! Preencha suas informações para entrar automaticamente.",
+        create_tab: "Criar uma sala",
+        join_tab: "Entrar numa sala",
+        your_nickname: "Seu nome",
+        room_name: "Nome da sala",
+        room_password: "Senha (opcional)",
+        room_code: "Código da sala",
+        room_password_if_required: "Senha (se necessária)",
+        create_button: "🎉 Criar sala",
+        join_button: "🚪 Entrar na sala",
+        nickname_placeholder: "Ex: Maria",
+        room_name_placeholder: "Ex: Reunião de equipe, Aula de inglês...",
+        room_code_placeholder: "Ex: 1234",
+        password_placeholder: "Deixe vazio para nenhuma senha",
+        password_if_required_placeholder: "Deixe vazio se não há senha",
+
+        page_title_room: "TradLive - Sala de tradução",
+        room_label: "Sala:",
+        leave_button: "Sair",
+        connecting: "Conectando...",
+        share_room: "🔗 Compartilhar sala",
+        qr_instructions: "Escaneie este código QR para entrar diretamente na sala:",
+        room_code_label: "Código da sala:",
+        qr_scan_instruction: "Participantes escaneiam para entrar automaticamente",
+        connecting_room: "Conectando à sala...",
+        speak_french: "🎤 Pressione e fale",
+        speak_your_language: "🎤 Pressione e fale",
+        text_mode: "💬 Modo Texto",
+        write_french_messages: "✍️ Escrever em francês",
+        write_your_language_messages: "✍️ Escrever no seu idioma",
+        write_french_placeholder: "Escreva sua mensagem em francês aqui...",
+        write_your_language_placeholder: "Escreva sua mensagem no seu idioma aqui...",
+        send_translation: "📤 Enviar tradução",
+        send_to_french: "📤 Enviar para francês",
+        close_button: "❌ Fechar",
+        what_you_say: "📝 O que você diz (Francês)",
+        participant_responses: "💬 Respostas dos participantes (Francês)",
+        host_message: "📝 Mensagem do anfitrião (Francês)",
+        translation_label: "Tradução",
+        your_language: "Seu idioma",
+        your_message: "💬 Sua mensagem",
+        in_your_language: "No seu idioma:",
+        french_translation: "Tradução francesa:",
+        participants_title: "Participantes",
+        loading_participants: "Carregando lista...",
+        waiting_your_message: "Aguardando sua mensagem...",
+        waiting_responses: "Aguardando respostas...",
+        waiting_host_message: "Aguardando mensagem do anfitrião...",
+        waiting_translation: "Aguardando tradução...",
+
+        mic_incompatible: "Microfone incompatível",
+        mic_incompatible_message: "Seu navegador não pode usar reconhecimento de voz com TradLive.",
+        solution: "Solução:",
+        use_text_mode: "Use o campo de texto abaixo para escrever suas mensagens.",
+        text_mode_activated: "Modo texto ativado. Use o campo de texto abaixo.",
+        host_badge: "ANFITRIÃO",
+        stop_button: "🎤 Parar",
+        listening_french: "Ouvindo... Fale em francês.",
+        listening_your_language: "Ouvindo... Fale no seu idioma.",
+        recognizing: "Reconhecendo: ",
+        network_problem: "Problema de rede, tentando novamente...",
+        mic_permission_error: "❌ Permita acesso ao microfone e recarregue a página.",
+        mic_problem: "Problema de microfone. Modo texto ativado.",
+        connected: "Conectado ✅",
+        reconnecting: "Reconectando...",
+        no_participants: "Nenhum participante",
+        broadcasting: "Transmitindo tradução...",
+        message_sent: "Mensagem transmitida com síntese de voz!",
+        sending_response: "Enviando sua resposta...",
+        response_sent: "Resposta enviada ao anfitrião!",
+        translating: "Traduzindo...",
+        click_mic: "Clique no microfone para falar.",
+        confirm_leave: "Tem certeza de que deseja sair da sala?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+        // Tooltips de ajuda
+        tooltip_create_host: "Você será o anfitrião da conversa",
+        tooltip_join_guest: "Você participará de uma conversa existente",
+        tooltip_nickname: "Digite seu nome para se identificar",
+        tooltip_room_name: "Nomeie sua sala (ex: Reunião de equipe, Aula de inglês)",
+        tooltip_password_create: "Proteja sua sala com uma senha (opcional)",
+        tooltip_room_code: "Digite o código de 4 dígitos fornecido pelo anfitrião",
+        tooltip_password_join: "Digite a senha fornecida pelo anfitrião",
+
+        // Mensagens de status
+        room_created_success: "🎉 Sala criada com sucesso!",
+        redirecting: "Redirecionando...",
+        connection_success: "✅ Conexão bem-sucedida! Redirecionando...",
+        fill_required_fields: "Por favor, preencha todos os campos obrigatórios",
+        room_code_4_digits: "O código da sala deve conter 4 dígitos",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Por favor, preencha este campo",
+        validation_pattern: "O código deve conter exatamente 4 dígitos (ex: 1234)",
+        validation_nickname: "O nome é obrigatório",
+        validation_room_name: "O nome da sala é obrigatório",
+        validation_room_code: "O código da sala é obrigatório"
         
-        setTimeout(() => {
-            const solution = getTranslation('use_text_mode') || 
-                'Utilisez la zone de saisie ci-dessous pour écrire vos messages.';
-            window.TradLive.notifications.show(solution, 'info', { duration: 6000 });
-        }, 1000);
-    } else {
-        // Fallback avec création d'élément
-        showIncompatibilityFallback();
-    }
-}
+    },
 
-function showIncompatibilityFallback() {
-    const messageDiv = document.createElement('div');
-    messageDiv.innerHTML = `
-        <div style="text-align: center; margin: 20px 0; padding: 20px; background: rgba(244, 67, 54, 0.9); color: white; border-radius: 15px; border: 2px solid #e74c3c;">
-            <h3 style="color: white; margin-bottom: 15px;">🎤 ${getTranslation('mic_incompatible') || 'Microphone non compatible'}</h3>
-            <p style="font-size: 16px; margin-bottom: 10px;">
-                ${getTranslation('mic_incompatible_message') || 'Votre navigateur ne peut pas utiliser la reconnaissance vocale avec TradLive.'}
-            </p>
-            <p style="font-size: 14px; opacity: 0.9; margin-bottom: 15px;">
-                💡 <strong>${getTranslation('solution') || 'Solution'} :</strong> ${getTranslation('use_text_mode') || 'Utilisez la zone de saisie ci-dessous pour écrire vos messages.'}
-            </p>
-        </div>
-    `;
-    
-    const controlsEl = document.getElementById('controls');
-    if (controlsEl) {
-        controlsEl.insertAdjacentElement('beforebegin', messageDiv);
+    // 🇷🇺 РУССКИЙ
+    ru: {
+        page_title_home: "TradLive - Перевод в реальном времени",
+        tagline: "Голосовой перевод в реальном времени для всех",
+        choose_language: "🌍 Выберите ваш язык",
+        continue_button: "Продолжить в TradLive",
+        how_it_works: "💡 Как это работает?",
+        instruction_1: "Выберите ваш язык выше",
+        instruction_2: "Создайте комнату или присоединитесь к существующей",
+        instruction_3: "Говорите на вашем языке, все понимают!",
+        instruction_4: "До 10 человек могут участвовать одновременно",
+
+        page_title_rooms: "TradLive - Комнаты перевода",
+        back_button: "← Назад на главную",
+        page_heading: "🌍 TradLive - Многопользовательский перевод",
+        selected_language: "Выбранный язык:",
+        auto_join_notice: "✅ Код комнаты обнаружен! Заполните информацию для автоматического присоединения.",
+        create_tab: "Создать комнату",
+        join_tab: "Присоединиться к комнате",
+        your_nickname: "Ваше имя",
+        room_name: "Название комнаты",
+        room_password: "Пароль (необязательно)",
+        room_code: "Код комнаты",
+        room_password_if_required: "Пароль (если требуется)",
+        create_button: "🎉 Создать комнату",
+        join_button: "🚪 Присоединиться к комнате",
+        nickname_placeholder: "Например: Мария",
+        room_name_placeholder: "Например: Встреча команды, Урок английского...",
+        room_code_placeholder: "Например: 1234",
+        password_placeholder: "Оставьте пустым для отсутствия пароля",
+        password_if_required_placeholder: "Оставьте пустым если нет пароля",
+
+        page_title_room: "TradLive - Комната перевода",
+        room_label: "Комната:",
+        leave_button: "Выйти",
+        connecting: "Подключение...",
+        share_room: "🔗 Поделиться комнатой",
+        qr_instructions: "Отсканируйте этот QR-код для прямого присоединения к комнате:",
+        room_code_label: "Код комнаты:",
+        qr_scan_instruction: "Участники сканируют для автоматического присоединения",
+        connecting_room: "Подключение к комнате...",
+        speak_french: "🎤 Нажмите и говорите",
+        speak_your_language: "🎤 Нажмите и говорите",
+        text_mode: "💬 Текстовый режим",
+        write_french_messages: "✍️ Писать по-французски",
+        write_your_language_messages: "✍️ Писать на вашем языке",
+        write_french_placeholder: "Напишите ваше сообщение по-французски здесь...",
+        write_your_language_placeholder: "Напишите ваше сообщение на вашем языке...",
+        send_translation: "📤 Отправить перевод",
+        send_to_french: "📤 Отправить на французский",
+        close_button: "❌ Закрыть",
+        what_you_say: "📝 Что вы говорите (Французский)",
+        participant_responses: "💬 Ответы участников (Французский)",
+        host_message: "📝 Сообщение хоста (Французский)",
+        translation_label: "Перевод",
+        your_language: "Ваш язык",
+        your_message: "💬 Ваше сообщение",
+        in_your_language: "На вашем языке:",
+        french_translation: "Французский перевод:",
+        participants_title: "Участники",
+        loading_participants: "Загрузка списка...",
+        waiting_your_message: "Ожидание вашего сообщения...",
+        waiting_responses: "Ожидание ответов...",
+        waiting_host_message: "Ожидание сообщения хоста...",
+        waiting_translation: "Ожидание перевода...",
+
+        mic_incompatible: "Микрофон несовместим",
+        mic_incompatible_message: "Ваш браузер не может использовать распознавание речи с TradLive.",
+        solution: "Решение:",
+        use_text_mode: "Используйте текстовое поле ниже для написания ваших сообщений.",
+        text_mode_activated: "Текстовый режим активирован. Используйте текстовое поле ниже.",
+        host_badge: "ХОСТ",
+        stop_button: "🎤 Остановить",
+        listening_french: "Слушаю... Говорите по-французски.",
+        listening_your_language: "Слушаю... Говорите на вашем языке.",
+        recognizing: "Распознавание: ",
+        network_problem: "Проблема с сетью, повторная попытка...",
+        mic_permission_error: "❌ Разрешите доступ к микрофону и перезагрузите страницу.",
+        mic_problem: "Проблема с микрофоном. Текстовый режим активирован.",
+        connected: "Подключено ✅",
+        reconnecting: "Переподключение...",
+        no_participants: "Нет участников",
+        broadcasting: "Трансляция перевода...",
+        message_sent: "Сообщение транслировано с синтезом речи!",
+        sending_response: "Отправка вашего ответа...",
+        response_sent: "Ответ отправлен хосту!",
+        translating: "Перевод...",
+        click_mic: "Нажмите на микрофон для говорения.",
+        confirm_leave: "Вы уверены, что хотите покинуть комнату?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+        // Подсказки справки
+        tooltip_create_host: "Вы будете хостом разговора",
+        tooltip_join_guest: "Вы будете участвовать в существующем разговоре",
+        tooltip_nickname: "Введите ваше имя для идентификации",
+        tooltip_room_name: "Назовите вашу комнату (например: Встреча команды, Урок английского)",
+        tooltip_password_create: "Защитите вашу комнату паролем (необязательно)",
+        tooltip_room_code: "Введите 4-значный код, предоставленный хостом",
+        tooltip_password_join: "Введите пароль, предоставленный хостом",
+
+        // Сообщения о статусе
+        room_created_success: "🎉 Комната успешно создана!",
+        redirecting: "Перенаправление...",
+        connection_success: "✅ Подключение успешно! Перенаправление...",
+        fill_required_fields: "Пожалуйста, заполните все обязательные поля",
+        room_code_4_digits: "Код комнаты должен содержать 4 цифры",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Пожалуйста, заполните это поле",
+        validation_pattern: "Код должен содержать ровно 4 цифры (например: 1234)",
+        validation_nickname: "Имя обязательно",
+        validation_room_name: "Название комнаты обязательно",
+        validation_room_code: "Код комнаты обязателен"
         
-        // Animation d'apparition
-        setTimeout(() => {
-            messageDiv.style.opacity = '0';
-            messageDiv.style.transform = 'translateY(-10px)';
-            messageDiv.style.transition = 'all 0.5s ease';
-            
-            requestAnimationFrame(() => {
-                messageDiv.style.opacity = '1';
-                messageDiv.style.transform = 'translateY(0)';
-            });
-        }, 100);
-    }
-}
+    },
 
-function cleanInterfaceForTextOnly() {
-    console.log('🧹 Nettoyage interface pour mode texte uniquement...');
-    
-    // Masquer tous les boutons micro avec animation fluide
-    document.querySelectorAll('.mic-button').forEach(btn => {
-        btn.style.transition = 'all 0.3s ease';
-        btn.style.opacity = '0';
-        btn.style.transform = 'scale(0.9)';
+    // 🇨🇳 中文
+    "zh-CN": {
+        page_title_home: "TradLive - 实时翻译",
+        tagline: "面向所有人的实时语音翻译",
+        choose_language: "🌍 选择您的语言",
+        continue_button: "继续使用 TradLive",
+        how_it_works: "💡 它是如何工作的？",
+        instruction_1: "在上面选择您的语言",
+        instruction_2: "创建房间或加入现有房间",
+        instruction_3: "用您的语言说话，每个人都能理解！",
+        instruction_4: "最多10人可以同时参与",
+
+        page_title_rooms: "TradLive - 翻译房间",
+        back_button: "← 返回首页",
+        page_heading: "🌍 TradLive - 多用户翻译",
+        selected_language: "选择的语言：",
+        auto_join_notice: "✅ 检测到房间代码！填写您的信息以自动加入。",
+        create_tab: "创建房间",
+        join_tab: "加入房间",
+        your_nickname: "您的名字",
+        room_name: "房间名称",
+        room_password: "密码（可选）",
+        room_code: "房间代码",
+        room_password_if_required: "密码（如果需要）",
+        create_button: "🎉 创建房间",
+        join_button: "🚪 加入房间",
+        nickname_placeholder: "例如：玛丽",
+        room_name_placeholder: "例如：团队会议，英语课...",
+        room_code_placeholder: "例如：1234",
+        password_placeholder: "留空表示无密码",
+        password_if_required_placeholder: "如果没有密码请留空",
+
+        page_title_room: "TradLive - 翻译房间",
+        room_label: "房间：",
+        leave_button: "离开",
+        connecting: "连接中...",
+        share_room: "🔗 分享房间",
+        qr_instructions: "扫描此二维码直接加入房间：",
+        room_code_label: "房间代码：",
+        qr_scan_instruction: "参与者扫描即可自动加入",
+        connecting_room: "连接到房间...",
+        speak_french: "🎤 按下并说话",
+        speak_your_language: "🎤 按下并说话",
+        text_mode: "💬 文本模式",
+        write_french_messages: "✍️ 用法语写作",
+        write_your_language_messages: "✍️ 用您的语言写作",
+        write_french_placeholder: "在这里用法语写您的消息...",
+        write_your_language_placeholder: "在这里用您的语言写消息...",
+        send_translation: "📤 发送翻译",
+        send_to_french: "📤 发送到法语",
+        close_button: "❌ 关闭",
+        what_you_say: "📝 您说的话（法语）",
+        participant_responses: "💬 参与者回复（法语）",
+        host_message: "📝 主持人消息（法语）",
+        translation_label: "翻译",
+        your_language: "您的语言",
+        your_message: "💬 您的消息",
+        in_your_language: "用您的语言：",
+        french_translation: "法语翻译：",
+        participants_title: "参与者",
+        loading_participants: "加载列表中...",
+        waiting_your_message: "等待您的消息...",
+        waiting_responses: "等待回复...",
+        waiting_host_message: "等待主持人消息...",
+        waiting_translation: "等待翻译...",
+
+        mic_incompatible: "麦克风不兼容",
+        mic_incompatible_message: "您的浏览器无法在TradLive中使用语音识别。",
+        solution: "解决方案：",
+        use_text_mode: "使用下面的文本输入框来写您的消息。",
+        text_mode_activated: "文本模式已激活。使用下面的文本输入框。",
+        host_badge: "主持人",
+        stop_button: "🎤 停止",
+        listening_french: "正在聆听...请说法语。",
+        listening_your_language: "正在聆听...请说您的语言。",
+        recognizing: "识别中：",
+        network_problem: "网络问题，正在重试...",
+        mic_permission_error: "❌ 请允许麦克风访问并重新加载页面。",
+        mic_problem: "麦克风问题。文本模式已激活。",
+        connected: "已连接 ✅",
+        reconnecting: "重新连接中...",
+        no_participants: "无参与者",
+        broadcasting: "正在广播翻译...",
+        message_sent: "消息已通过语音合成广播！",
+        sending_response: "正在发送您的回复...",
+        response_sent: "回复已发送给主持人！",
+        translating: "翻译中...",
+        click_mic: "点击麦克风开始说话。",
+        confirm_leave: "您确定要离开房间吗？",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+        // 帮助提示
+        tooltip_create_host: "您将成为对话的主持人",
+        tooltip_join_guest: "您将参与现有的对话",
+        tooltip_nickname: "输入您的姓名以进行身份识别",
+        tooltip_room_name: "为您的房间命名（例如：团队会议，英语课）",
+        tooltip_password_create: "用密码保护您的房间（可选）",
+        tooltip_room_code: "输入主持人提供的4位数代码",
+        tooltip_password_join: "输入主持人提供的密码",
+
+        // 状态消息
+        room_created_success: "🎉 房间创建成功！",
+        redirecting: "正在重定向...",
+        connection_success: "✅ 连接成功！正在重定向...",
+        fill_required_fields: "请填写所有必填字段",
+        room_code_4_digits: "房间代码必须包含4位数字",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "请填写此字段",
+        validation_pattern: "代码必须包含4位数字（例如：1234）",
+        validation_nickname: "姓名是必填项",
+        validation_room_name: "房间名称是必填项",
+        validation_room_code: "房间代码是必填项"
         
-        setTimeout(() => {
-            btn.style.display = 'none';
-        }, 300);
-    });
-    
-    // Masquer les boutons "Mode Texte" (plus nécessaires)
-    document.querySelectorAll('.text-mode-button').forEach(btn => {
-        btn.style.transition = 'all 0.3s ease';
-        btn.style.opacity = '0';
+    },
+
+    // 🇯🇵 日本語
+    ja: {
+        page_title_home: "TradLive - リアルタイム翻訳",
+        tagline: "みんなのためのリアルタイム音声翻訳",
+        choose_language: "🌍 言語を選択してください",
+        continue_button: "TradLiveに進む",
+        how_it_works: "💡 仕組みは？",
+        instruction_1: "上で言語を選択してください",
+        instruction_2: "ルームを作成するか既存のものに参加してください",
+        instruction_3: "あなたの言語で話すと、みんなが理解できます！",
+        instruction_4: "最大10人が同時に参加できます",
+
+        page_title_rooms: "TradLive - 翻訳ルーム",
+        back_button: "← ホームに戻る",
+        page_heading: "🌍 TradLive - マルチユーザー翻訳",
+        selected_language: "選択された言語：",
+        auto_join_notice: "✅ ルームコードが検出されました！情報を入力して自動参加してください。",
+        create_tab: "ルームを作成",
+        join_tab: "ルームに参加",
+        your_nickname: "お名前",
+        room_name: "ルーム名",
+        room_password: "パスワード（オプション）",
+        room_code: "ルームコード",
+        room_password_if_required: "パスワード（必要な場合）",
+        create_button: "🎉 ルーム作成",
+        join_button: "🚪 ルームに参加",
+        nickname_placeholder: "例：マリー",
+        room_name_placeholder: "例：チーム会議、英語クラス...",
+        room_code_placeholder: "例：1234",
+        password_placeholder: "パスワードなしの場合は空のままにしてください",
+        password_if_required_placeholder: "パスワードがない場合は空のままにしてください",
+
+        page_title_room: "TradLive - 翻訳ルーム",
+        room_label: "ルーム：",
+        leave_button: "退出",
+        connecting: "接続中...",
+        share_room: "🔗 ルームをシェア",
+        qr_instructions: "このQRコードをスキャンしてルームに直接参加：",
+        room_code_label: "ルームコード：",
+        qr_scan_instruction: "参加者がスキャンして自動参加",
+        connecting_room: "ルームに接続中...",
+        speak_french: "🎤 押して話す",
+        speak_your_language: "🎤 押して話す",
+        text_mode: "💬 テキストモード",
+        write_french_messages: "✍️ フランス語で書く",
+        write_your_language_messages: "✍️ あなたの言語で書く",
+        write_french_placeholder: "ここにフランス語でメッセージを書いてください...",
+        write_your_language_placeholder: "ここにあなたの言語でメッセージを書いてください...",
+        send_translation: "📤 翻訳を送信",
+        send_to_french: "📤 フランス語に送信",
+        close_button: "❌ 閉じる",
+        what_you_say: "📝 あなたが言ったこと（フランス語）",
+        participant_responses: "💬 参加者の返事（フランス語）",
+        host_message: "📝 ホストのメッセージ（フランス語）",
+        translation_label: "翻訳",
+        your_language: "あなたの言語",
+        your_message: "💬 あなたのメッセージ",
+        in_your_language: "あなたの言語で：",
+        french_translation: "フランス語翻訳：",
+        participants_title: "参加者",
+        loading_participants: "リストを読み込み中...",
+        waiting_your_message: "あなたのメッセージを待機中...",
+        waiting_responses: "返事を待機中...",
+        waiting_host_message: "ホストのメッセージを待機中...",
+        waiting_translation: "翻訳を待機中...",
+
+        mic_incompatible: "マイクが非対応",
+        mic_incompatible_message: "あなたのブラウザはTradLiveで音声認識を使用できません。",
+        solution: "解決策：",
+        use_text_mode: "下のテキスト入力欄を使用してメッセージを書いてください。",
+        text_mode_activated: "テキストモードが有効になりました。下のテキスト入力欄を使用してください。",
+        host_badge: "ホスト",
+        stop_button: "🎤 停止",
+        listening_french: "聞いています...フランス語で話してください。",
+        listening_your_language: "聞いています...あなたの言語で話してください。",
+        recognizing: "認識中：",
+        network_problem: "ネットワーク問題、再試行中...",
+        mic_permission_error: "❌ マイクアクセスを許可してページを再読み込みしてください。",
+        mic_problem: "マイクの問題。テキストモードが有効になりました。",
+        connected: "接続済み ✅",
+        reconnecting: "再接続中...",
+        no_participants: "参加者なし",
+        broadcasting: "翻訳を配信中...",
+        message_sent: "音声合成でメッセージが配信されました！",
+        sending_response: "あなたの返事を送信中...",
+        response_sent: "返事がホストに送信されました！",
+        translating: "翻訳中...",
+        click_mic: "話すためにマイクをクリックしてください。",
+        confirm_leave: "本当にルームを退出しますか？",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+        // ヘルプツールチップ
+        tooltip_create_host: "あなたが会話のホストになります",
+        tooltip_join_guest: "既存の会話に参加します",
+        tooltip_nickname: "身元確認のためにお名前を入力してください",
+        tooltip_room_name: "ルーム名を入力してください（例：チーム会議、英語クラス）",
+        tooltip_password_create: "ルームをパスワードで保護してください（オプション）",
+        tooltip_room_code: "ホストが提供した4桁のコードを入力してください",
+        tooltip_password_join: "ホストが提供したパスワードを入力してください",
+
+        // ステータスメッセージ
+        room_created_success: "🎉 ルームが正常に作成されました！",
+        redirecting: "リダイレクト中...",
+        connection_success: "✅ 接続成功！リダイレクト中...",
+        fill_required_fields: "すべての必須フィールドに入力してください",
+        room_code_4_digits: "ルームコードは4桁の数字である必要があります",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "このフィールドを入力してください",
+        validation_pattern: "コードは4桁の数字である必要があります（例：1234）",
+        validation_nickname: "お名前は必須です",
+        validation_room_name: "ルーム名は必須です",
+        validation_room_code: "ルームコードは必須です"
         
-        setTimeout(() => {
-            btn.style.display = 'none';
-        }, 300);
-    });
-    
-    // Masquer les animations d'onde
-    document.querySelectorAll('.wave-animation').forEach(wave => {
-        wave.style.display = 'none';
-    });
-    
-    // Afficher automatiquement la zone de saisie
-    setTimeout(() => {
-        if (isHost) {
-            showTextInput();
-            console.log('📝 Zone texte hôte activée automatiquement');
-        } else {
-            showParticipantTextInput();
-            console.log('📝 Zone texte participant activée automatiquement');
-        }
-    }, 500);
-    
-    // Mettre à jour le statut
-    setTimeout(() => {
-        const message = getTranslation('text_mode_activated') || 
-            'Mode texte activé. Utilisez la zone de saisie ci-dessous.';
-        showStatus(message, 'info');
-    }, 1000);
-}
+    },
 
-/* ========================================
-   INITIALISATION DE LA SALLE (FONCTION PRINCIPALE) - FINALISÉE
-======================================== */
-function initializeRoom() {
-    console.log('🏠 Initialisation de la salle TradLive (version finale)...');
-    
-    // Initialiser les éléments DOM
-    initializeDOMElements();
-    
-    // Récupérer les données utilisateur
-    const userDataStr = getStorageItem('tradlive_user');
-    if (!userDataStr) {
-        const message = getTranslation('user_data_missing') || 
-            'Données utilisateur manquantes. Retour à l\'accueil...';
-        showError(message);
-        setTimeout(() => window.location.href = '/rooms', 2000);
-        return;
-    }
-    
-    try {
-        userData = typeof userDataStr === 'string' ? JSON.parse(userDataStr) : userDataStr;
-    } catch (error) {
-        console.error('❌ Erreur parsing userData:', error);
-        showError('Données utilisateur corrompues. Retour à l\'accueil...');
-        setTimeout(() => window.location.href = '/rooms', 2000);
-        return;
-    }
-    
-    // Vérifier la cohérence de salle
-    const currentRoomId = window.location.pathname.split('/').pop();
-    if (userData.room_id !== currentRoomId) {
-        showError('Incohérence de salle. Retour à l\'accueil...');
-        setTimeout(() => window.location.href = '/rooms', 2000);
-        return;
-    }
-    
-    // Initialiser l'interface utilisateur
-    setupUserInterface();
-    
-    // Initialiser les voix de synthèse
-    initializeSpeechSynthesis();
-    
-    // Charger les informations de la salle
-    loadRoomInfo();
-    
-    // Démarrer les systèmes temps réel
-    startRealTimeUpdates();
-    startHeartbeat();
-    
-    // Configurer la reconnaissance vocale
-    setupSpeechRecognition();
-    
-    // Finaliser l'initialisation
-    finalizeInitialization();
-}
+    // 🇸🇦 العربية
+    ar: {
+        page_title_home: "TradLive - الترجمة في الوقت الفعلي",
+        tagline: "ترجمة صوتية في الوقت الفعلي للجميع",
+        choose_language: "🌍 اختر لغتك",
+        continue_button: "المتابعة إلى TradLive",
+        how_it_works: "💡 كيف يعمل؟",
+        instruction_1: "اختر لغتك أعلاه",
+        instruction_2: "أنشئ غرفة أو انضم إلى غرفة موجودة",
+        instruction_3: "تحدث بلغتك، الجميع يفهم!",
+        instruction_4: "يمكن لـ 10 أشخاص كحد أقصى المشاركة في نفس الوقت",
 
-function setupUserInterface() {
-    // Afficher les informations utilisateur
-    const nicknameEl = document.getElementById('user-nickname');
-    const languageEl = document.getElementById('user-language');
-    const roomCodeEl = document.getElementById('qr-room-code');
-    
-    if (nicknameEl) nicknameEl.textContent = userData.nickname;
-    if (languageEl) languageEl.textContent = getLanguageName(userData.language);
-    if (roomCodeEl) roomCodeEl.textContent = userData.room_id;
-    
-    // Récupérer et appliquer la langue d'interface
-    window.interfaceLanguage = getStorageItem('tradlive_language', 'fr');
-    
-    // Appliquer les traductions
-    if (window.applyTranslations && window.interfaceLanguage) {
-        applyTranslations(window.interfaceLanguage);
-    }
-    
-    // Animation d'entrée de la page
-    setTimeout(() => {
-        const container = document.querySelector('.room-container');
-        if (container) {
-            container.classList.add('loaded');
-        }
-    }, 100);
-}
+        page_title_rooms: "TradLive - غرف الترجمة",
+        back_button: "← العودة للرئيسية",
+        page_heading: "🌍 TradLive - ترجمة متعددة المستخدمين",
+        selected_language: "اللغة المختارة:",
+        auto_join_notice: "✅ تم اكتشاف كود الغرفة! املأ معلوماتك للانضمام تلقائياً.",
+        create_tab: "إنشاء غرفة",
+        join_tab: "الانضمام إلى غرفة",
+        your_nickname: "اسمك",
+        room_name: "اسم الغرفة",
+        room_password: "كلمة المرور (اختيارية)",
+        room_code: "كود الغرفة",
+        room_password_if_required: "كلمة المرور (إذا كانت مطلوبة)",
+        create_button: "🎉 إنشاء الغرفة",
+        join_button: "🚪 الانضمام للغرفة",
+        nickname_placeholder: "مثال: مريم",
+        room_name_placeholder: "مثال: اجتماع الفريق، درس الإنجليزية...",
+        room_code_placeholder: "مثال: 1234",
+        password_placeholder: "اتركه فارغاً لعدم وجود كلمة مرور",
+        password_if_required_placeholder: "اتركه فارغاً إذا لم تكن هناك كلمة مرور",
 
-function initializeSpeechSynthesis() {
-    if ('speechSynthesis' in window) {
-        // Forcer le chargement des voix
-        window.speechSynthesis.getVoices();
+        page_title_room: "TradLive - غرفة الترجمة",
+        room_label: "الغرفة:",
+        leave_button: "مغادرة",
+        connecting: "جاري الاتصال...",
+        share_room: "🔗 مشاركة الغرفة",
+        qr_instructions: "امسح هذا الرمز المربع للانضمام مباشرة للغرفة:",
+        room_code_label: "كود الغرفة:",
+        qr_scan_instruction: "المشاركون يمسحون للانضمام تلقائياً",
+        connecting_room: "الاتصال بالغرفة...",
+        speak_french: "🎤 اضغط وتحدث",
+        speak_your_language: "🎤 اضغط وتحدث",
+        text_mode: "💬 وضع النص",
+        write_french_messages: "✍️ اكتب بالفرنسية",
+        write_your_language_messages: "✍️ اكتب بلغتك",
+        write_french_placeholder: "اكتب رسالتك بالفرنسية هنا...",
+        write_your_language_placeholder: "اكتب رسالتك بلغتك هنا...",
+        send_translation: "📤 إرسال الترجمة",
+        send_to_french: "📤 إرسال للفرنسية",
+        close_button: "❌ إغلاق",
+        what_you_say: "📝 ما تقوله (الفرنسية)",
+        participant_responses: "💬 ردود المشاركين (الفرنسية)",
+        host_message: "📝 رسالة المضيف (الفرنسية)",
+        translation_label: "الترجمة",
+        your_language: "لغتك",
+        your_message: "💬 رسالتك",
+        in_your_language: "بلغتك:",
+        french_translation: "الترجمة الفرنسية:",
+        participants_title: "المشاركون",
+        loading_participants: "تحميل القائمة...",
+        waiting_your_message: "في انتظار رسالتك...",
+        waiting_responses: "في انتظار الردود...",
+        waiting_host_message: "في انتظار رسالة المضيف...",
+        waiting_translation: "في انتظار الترجمة...",
+
+        mic_incompatible: "الميكروفون غير متوافق",
+        mic_incompatible_message: "متصفحك لا يستطيع استخدام التعرف على الصوت مع TradLive.",
+        solution: "الحل:",
+        use_text_mode: "استخدم حقل النص أدناه لكتابة رسائلك.",
+        text_mode_activated: "تم تفعيل وضع النص. استخدم حقل النص أدناه.",
+        host_badge: "المضيف",
+        stop_button: "🎤 إيقاف",
+        listening_french: "أستمع... تحدث بالفرنسية.",
+        listening_your_language: "أستمع... تحدث بلغتك.",
+        recognizing: "جاري التعرف: ",
+        network_problem: "مشكلة في الشبكة، جاري المحاولة مرة أخرى...",
+        mic_permission_error: "❌ اسمح بالوصول للميكروفون وأعد تحميل الصفحة.",
+        mic_problem: "مشكلة في الميكروفون. تم تفعيل وضع النص.",
+        connected: "متصل ✅",
+        reconnecting: "إعادة الاتصال...",
+        no_participants: "لا يوجد مشاركون",
+        broadcasting: "بث الترجمة...",
+        message_sent: "تم بث الرسالة مع التحويل الصوتي!",
+        sending_response: "إرسال ردك...",
+        response_sent: "تم إرسال الرد للمضيف!",
+        translating: "جاري الترجمة...",
+        click_mic: "انقر على الميكروفون للتحدث.",
+        confirm_leave: "هل أنت متأكد من أنك تريد مغادرة الغرفة؟",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+     // تلميحات المساعدة
+        tooltip_create_host: "ستكون مضيف المحادثة",
+        tooltip_join_guest: "ستشارك في محادثة موجودة",
+        tooltip_nickname: "اكتب اسمك للتعريف بنفسك",
+        tooltip_room_name: "اسم غرفتك (مثال: اجتماع الفريق، درس الإنجليزية)",
+        tooltip_password_create: "احم غرفتك بكلمة مرور (اختياري)",
+        tooltip_room_code: "أدخل الرمز المكون من 4 أرقام المقدم من المضيف",
+        tooltip_password_join: "أدخل كلمة المرور المقدمة من المضيف",
+
+        // رسائل الحالة
+        room_created_success: "🎉 تم إنشاء الغرفة بنجاح!",
+        redirecting: "جاري إعادة التوجيه...",
+        connection_success: "✅ تم الاتصال بنجاح! جاري إعادة التوجيه...",
+        fill_required_fields: "يرجى ملء جميع الحقول المطلوبة",
+        room_code_4_digits: "يجب أن يحتوي كود الغرفة على 4 أرقام",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "يرجى ملء هذا الحقل",
+        validation_pattern: "يجب أن يحتوي الرمز على 4 أرقام بالضبط (مثال: 1234)",
+        validation_nickname: "الاسم مطلوب",
+        validation_room_name: "اسم الغرفة مطلوب",
+        validation_room_code: "كود الغرفة مطلوب"
         
-        window.speechSynthesis.onvoiceschanged = function() {
-            const voicesCount = window.speechSynthesis.getVoices().length;
-            console.log('🎵 Voix de synthèse disponibles:', voicesCount);
-        };
+    },
+
+    // 🇺🇦 УКРАЇНСЬКА
+    uk: {
+        page_title_home: "TradLive - Переклад у реальному часі",
+        tagline: "Голосовий переклад у реальному часі для всіх",
+        choose_language: "🌍 Оберіть вашу мову",
+        continue_button: "Продовжити до TradLive",
+        how_it_works: "💡 Як це працює?",
+        instruction_1: "Оберіть вашу мову вище",
+        instruction_2: "Створіть кімнату або приєднайтеся до існуючої",
+        instruction_3: "Говоріть вашою мовою, всі розуміють!",
+        instruction_4: "До 10 осіб можуть брати участь одночасно",
+
+        page_title_rooms: "TradLive - Кімнати перекладу",
+        back_button: "← Назад на головну",
+        page_heading: "🌍 TradLive - Багатокористувацький переклад",
+        selected_language: "Обрана мова:",
+        auto_join_notice: "✅ Код кімнати виявлено! Заповніть інформацію для автоматичного приєднання.",
+        create_tab: "Створити кімнату",
+        join_tab: "Приєднатися до кімнати",
+        your_nickname: "Ваше ім'я",
+        room_name: "Назва кімнати",
+        room_password: "Пароль (необов'язково)",
+        room_code: "Код кімнати",
+        room_password_if_required: "Пароль (якщо потрібен)",
+        create_button: "🎉 Створити кімнату",
+        join_button: "🚪 Приєднатися до кімнати",
+        nickname_placeholder: "Наприклад: Марія",
+        room_name_placeholder: "Наприклад: Зустріч команди, Урок англійської...",
+        room_code_placeholder: "Наприклад: 1234",
+        password_placeholder: "Залиште порожнім для відсутності пароля",
+        password_if_required_placeholder: "Залиште порожнім якщо немає пароля",
+
+        page_title_room: "TradLive - Кімната перекладу",
+        room_label: "Кімната:",
+        leave_button: "Вийти",
+        connecting: "Підключення...",
+        share_room: "🔗 Поділитися кімнатою",
+        qr_instructions: "Відскануйте цей QR-код для прямого приєднання до кімнати:",
+        room_code_label: "Код кімнати:",
+        qr_scan_instruction: "Учасники сканують для автоматичного приєднання",
+        connecting_room: "Підключення до кімнати...",
+        speak_french: "🎤 Натисніть і говоріть",
+        speak_your_language: "🎤 Натисніть і говоріть",
+        text_mode: "💬 Текстовий режим",
+        write_french_messages: "✍️ Писати французькою",
+        write_your_language_messages: "✍️ Писати вашою мовою",
+        write_french_placeholder: "Напишіть ваше повідомлення французькою тут...",
+        write_your_language_placeholder: "Напишіть ваше повідомлення вашою мовою...",
+        send_translation: "📤 Надіслати переклад",
+        send_to_french: "📤 Надіслати французькою",
+        close_button: "❌ Закрити",
+        what_you_say: "📝 Що ви говорите (Французька)",
+        participant_responses: "💬 Відповіді учасників (Французька)",
+        host_message: "📝 Повідомлення хоста (Французька)",
+        translation_label: "Переклад",
+        your_language: "Ваша мова",
+        your_message: "💬 Ваше повідомлення",
+        in_your_language: "Вашою мовою:",
+        french_translation: "Французький переклад:",
+        participants_title: "Учасники",
+        loading_participants: "Завантаження списку...",
+        waiting_your_message: "Очікування вашого повідомлення...",
+        waiting_responses: "Очікування відповідей...",
+        waiting_host_message: "Очікування повідомлення хоста...",
+        waiting_translation: "Очікування перекладу...",
+
+        mic_incompatible: "Мікрофон несумісний",
+        mic_incompatible_message: "Ваш браузер не може використовувати розпізнавання мовлення з TradLive.",
+        solution: "Рішення:",
+        use_text_mode: "Використовуйте текстове поле нижче для написання ваших повідомлень.",
+        text_mode_activated: "Текстовий режим активовано. Використовуйте текстове поле нижче.",
+        host_badge: "ХОСТ",
+        stop_button: "🎤 Зупинити",
+        listening_french: "Слухаю... Говоріть французькою.",
+        listening_your_language: "Слухаю... Говоріть вашою мовою.",
+        recognizing: "Розпізнавання: ",
+        network_problem: "Проблема з мережею, повторна спроба...",
+        mic_permission_error: "❌ Дозвольте доступ до мікрофона та перезавантажте сторінку.",
+        mic_problem: "Проблема з мікрофоном. Текстовий режим активовано.",
+        connected: "Підключено ✅",
+        reconnecting: "Перепідключення...",
+        no_participants: "Немає учасників",
+        broadcasting: "Трансляція перекладу...",
+        message_sent: "Повідомлення транслюється з синтезом мовлення!",
+        sending_response: "Надсилання вашої відповіді...",
+        response_sent: "Відповідь надіслана хосту!",
+        translating: "Переклад...",
+        click_mic: "Натисніть на мікрофон для говоріння.",
+        confirm_leave: "Ви впевнені, що хочете покинути кімнату?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+     // Підказки допомоги
+        tooltip_create_host: "Ви будете хостом розмови",
+        tooltip_join_guest: "Ви будете брати участь в існуючій розмові",
+        tooltip_nickname: "Введіть ваше ім'я для ідентифікації",
+        tooltip_room_name: "Назвіть вашу кімнату (наприклад: Зустріч команди, Урок англійської)",
+        tooltip_password_create: "Захистіть вашу кімнату паролем (необов'язково)",
+        tooltip_room_code: "Введіть 4-значний код, наданий хостом",
+        tooltip_password_join: "Введіть пароль, наданий хостом",
+
+        // Повідомлення про статус
+        room_created_success: "🎉 Кімнату успішно створено!",
+        redirecting: "Перенаправлення...",
+        connection_success: "✅ Підключення успішне! Перенаправлення...",
+        fill_required_fields: "Будь ласка, заповніть всі обов'язкові поля",
+        room_code_4_digits: "Код кімнати повинен містити 4 цифри",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "Будь ласка, заповніть це поле",
+        validation_pattern: "Код повинен містити рівно 4 цифри (наприклад: 1234)",
+        validation_nickname: "Ім'я обов'язкове",
+        validation_room_name: "Назва кімнати обов'язкова",
+        validation_room_code: "Код кімнати обов'язковий"
         
-        // Pré-charger les voix principales avec un délai
-        setTimeout(() => {
-            const testLanguages = ['fr-FR', 'en-US', 'es-ES', 'de-DE'];
-            testLanguages.forEach(lang => {
-                try {
-                    const utterance = new SpeechSynthesisUtterance(' ');
-                    utterance.lang = lang;
-                    utterance.volume = 0;
-                    window.speechSynthesis.speak(utterance);
-                } catch (error) {
-                    console.warn(`⚠️ Erreur pré-chargement voix ${lang}:`, error);
-                }
-            });
-        }, 1000);
-    }
-}
+    },
 
-function finalizeInitialization() {
-    // Mettre à jour le QR code
-    updateQRCode();
-    
-    // Configurer les event listeners des boutons
-    setupButtonListeners();
-    
-    // Vérifier la compatibilité du navigateur
-    setTimeout(() => {
-        checkBrowserCompatibility();
-    }, 1000);
-    
-    // Émettre événement d'initialisation
-    if (window.TradLive?.events) {
-        window.TradLive.events.emit('room:initialized', {
-            roomId: userData.room_id,
-            userId: userData.user_id,
-            isHost: isHost,
-            language: userData.language
-        });
-    }
-    
-    console.log('✅ Initialisation de la salle terminée avec succès');
-}
+    // 🇮🇷 فارسی
+    fa: {
+        page_title_home: "TradLive - ترجمه بلادرنگ",
+        tagline: "ترجمه صوتی بلادرنگ برای همه",
+        choose_language: "🌍 زبان خود را انتخاب کنید",
+        continue_button: "ادامه به TradLive",
+        how_it_works: "💡 چگونه کار می‌کند؟",
+        instruction_1: "زبان خود را در بالا انتخاب کنید",
+        instruction_2: "اتاق ایجاد کنید یا به اتاق موجود بپیوندید",
+        instruction_3: "به زبان خود صحبت کنید، همه می‌فهمند!",
+        instruction_4: "تا ۱۰ نفر می‌توانند همزمان شرکت کنند",
 
-function checkBrowserCompatibility() {
-    if (window.TradLive?.browser) {
-        const browserInfo = window.TradLive.browser.getRecommendations();
-        if (browserInfo) {
-            showBrowserCompatibilityMessage(browserInfo);
-        }
-    } else {
-        // Vérification basique si TradLive n'est pas disponible
-        const isCompatible = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
-        if (!isCompatible) {
-            setTimeout(() => {
-                cleanInterfaceForTextOnly();
-            }, 500);
-        }
-    }
-}
+        page_title_rooms: "TradLive - اتاق‌های ترجمه",
+        back_button: "← بازگشت به خانه",
+        page_heading: "🌍 TradLive - ترجمه چندکاربره",
+        selected_language: "زبان انتخاب شده:",
+        auto_join_notice: "✅ کد اتاق شناسایی شد! اطلاعات خود را پر کنید تا خودکار ملحق شوید.",
+        create_tab: "ایجاد اتاق",
+        join_tab: "پیوستن به اتاق",
+        your_nickname: "نام شما",
+        room_name: "نام اتاق",
+        room_password: "رمز عبور (اختیاری)",
+        room_code: "کد اتاق",
+        room_password_if_required: "رمز عبور (در صورت نیاز)",
+        create_button: "🎉 ایجاد اتاق",
+        join_button: "🚪 پیوستن به اتاق",
+        nickname_placeholder: "مثال: مریم",
+        room_name_placeholder: "مثال: جلسه تیم، کلاس انگلیسی...",
+        room_code_placeholder: "مثال: ۱۲۳۴",
+        password_placeholder: "برای عدم رمز عبور خالی بگذارید",
+        password_if_required_placeholder: "اگر رمز عبوری نیست خالی بگذارید",
 
-function showBrowserCompatibilityMessage(compatibilityInfo) {
-    console.log('🎨 Évaluation compatibilité navigateur:', compatibilityInfo.level);
-    
-    if (window.TradLive?.notifications) {
-        const type = compatibilityInfo.level === 'excellent' ? 'success' : 
-                    compatibilityInfo.level === 'good' ? 'info' : 'warning';
+        page_title_room: "TradLive - اتاق ترجمه",
+        room_label: "اتاق:",
+        leave_button: "خروج",
+        connecting: "در حال اتصال...",
+        share_room: "🔗 اشتراک اتاق",
+        qr_instructions: "این کد QR را برای پیوستن مستقیم به اتاق اسکن کنید:",
+        room_code_label: "کد اتاق:",
+        qr_scan_instruction: "شرکت‌کنندگان اسکن می‌کنند تا خودکار بپیوندند",
+        connecting_room: "اتصال به اتاق...",
+        speak_french: "🎤 فشار دهید و صحبت کنید",
+        speak_your_language: "🎤 فشار دهید و صحبت کنید",
+        text_mode: "💬 حالت متن",
+        write_french_messages: "✍️ به فرانسوی بنویسید",
+        write_your_language_messages: "✍️ به زبان خود بنویسید",
+        write_french_placeholder: "پیام خود را به فرانسوی اینجا بنویسید...",
+        write_your_language_placeholder: "پیام خود را به زبان خود اینجا بنویسید...",
+        send_translation: "📤 ارسال ترجمه",
+        send_to_french: "📤 ارسال به فرانسوی",
+        close_button: "❌ بستن",
+        what_you_say: "📝 آنچه شما می‌گویید (فرانسوی)",
+        participant_responses: "💬 پاسخ‌های شرکت‌کنندگان (فرانسوی)",
+        host_message: "📝 پیام میزبان (فرانسوی)",
+        translation_label: "ترجمه",
+        your_language: "زبان شما",
+        your_message: "💬 پیام شما",
+        in_your_language: "به زبان شما:",
+        french_translation: "ترجمه فرانسوی:",
+        participants_title: "شرکت‌کنندگان",
+        loading_participants: "بارگیری فهرست...",
+        waiting_your_message: "انتظار برای پیام شما...",
+        waiting_responses: "انتظار برای پاسخ‌ها...",
+        waiting_host_message: "انتظار برای پیام میزبان...",
+        waiting_translation: "انتظار برای ترجمه...",
+
+        mic_incompatible: "میکروفون ناسازگار",
+        mic_incompatible_message: "مرورگر شما نمی‌تواند از تشخیص صدا با TradLive استفاده کند.",
+        solution: "راه‌حل:",
+        use_text_mode: "از فیلد متن زیر برای نوشتن پیام‌هایتان استفاده کنید.",
+        text_mode_activated: "حالت متن فعال شد. از فیلد متن زیر استفاده کنید.",
+        host_badge: "میزبان",
+        stop_button: "🎤 توقف",
+        listening_french: "در حال گوش دادن... به فرانسوی صحبت کنید.",
+        listening_your_language: "در حال گوش دادن... به زبان خود صحبت کنید.",
+        recognizing: "در حال تشخیص: ",
+        network_problem: "مشکل شبکه، تلاش مجدد...",
+        mic_permission_error: "❌ دسترسی میکروفون را اجازه دهید و صفحه را بارگیری مجدد کنید.",
+        mic_problem: "مشکل میکروفون. حالت متن فعال شد.",
+        connected: "متصل ✅",
+        reconnecting: "اتصال مجدد...",
+        no_participants: "شرکت‌کننده‌ای نیست",
+        broadcasting: "پخش ترجمه...",
+        message_sent: "پیام با سنتز صدا پخش شد!",
+        sending_response: "ارسال پاسخ شما...",
+        response_sent: "پاسخ به میزبان ارسال شد!",
+        translating: "در حال ترجمه...",
+        click_mic: "روی میکروفون کلیک کنید تا صحبت کنید.",
+        confirm_leave: "آیا مطمئن هستید که می‌خواهید اتاق را ترک کنید؟",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+    // راهنمای ابزارک‌ها
+    tooltip_create_host: "شما میزبان مکالمه خواهید بود",
+    tooltip_join_guest: "شما در مکالمه‌ای موجود شرکت خواهید کرد",
+    tooltip_nickname: "نام خود را برای شناسایی وارد کنید",
+    tooltip_room_name: "اتاق خود را نام‌گذاری کنید (مثال: جلسه تیم، کلاس انگلیسی)",
+    tooltip_password_create: "اتاق خود را با رمز عبور محافظت کنید (اختیاری)",
+    tooltip_room_code: "کد 4 رقمی ارائه شده توسط میزبان را وارد کنید",
+    tooltip_password_join: "رمز عبور ارائه شده توسط میزبان را وارد کنید",
+
+     // پیام‌های وضعیت
+    room_created_success: "🎉 اتاق با موفقیت ایجاد شد!",
+    redirecting: "در حال هدایت مجدد...",
+    connection_success: "✅ اتصال موفق! در حال هدایت مجدد...",
+    fill_required_fields: "لطفاً تمام فیلدهای ضروری را پر کنید",
+    room_code_4_digits: "کد اتاق باید شامل 4 رقم باشد",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "لطفاً این فیلد را پر کنید",
+        validation_pattern: "کد باید دقیقاً شامل 4 رقم باشد (مثال: 1234)",
+        validation_nickname: "نام الزامی است",
+        validation_room_name: "نام اتاق الزامی است",
+        validation_room_code: "کد اتاق الزامی است"
         
-        window.TradLive.notifications.show(compatibilityInfo.message, type, { duration: 6000 });
+    },
+
+    // 🇮🇳 हिन्दी
+    hi: {
+        page_title_home: "TradLive - रियल-टाइम अनुवाद",
+        tagline: "सभी के लिए रियल-टाइम आवाज़ अनुवाद",
+        choose_language: "🌍 अपनी भाषा चुनें",
+        continue_button: "TradLive पर जारी रखें",
+        how_it_works: "💡 यह कैसे काम करता है?",
+        instruction_1: "ऊपर अपनी भाषा चुनें",
+        instruction_2: "कमरा बनाएं या मौजूदा में शामिल हों",
+        instruction_3: "अपनी भाषा में बोलें, सभी समझ जाएंगे!",
+        instruction_4: "एक साथ 10 लोग तक भाग ले सकते हैं",
+
+        page_title_rooms: "TradLive - अनुवाद कमरे",
+        back_button: "← मुख्य पृष्ठ पर वापस",
+        page_heading: "🌍 TradLive - बहु-उपयोगकर्ता अनुवाद",
+        selected_language: "चयनित भाषा:",
+        auto_join_notice: "✅ कमरे का कोड मिला! स्वचालित रूप से शामिल होने के लिए अपनी जानकारी भरें।",
+        create_tab: "कमरा बनाएं",
+        join_tab: "कमरे में शामिल हों",
+        your_nickname: "आपका नाम",
+        room_name: "कमरे का नाम",
+        room_password: "पासवर्ड (वैकल्पिक)",
+        room_code: "कमरे का कोड",
+        room_password_if_required: "पासवर्ड (यदि आवश्यक हो)",
+        create_button: "🎉 कमरा बनाएं",
+        join_button: "🚪 कमरे में शामिल हों",
+        nickname_placeholder: "उदाहरण: मैरी",
+        room_name_placeholder: "उदाहरण: टीम मीटिंग, अंग्रेजी क्लास...",
+        room_code_placeholder: "उदाहरण: 1234",
+        password_placeholder: "पासवर्ड नहीं चाहिए तो खाली छोड़ें",
+        password_if_required_placeholder: "पासवर्ड नहीं है तो खाली छोड़ें",
+
+        page_title_room: "TradLive - अनुवाद कमरा",
+        room_label: "कमरा:",
+        leave_button: "निकलें",
+        connecting: "कनेक्ट हो रहा है...",
+        share_room: "🔗 कमरा साझा करें",
+        qr_instructions: "कमरे में सीधे शामिल होने के लिए इस QR कोड को स्कैन करें:",
+        room_code_label: "कमरे का कोड:",
+        qr_scan_instruction: "प्रतिभागी स्वचालित रूप से शामिल होने के लिए स्कैन करते हैं",
+        connecting_room: "कमरे से कनेक्ट हो रहा है...",
+        speak_french: "🎤 दबाएं और बोलें",
+        speak_your_language: "🎤 दबाएं और बोलें",
+        text_mode: "💬 टेक्स्ट मोड",
+        write_french_messages: "✍️ फ्रेंच में लिखें",
+        write_your_language_messages: "✍️ अपनी भाषा में लिखें",
+        write_french_placeholder: "यहाँ फ्रेंच में अपना संदेश लिखें...",
+        write_your_language_placeholder: "यहाँ अपनी भाषा में अपना संदेश लिखें...",
+        send_translation: "📤 अनुवाद भेजें",
+        send_to_french: "📤 फ्रेंच में भेजें",
+        close_button: "❌ बंद करें",
+        what_you_say: "📝 आप क्या कहते हैं (फ्रेंच)",
+        participant_responses: "💬 प्रतिभागियों के जवाब (फ्रेंच)",
+        host_message: "📝 होस्ट का संदेश (फ्रेंच)",
+        translation_label: "अनुवाद",
+        your_language: "आपकी भाषा",
+        your_message: "💬 आपका संदेश",
+        in_your_language: "आपकी भाषा में:",
+        french_translation: "फ्रेंच अनुवाद:",
+        participants_title: "प्रतिभागी",
+        loading_participants: "सूची लोड हो रही है...",
+        waiting_your_message: "आपके संदेश का इंतज़ार...",
+        waiting_responses: "जवाबों का इंतज़ार...",
+        waiting_host_message: "होस्ट के संदेश का इंतज़ार...",
+        waiting_translation: "अनुवाद का इंतज़ार...",
+
+        mic_incompatible: "माइक्रोफोन असंगत",
+        mic_incompatible_message: "आपका ब्राउज़र TradLive के साथ आवाज़ पहचान का उपयोग नहीं कर सकता।",
+        solution: "समाधान:",
+        use_text_mode: "अपने संदेश लिखने के लिए नीचे टेक्स्ट फील्ड का उपयोग करें।",
+        text_mode_activated: "टेक्स्ट मोड सक्रिय। नीचे टेक्स्ट फील्ड का उपयोग करें।",
+        host_badge: "होस्ट",
+        stop_button: "🎤 रुकें",
+        listening_french: "सुन रहा हूँ... फ्रेंच में बोलें।",
+        listening_your_language: "सुन रहा हूँ... अपनी भाषा में बोलें।",
+        recognizing: "पहचान रहा है: ",
+        network_problem: "नेटवर्क समस्या, पुनः प्रयास...",
+        mic_permission_error: "❌ माइक्रोफोन एक्सेस की अनुमति दें और पेज रीलोड करें।",
+        mic_problem: "माइक्रोफोन समस्या। टेक्स्ट मोड सक्रिय।",
+        connected: "कनेक्टेड ✅",
+        reconnecting: "पुनः कनेक्ट हो रहा है...",
+        no_participants: "कोई प्रतिभागी नहीं",
+        broadcasting: "अनुवाद प्रसारित कर रहा है...",
+        message_sent: "संदेश आवाज़ संश्लेषण के साथ प्रसारित!",
+        sending_response: "आपका जवाब भेज रहा है...",
+        response_sent: "जवाब होस्ट को भेजा गया!",
+        translating: "अनुवाद हो रहा है...",
+        click_mic: "बोलने के लिए माइक्रोफोन पर क्लिक करें।",
+        confirm_leave: "क्या आप वाकई कमरा छोड़ना चाहते हैं?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+    // सहायता टूलटिप्स
+    tooltip_create_host: "आप बातचीत के होस्ट होंगे",
+    tooltip_join_guest: "आप मौजूदा बातचीत में भाग लेंगे",
+    tooltip_nickname: "पहचान के लिए अपना नाम लिखें",
+    tooltip_room_name: "अपने कमरे का नाम रखें (उदाहरण: टीम मीटिंग, अंग्रेजी क्लास)",
+    tooltip_password_create: "अपने कमरे को पासवर्ड से सुरक्षित करें (वैकल्पिक)",
+    tooltip_room_code: "होस्ट द्वारा प्रदान किया गया 4 अंकों का कोड दर्ज करें",
+    tooltip_password_join: "होस्ट द्वारा प्रदान किया गया पासवर्ड दर्ज करें",
+
+    // स्थिति संदेश
+    room_created_success: "🎉 कमरा सफलतापूर्वक बनाया गया!",
+    redirecting: "रीडायरेक्ट हो रहा है...",
+    connection_success: "✅ कनेक्शन सफल! रीडायरेक्ट हो रहा है...",
+    fill_required_fields: "कृपया सभी आवश्यक फ़ील्ड भरें",
+    room_code_4_digits: "कमरे के कोड में 4 अंक होने चाहिए",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "कृपया इस फ़ील्ड को भरें",
+        validation_pattern: "कोड में बिल्कुल 4 अंक होने चाहिए (उदाहरण: 1234)",
+        validation_nickname: "नाम आवश्यक है",
+        validation_room_name: "कमरे का नाम आवश्यक है",
+        validation_room_code: "कमरे का कोड आवश्यक है"
         
-        // Afficher les suggestions si nécessaire
-        if (compatibilityInfo.suggestions?.length > 0) {
-            setTimeout(() => {
-                compatibilityInfo.suggestions.forEach((suggestion, index) => {
-                    setTimeout(() => {
-                        window.TradLive.notifications.show(suggestion, 'info', { duration: 5000 });
-                    }, index * 1500);
-                });
-            }, 1000);
-        }
-    }
-    
-    // Actions selon le niveau de compatibilité
-    if (compatibilityInfo.level === 'limited') {
-        console.log('❌ Compatibilité limitée détectée, basculement mode texte');
-        setTimeout(() => {
-            cleanInterfaceForTextOnly();
-        }, 2000);
-    }
-}
+    },
 
-/* ========================================
-   GESTION DES ÉLÉMENTS DOM - FINALISÉE
-======================================== */
-function initializeDOMElements() {
-    const elementIds = [
-        'status', 'controls', 'host-controls', 'participant-controls',
-        'mic-button', 'participant-mic-button', 'text-mode-button', 'participant-text-button',
-        'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image', 'connection-status',
-        'text-input-fallback', 'participant-text-input',
-        'host-interface', 'participant-interface',
-        'host-original-text', 'host-responses-text',
-        'participant-original-text', 'participant-translated-text', 'participant-message-area',
-        'participant-own-text', 'participant-french-text', 'participant-target-language',
-        'participants-list', 'participant-count'
-    ];
-    
-    const elements = {};
-    elementIds.forEach(id => {
-        elements[id] = document.getElementById(id);
-        if (!elements[id]) {
-            console.warn(`⚠️ Élément DOM non trouvé: ${id}`);
-        }
-    });
-    
-    // Assignation globale pour compatibilité
-    Object.assign(window, {
-        statusEl: elements['status'],
-        controlsEl: elements['controls'],
-        hostControlsEl: elements['host-controls'],
-        participantControlsEl: elements['participant-controls'],
-        micButton: elements['mic-button'],
-        participantMicButton: elements['participant-mic-button'],
-        textModeButton: elements['text-mode-button'],
-        participantTextButton: elements['participant-text-button'],
-        waveAnimation: elements['wave-animation'],
-        participantWave: elements['participant-wave'],
-        qrSection: elements['qr-section'],
-        connectionStatus: elements['connection-status'],
-        textInputFallback: elements['text-input-fallback'],
-        participantTextInput: elements['participant-text-input'],
-        hostInterface: elements['host-interface'],
-        participantInterface: elements['participant-interface'],
-        hostOriginalText: elements['host-original-text'],
-        hostResponsesText: elements['host-responses-text'],
-        participantOriginalText: elements['participant-original-text'],
-        participantTranslatedText: elements['participant-translated-text'],
-        participantMessageArea: elements['participant-message-area'],
-        participantOwnText: elements['participant-own-text'],
-        participantFrenchText: elements['participant-french-text'],
-        participantTargetLanguage: elements['participant-target-language'],
-        participantsListEl: elements['participants-list'],
-        participantCountEl: elements['participant-count']
-    });
-}
+    // 🇧🇩 বাংলা
+    bn: {
+        page_title_home: "TradLive - রিয়েল-টাইম অনুবাদ",
+        tagline: "সবার জন্য রিয়েল-টাইম ভয়েস অনুবাদ",
+        choose_language: "🌍 আপনার ভাষা বেছে নিন",
+        continue_button: "TradLive-এ চালিয়ে যান",
+        how_it_works: "💡 এটি কীভাবে কাজ করে?",
+        instruction_1: "উপরে আপনার ভাষা বেছে নিন",
+        instruction_2: "একটি রুম তৈরি করুন বা বিদ্যমান একটিতে যোগ দিন",
+        instruction_3: "আপনার ভাষায় কথা বলুন, সবাই বুঝবে!",
+        instruction_4: "একসাথে ১০ জন পর্যন্ত অংশগ্রহণ করতে পারে",
 
-/* ========================================
-   CHARGEMENT DES INFORMATIONS DE SALLE - FINALISÉ
-======================================== */
-function loadRoomInfo() {
-    const url = `/api/room/${userData.room_id}/info`;
-    
-    makeApiRequest(url)
-        .then(data => {
-            if (data.success) {
-                roomData = data.data ? data.data.room : data.room;
-                reconnectAttempts = 0;
-                updateConnectionStatus(true);
-                
-                // Identifier le rôle de l'utilisateur
-                const currentUser = roomData.users.find(u => u.user_id === userData.user_id);
-                if (currentUser) {
-                    isHost = currentUser.is_host;
-                    setupRoleInterface();
-                    updateParticipantsList();
-                    
-                    // Émettre événement de connexion
-                    if (window.TradLive?.events) {
-                        window.TradLive.events.emit('room:connected', {
-                            roomData: roomData,
-                            isHost: isHost
-                        });
-                    }
-                } else {
-                    throw new Error('Utilisateur non trouvé dans la salle');
-                }
-            } else {
-                throw new Error(data.error || 'Erreur inconnue');
-            }
-        })
-        .catch(error => {
-            console.error('❌ Erreur chargement salle:', error);
-            handleConnectionError();
-        });
-}
+        page_title_rooms: "TradLive - অনুবাদ রুম",
+        back_button: "← হোমে ফিরে যান",
+        page_heading: "🌍 TradLive - মাল্টি-ইউজার অনুবাদ",
+        selected_language: "নির্বাচিত ভাষা:",
+        auto_join_notice: "✅ রুম কোড শনাক্ত করা হয়েছে! স্বয়ংক্রিয়ভাবে যোগ দিতে আপনার তথ্য পূরণ করুন।",
+        create_tab: "একটি রুম তৈরি করুন",
+        join_tab: "একটি রুমে যোগ দিন",
+        your_nickname: "আপনার নাম",
+        room_name: "রুমের নাম",
+        room_password: "পাসওয়ার্ড (ঐচ্ছিক)",
+        room_code: "রুম কোড",
+        room_password_if_required: "পাসওয়ার্ড (প্রয়োজনে)",
+        create_button: "🎉 রুম তৈরি করুন",
+        join_button: "🚪 রুমে যোগ দিন",
+        nickname_placeholder: "উদাহরণ: মারিয়া",
+        room_name_placeholder: "উদাহরণ: টিম মিটিং, ইংরেজি ক্লাস...",
+        room_code_placeholder: "উদাহরণ: ১২৩৪",
+        password_placeholder: "কোন পাসওয়ার্ড না চাইলে খালি রাখুন",
+        password_if_required_placeholder: "পাসওয়ার্ড না থাকলে খালি রাখুন",
 
-function setupRoleInterface() {
-    // CORRECTION : Éviter les appels multiples
-    const alreadyConfigured = document.querySelector('.role-configured');
-    if (alreadyConfigured) {
-        return; // Interface déjà configurée
-    }
-    
-    if (isHost) {
-        // Interface hôte
-        showElement('host-controls');
-        showElement('host-interface');
+        page_title_room: "TradLive - অনুবাদ রুম",
+        room_label: "রুম:",
+        leave_button: "বের হন",
+        connecting: "সংযোগ করা হচ্ছে...",
+        share_room: "🔗 রুম শেয়ার করুন",
+        qr_instructions: "সরাসরি রুমে যোগ দিতে এই QR কোড স্ক্যান করুন:",
+        room_code_label: "রুম কোড:",
+        qr_scan_instruction: "অংশগ্রহণকারীরা স্বয়ংক্রিয়ভাবে যোগ দিতে স্ক্যান করে",
+        connecting_room: "রুমে সংযোগ করা হচ্ছে...",
+        speak_french: "🎤 চাপুন এবং কথা বলুন",
+        speak_your_language: "🎤 চাপুন এবং কথা বলুন",
+        text_mode: "💬 টেক্সট মোড",
+        write_french_messages: "✍️ ফরাসিতে লিখুন",
+        write_your_language_messages: "✍️ আপনার ভাষায় লিখুন",
+        write_french_placeholder: "এখানে ফরাসিতে আপনার বার্তা লিখুন...",
+        write_your_language_placeholder: "এখানে আপনার ভাষায় আপনার বার্তা লিখুন...",
+        send_translation: "📤 অনুবাদ পাঠান",
+        send_to_french: "📤 ফরাসিতে পাঠান",
+        close_button: "❌ বন্ধ করুন",
+        what_you_say: "📝 আপনি যা বলেন (ফরাসি)",
+        participant_responses: "💬 অংশগ্রহণকারীদের উত্তর (ফরাসি)",
+        host_message: "📝 হোস্টের বার্তা (ফরাসি)",
+        translation_label: "অনুবাদ",
+        your_language: "আপনার ভাষা",
+        your_message: "💬 আপনার বার্তা",
+        in_your_language: "আপনার ভাষায়:",
+        french_translation: "ফরাসি অনুবাদ:",
+        participants_title: "অংশগ্রহণকারী",
+        loading_participants: "তালিকা লোড হচ্ছে...",
+        waiting_your_message: "আপনার বার্তার জন্য অপেক্ষা...",
+        waiting_responses: "উত্তরের জন্য অপেক্ষা...",
+        waiting_host_message: "হোস্টের বার্তার জন্য অপেক্ষা...",
+        waiting_translation: "অনুবাদের জন্য অপেক্ষা...",
+
+        mic_incompatible: "মাইক্রোফোন সামঞ্জস্যপূর্ণ নয়",
+        mic_incompatible_message: "আপনার ব্রাউজার TradLive-এর সাথে ভয়েস রিকগনিশন ব্যবহার করতে পারে না।",
+        solution: "সমাধান:",
+        use_text_mode: "আপনার বার্তা লিখতে নিচের টেক্সট ক্ষেত্র ব্যবহার করুন।",
+        text_mode_activated: "টেক্সট মোড সক্রিয়। নিচের টেক্সট ক্ষেত্র ব্যবহার করুন।",
+        host_badge: "হোস্ট",
+        stop_button: "🎤 থামুন",
+        listening_french: "শুনছি... ফরাসিতে কথা বলুন।",
+        listening_your_language: "শুনছি... আপনার ভাষায় কথা বলুন।",
+        recognizing: "চিনতে পারছি: ",
+        network_problem: "নেটওয়ার্ক সমস্যা, পুনরায় চেষ্টা করা হচ্ছে...",
+        mic_permission_error: "❌ মাইক্রোফোন অ্যাক্সেসের অনুমতি দিন এবং পৃষ্ঠাটি রিলোড করুন।",
+        mic_problem: "মাইক্রোফোন সমস্যা। টেক্সট মোড সক্রিয়।",
+        connected: "সংযুক্ত ✅",
+        reconnecting: "পুনরায় সংযোগ করা হচ্ছে...",
+        no_participants: "কোন অংশগ্রহণকারী নেই",
+        broadcasting: "অনুবাদ সম্প্রচার করা হচ্ছে...",
+        message_sent: "ভয়েস সিন্থেসিসের সাথে বার্তা সম্প্রচারিত!",
+        sending_response: "আপনার উত্তর পাঠানো হচ্ছে...",
+        response_sent: "হোস্টের কাছে উত্তর পাঠানো হয়েছে!",
+        translating: "অনুবাদ করা হচ্ছে...",
+        click_mic: "কথা বলতে মাইক্রোফোনে ক্লিক করুন।",
+        confirm_leave: "আপনি কি নিশ্চিত যে আপনি রুম ছেড়ে যেতে চান?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+    // সহায়তা টুলটিপস
+    tooltip_create_host: "আপনি কথোপকথনের হোস্ট হবেন",
+    tooltip_join_guest: "আপনি একটি বিদ্যমান কথোপকথনে অংশগ্রহণ করবেন",
+    tooltip_nickname: "পরিচয়ের জন্য আপনার নাম লিখুন",
+    tooltip_room_name: "আপনার রুমের নাম দিন (উদাহরণ: টিম মিটিং, ইংরেজি ক্লাস)",
+    tooltip_password_create: "আপনার রুমকে পাসওয়ার্ড দিয়ে সুরক্ষিত করুন (ঐচ্ছিক)",
+    tooltip_room_code: "হোস্ট প্রদত্ত ৪ সংখ্যার কোড লিখুন",
+    tooltip_password_join: "হোস্ট প্রদত্ত পাসওয়ার্ড লিখুন",
+
+    // অবস্থা বার্তা
+    room_created_success: "🎉 রুম সফলভাবে তৈরি হয়েছে!",
+    redirecting: "পুনর্নির্দেশ করা হচ্ছে...",
+    connection_success: "✅ সংযোগ সফল! পুনর্নির্দেশ করা হচ্ছে...",
+    fill_required_fields: "দয়া করে সমস্ত প্রয়োজনীয় ক্ষেত্র পূরণ করুন",
+    room_code_4_digits: "রুম কোডে ৪টি সংখ্যা থাকতে হবে",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "দয়া করে এই ক্ষেত্রটি পূরণ করুন",
+        validation_pattern: "কোডে ঠিক ৪টি সংখ্যা থাকতে হবে (উদাহরণ: ১২৩৪)",
+        validation_nickname: "নাম আবশ্যক",
+        validation_room_name: "রুমের নাম আবশ্যক",
+        validation_room_code: "রুম কোড আবশ্যক"
         
-        const qrSection = document.getElementById('qr-section');
-        if (qrSection) {
-            qrSection.classList.add('show');
-        }
-       // Initialiser le QR code
-      qrCodeImage = document.getElementById('qr-code-image'); // ou l'ID correct
-      console.log('🔍 qrCodeImage initialisé:', qrCodeImage);
-      updateQRCode();
+    },
+
+    // 🇮🇳 తెలుగు
+    te: {
+        page_title_home: "TradLive - రియల్-టైమ్ అనువాదం",
+        tagline: "అందరికోసం రియల్-టైమ్ వాయిస్ అనువాదం",
+        choose_language: "🌍 మీ భాషను ఎంచుకోండి",
+        continue_button: "TradLive కి కొనసాగించండి",
+        how_it_works: "💡 ఇది ఎలా పని చేస్తుంది?",
+        instruction_1: "మీ భాషను పైన ఎంచుకోండి",
+        instruction_2: "గదిని సృష్టించండి లేదా ఉన్న దానిలో చేరండి",
+        instruction_3: "మీ భాషలో మాట్లాడండి, అందరికీ అర్థమవుతుంది!",
+        instruction_4: "ఒకేసారి 10 మంది వరకు పాల్గొనవచ్చు",
+
+        page_title_rooms: "TradLive - అనువాద గదులు",
+        back_button: "← హోమ్‌కు తిరిగి వెళ్ళు",
+        page_heading: "🌍 TradLive - మల్టీ-యూజర్ అనువాదం",
+        selected_language: "ఎంచుకున్న భాష:",
+        auto_join_notice: "✅ గది కోడ్ గుర్తించబడింది! ఆటోమేటిక్‌గా చేరడానికి మీ సమాచారం నింపండి।",
+        create_tab: "గదిని సృష్టించండి",
+        join_tab: "గదిలో చేరండి",
+        your_nickname: "మీ పేరు",
+        room_name: "గది పేరు",
+        room_password: "పాస్‌వర్డ్ (ఐచ్ఛికం)",
+        room_code: "గది కోడ్",
+        room_password_if_required: "పాస్‌వర్డ్ (అవసరమైతే)",
+        create_button: "🎉 గదిని సృష్టించండి",
+        join_button: "🚪 గదిలో చేరండి",
+        nickname_placeholder: "ఉదాహరణ: మేరీ",
+        room_name_placeholder: "ఉదాహరణ: టీమ్ మీటింగ్, ఇంగ్లీష్ క్లాస్...",
+        room_code_placeholder: "ఉదాహరణ: 1234",
+        password_placeholder: "పాస్‌వర్డ్ అక్కర్లేకపోతే ఖాళీగా వదిలేయండి",
+        password_if_required_placeholder: "పాస్‌వర్డ్ లేకపోతే ఖాళీగా వదిలేయండి",
+
+        page_title_room: "TradLive - అనువాద గది",
+        room_label: "గది:",
+        leave_button: "వదిలేయండి",
+        connecting: "కనెక్ట్ అవుతున్నది...",
+        share_room: "🔗 గదిని షేర్ చేయండి",
+        qr_instructions: "గదిలో నేరుగా చేరడానికి ఈ QR కోడ్‌ను స్కాన్ చేయండి:",
+        room_code_label: "గది కోడ్:",
+        qr_scan_instruction: "పాల్గొనేవారు ఆటోమేటిక్‌గా చేరడానికి స్కాన్ చేస్తారు",
+        connecting_room: "గదికి కనెక్ట్ అవుతున్నది...",
+        speak_french: "🎤 నొక్కండి మరియు మాట్లాడండి",
+        speak_your_language: "🎤 నొక్కండి మరియు మాట్లాడండి",
+        text_mode: "💬 టెక్స్ట్ మోడ్",
+        write_french_messages: "✍️ ఫ్రెంచ్‌లో వ్రాయండి",
+        write_your_language_messages: "✍️ మీ భాషలో వ్రాయండి",
+        write_french_placeholder: "ఇక్కడ ఫ్రెంచ్‌లో మీ సందేశం వ్రాయండి...",
+        write_your_language_placeholder: "ఇక్కడ మీ భాషలో మీ సందేశం వ్రాయండి...",
+        send_translation: "📤 అనువాదం పంపండి",
+        send_to_french: "📤 ఫ్రెంచ్‌కు పంపండి",
+        close_button: "❌ మూసేయండి",
+        what_you_say: "📝 మీరు చెప్పేది (ఫ్రెంచ్)",
+        participant_responses: "💬 పాల్గొనేవారి జవాబులు (ఫ్రెంచ్)",
+        host_message: "📝 హోస్ట్ సందేశం (ఫ్రెంచ్)",
+        translation_label: "అనువాదం",
+        your_language: "మీ భాష",
+        your_message: "💬 మీ సందేశం",
+        in_your_language: "మీ భాషలో:",
+        french_translation: "ఫ్రెంచ్ అనువాదం:",
+        participants_title: "పాల్గొనేవారు",
+        loading_participants: "జాబితా లోడ్ అవుతున్నది...",
+        waiting_your_message: "మీ సందేశం కోసం వేచి ఉన్నాం...",
+        waiting_responses: "జవాబుల కోసం వేచి ఉన్నాం...",
+        waiting_host_message: "హోస్ట్ సందేశం కోసం వేచి ఉన్నాం...",
+        waiting_translation: "అనువాదం కోసం వేచి ఉన్నాం...",
+
+        mic_incompatible: "మైక్రోఫోన్ సుసంగతం లేదు",
+        mic_incompatible_message: "మీ బ్రౌజర్ TradLive తో వాయిస్ రికగ్నిషన్ ఉపయోగించలేదు.",
+        solution: "పరిష్కారం:",
+        use_text_mode: "మీ సందేశాలు వ్రాయడానికి కింది టెక్స్ట్ ఫీల్డ్ ఉపయోగించండి.",
+        text_mode_activated: "టెక్స్ట్ మోడ్ సక్రియం చేయబడింది. కింది టెక్స్ట్ ఫీల్డ్ ఉపయోగించండి.",
+        host_badge: "హోస్ట్",
+        stop_button: "🎤 ఆపండి",
+        listening_french: "వింటున్నాను... ఫ్రెంచ్‌లో మాట్లాడండి.",
+        listening_your_language: "వింటున్నాను... మీ భాషలో మాట్లాడండి.",
+        recognizing: "గుర్తిస్తున్నాను: ",
+        network_problem: "నెట్‌వర్క్ సమస్య, మళ్లీ ప్రయత్నిస్తున్నాము...",
+        mic_permission_error: "❌ మైక్రోఫోన్ యాక్సెస్‌ను అనుమతించండి మరియు పేజీని రీలోడ్ చేయండి.",
+        mic_problem: "మైక్రోఫోన్ సమస్య. టెక్స్ట్ మోడ్ సక్రియం చేయబడింది.",
+        connected: "కనెక్ట్ చేయబడింది ✅",
+        reconnecting: "మళ్లీ కనెక్ట్ అవుతున్నది...",
+        no_participants: "పాల్గొనేవారు లేరు",
+        broadcasting: "అనువాదం ప్రసారం చేస్తున్నాము...",
+        message_sent: "వాయిస్ సింథసిస్‌తో సందేశం ప్రసారం చేయబడింది!",
+        sending_response: "మీ జవాబు పంపిస్తున్నాము...",
+        response_sent: "హోస్ట్‌కు జవాబు పంపబడింది!",
+        translating: "అనువదిస్తున్నాము...",
+        click_mic: "మాట్లాడటానికి మైక్రోఫోన్‌ను క్లిక్ చేయండి.",
+        confirm_leave: "మీరు నిజంగా గదిని వదిలేయాలని అనుకుంటున్నారా?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+     // సహాయ టూల్‌టిప్స్
+    tooltip_create_host: "మీరు సంభాషణకు హోస్ట్ అవుతారు",
+    tooltip_join_guest: "మీరు ఉన్న సంభాషణలో పాల్గొంటారు",
+    tooltip_nickname: "గుర్తింపు కోసం మీ పేరు టైప్ చేయండి",
+    tooltip_room_name: "మీ గదికి పేరు పెట్టండి (ఉదా: టీమ్ మీటింగ్, ఇంగ్లీష్ క్లాస్)",
+    tooltip_password_create: "మీ గదిని పాస్‌వర్డ్‌తో రక్షించండి (ఐచ్ఛికం)",
+    tooltip_room_code: "హోస్ట్ అందించిన 4 అంకెల కోడ్‌ను నమోదు చేయండి",
+    tooltip_password_join: "హోస్ట్ అందించిన పాస్‌వర్డ్‌ను నమోదు చేయండి",
+
+    // స్థితి సందేశాలు
+    room_created_success: "🎉 గది విజయవంతంగా సృష్టించబడింది!",
+    redirecting: "దారి మళ్లిస్తున్నాము...",
+    connection_success: "✅ కనెక్షన్ విజయవంతం! దారి మళ్లిస్తున్నాము...",
+    fill_required_fields: "దయచేసి అన్ని అవసరమైన ఫీల్డ్‌లను పూరించండి",
+    room_code_4_digits: "గది కోడ్‌లో 4 అంకెలు ఉండాలి",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "దయచేసి ఈ ఫీల్డ్‌ను పూరించండి",
+        validation_pattern: "కోడ్‌లో సరిగ్గా 4 అంకెలు ఉండాలి (ఉదాహరణ: 1234)",
+        validation_nickname: "పేరు అవసరం",
+        validation_room_name: "గది పేరు అవసరం",
+        validation_room_code: "గది కోడ్ అవసరం"
         
-        // Marquer comme configuré
-        document.body.classList.add('role-configured');
+    },
+
+    // 🇮🇳 मराठी
+    mr: {
+        page_title_home: "TradLive - रियल-टाईम अनुवाद",
+        tagline: "सर्वांसाठी रियल-टाईम व्हॉइस अनुवाद",
+        choose_language: "🌍 तुमची भाषा निवडा",
+        continue_button: "TradLive ला सुरू ठेवा",
+        how_it_works: "💡 हे कसे काम करते?",
+        instruction_1: "वर तुमची भाषा निवडा",
+        instruction_2: "खोली तयार करा किंवा विद्यमान खोलीत सामील व्हा",
+        instruction_3: "तुमच्या भाषेत बोला, सर्वांना समजेल!",
+        instruction_4: "एकाच वेळी 10 लोकांपर्यंत सहभागी होऊ शकतात",
+
+        page_title_rooms: "TradLive - अनुवाद खोल्या",
+        back_button: "← होमवर परत या",
+        page_heading: "🌍 TradLive - मल्टी-यूझर अनुवाद",
+        selected_language: "निवडलेली भाषा:",
+        auto_join_notice: "✅ खोलीचा कोड शोधला! आपोआप सामील होण्यासाठी तुमची माहिती भरा.",
+        create_tab: "खोली तयार करा",
+        join_tab: "खोलीत सामील व्हा",
+        your_nickname: "तुमचे नाव",
+        room_name: "खोलीचे नाव",
+        room_password: "पासवर्ड (पर्यायी)",
+        room_code: "खोलीचा कोड",
+        room_password_if_required: "पासवर्ड (आवश्यक असल्यास)",
+        create_button: "🎉 खोली तयार करा",
+        join_button: "🚪 खोलीत सामील व्हा",
+        nickname_placeholder: "उदाहरण: मेरी",
+        room_name_placeholder: "उदाहरण: टीम मीटिंग, इंग्रजी वर्ग...",
+        room_code_placeholder: "उदाहरण: 1234",
+        password_placeholder: "पासवर्ड नको असल्यास रिकामे ठेवा",
+        password_if_required_placeholder: "पासवर्ड नसल्यास रिकामे ठेवा",
+
+        page_title_room: "TradLive - अनुवाद खोली",
+        room_label: "खोली:",
+        leave_button: "बाहेर पडा",
+        connecting: "जोडत आहे...",
+        share_room: "🔗 खोली शेअर करा",
+        qr_instructions: "खोलीत थेट सामील होण्यासाठी हा QR कोड स्कॅन करा:",
+        room_code_label: "खोलीचा कोड:",
+        qr_scan_instruction: "सहभागी आपोआप सामील होण्यासाठी स्कॅन करतात",
+        connecting_room: "खोलीशी जोडत आहे...",
+        speak_french: "🎤 दाबा आणि बोला",
+        speak_your_language: "🎤 दाबा आणि बोला",
+        text_mode: "💬 टेक्स्ट मोड",
+        write_french_messages: "✍️ फ्रेंचमध्ये लिहा",
+        write_your_language_messages: "✍️ तुमच्या भाषेत लिहा",
+        write_french_placeholder: "येथे फ्रेंचमध्ये तुमचा संदेश लिहा...",
+        write_your_language_placeholder: "येथे तुमच्या भाषेत तुमचा संदेश लिहा...",
+        send_translation: "📤 अनुवाद पाठवा",
+        send_to_french: "📤 फ्रेंचमध्ये पाठवा",
+        close_button: "❌ बंद करा",
+        what_you_say: "📝 तुम्ही काय म्हणता (फ्रेंच)",
+        participant_responses: "💬 सहभागींची उत्तरे (फ्रेंच)",
+        host_message: "📝 होस्टचा संदेश (फ्रेंच)",
+        translation_label: "अनुवाद",
+        your_language: "तुमची भाषा",
+        your_message: "💬 तुमचा संदेश",
+        in_your_language: "तुमच्या भाषेत:",
+        french_translation: "फ्रेंच अनुवाद:",
+        participants_title: "सहभागी",
+        loading_participants: "यादी लोड करत आहे...",
+        waiting_your_message: "तुमच्या संदेशाची प्रतीक्षा...",
+        waiting_responses: "उत्तरांची प्रतीक्षा...",
+        waiting_host_message: "होस्टच्या संदेशाची प्रतीक्षा...",
+        waiting_translation: "अनुवादाची प्रतीक्षा...",
+
+        mic_incompatible: "मायक्रोफोन सुसंगत नाही",
+        mic_incompatible_message: "तुमचा ब्राउझर TradLive सह व्हॉइस रेकगनिशन वापरू शकत नाही.",
+        solution: "उपाय:",
+        use_text_mode: "तुमचे संदेश लिहिण्यासाठी खालील टेक्स्ट फील्ड वापरा.",
+        text_mode_activated: "टेक्स्ट मोड सक्रिय केला. खालील टेक्स्ट फील्ड वापरा.",
+        host_badge: "होस्ट",
+        stop_button: "🎤 थांबवा",
+        listening_french: "ऐकत आहे... फ्रेंचमध्ये बोला.",
+        listening_your_language: "ऐकत आहे... तुमच्या भाषेत बोला.",
+        recognizing: "ओळखत आहे: ",
+        network_problem: "नेटवर्क समस्या, पुन्हा प्रयत्न करत आहे...",
+        mic_permission_error: "❌ मायक्रोफोन प्रवेशास परवानगी द्या आणि पृष्ठ रीलोड करा.",
+        mic_problem: "मायक्रोफोन समस्या. टेक्स्ट मोड सक्रिय केला.",
+        connected: "जोडले गेले ✅",
+        reconnecting: "पुन्हा जोडत आहे...",
+        no_participants: "कोणतेही सहभागी नाहीत",
+        broadcasting: "अनुवाद प्रसारित करत आहे...",
+        message_sent: "व्हॉइस सिंथेसिससह संदेश प्रसारित केला!",
+        sending_response: "तुमचे उत्तर पाठवत आहे...",
+        response_sent: "होस्टला उत्तर पाठवले!",
+        translating: "अनुवाद करत आहे...",
+        click_mic: "बोलण्यासाठी मायक्रोफोनवर क्लिक करा.",
+        confirm_leave: "तुम्हाला खरोखर खोली सोडायची आहे का?",
+
+        lang_french: "Français",
+        lang_english: "English",
+        lang_spanish: "Español",
+        lang_german: "Deutsch",
+        lang_italian: "Italiano",
+        lang_portuguese: "Português",
+        lang_russian: "Русский",
+        lang_chinese: "中文",
+        lang_japanese: "日本語",
+        lang_arabic: "العربية",
+        lang_ukrainian: "Українська",
+        lang_persian: "فارسی",
+        lang_hindi: "हिन्दी",
+        lang_bengali: "বাংলা",
+        lang_telugu: "తెలుగు",
+        lang_marathi: "मराठी",
+
+    // सहाय्य टूलटिप्स
+    tooltip_create_host: "तुम्ही संभाषणाचे होस्ट असाल",
+    tooltip_join_guest: "तुम्ही विद्यमान संभाषणात सहभागी व्हाल",
+    tooltip_nickname: "ओळखीसाठी तुमचे नाव टाइप करा",
+    tooltip_room_name: "तुमच्या खोलीचे नाव द्या (उदा: टीम मीटिंग, इंग्रजी वर्ग)",
+    tooltip_password_create: "तुमची खोली पासवर्डने सुरक्षित करा (पर्यायी)",
+    tooltip_room_code: "होस्टने दिलेला 4 अंकी कोड प्रविष्ट करा",
+    tooltip_password_join: "होस्टने दिलेला पासवर्ड प्रविष्ट करा",
+
+     // स्थिती संदेश
+    room_created_success: "🎉 खोली यशस्वीरित्या तयार केली!",
+    redirecting: "पुनर्निर्देशित करत आहे...",
+    connection_success: "✅ कनेक्शन यशस्वी! पुनर्निर्देशित करत आहे...",
+    fill_required_fields: "कृपया सर्व आवश्यक फील्ड भरा",
+    room_code_4_digits: "खोलीच्या कोडमध्ये 4 अंक असावेत",
+
+        // AJOUTE ces 5 nouvelles lignes
+        validation_required: "कृपया हे फील्ड भरा",
+        validation_pattern: "कोडमध्ये नक्की 4 अंक असावेत (उदाहरण: 1234)",
+        validation_nickname: "नाव आवश्यक आहे",
+        validation_room_name: "खोलीचे नाव आवश्यक आहे",
+        validation_room_code: "खोलीचा कोड आवश्यक आहे"
         
-        console.log('👑 Interface hôte configurée');
-    } else {
-        // Interface participant
-        showElement('participant-controls');
-        showElement('participant-interface');
-        
-        // Marquer comme configuré  
-        document.body.classList.add('role-configured');
-        
-        console.log('👤 Interface participant configurée');
     }
-    
-    // Afficher les contrôles communs
-    showElement('controls');
-    animateElement('controls', 'slideInUp');
-}
-
-function handleConnectionError() {
-    reconnectAttempts++;
-    updateConnectionStatus(false);
-    
-    if (reconnectAttempts < maxReconnectAttempts) {
-        const delay = Math.min(reconnectAttempts * 1000, 5000);
-        console.log(`🔄 Tentative de reconnexion ${reconnectAttempts}/${maxReconnectAttempts} dans ${delay}ms`);
-        
-        setTimeout(() => loadRoomInfo(), delay);
-    } else {
-        const message = getTranslation('connection_failed') || 
-            'Impossible de se connecter à la salle';
-        showError(message);
-        
-        // Proposer le retour aux salles
-        setTimeout(() => {
-            const confirmMessage = getTranslation('return_to_rooms') || 
-                'Retourner à la liste des salles ?';
-            if (confirm(confirmMessage)) {
-                window.location.href = '/rooms';
-            }
-        }, 3000);
-    }
-}
-
-function updateConnectionStatus(connected) {
-    // Mettre à jour les DEUX éléments de statut
-    const connectionStatus = document.getElementById('connection-status');
-    const mainStatus = document.getElementById('status');
-    
-    if (connected) {
-        const message = getTranslation('connected') || 'Connecté ✅';
-        
-        // Petit statut en-tête
-        if (connectionStatus) {
-            connectionStatus.textContent = message;
-            connectionStatus.style.color = '#4CAF50';
-        }
-        
-        // Gros statut principal
-        if (mainStatus) {
-            mainStatus.textContent = message;
-            mainStatus.className = 'status connected show';
-        }
-        
-        animateElement('connection-status', 'pulse');
-    } else {
-        const message = getTranslation('reconnecting') || 
-            `Reconnexion... (${reconnectAttempts}/${maxReconnectAttempts})`;
-            
-        // Petit statut en-tête
-        if (connectionStatus) {
-            connectionStatus.textContent = message;
-            connectionStatus.style.color = '#f44336';
-        }
-        
-        // Gros statut principal  
-        if (mainStatus) {
-            mainStatus.textContent = message;
-            mainStatus.className = 'status error show';
-        }
-        
-        animateElement('connection-status', 'shake');
-    }
-}
-
-function updateParticipantsList() {
-    const participantsListEl = document.getElementById('participants-list');
-    const participantCountEl = document.getElementById('participant-count');
-    
-    if (!roomData?.users || !participantsListEl || !participantCountEl) return;
-    
-    const userCount = roomData.users.length;
-    
-    // CORRECTION : Éviter la recréation si rien n'a changé
-    const currentCount = participantCountEl.textContent;
-    if (currentCount === userCount.toString() && participantsListEl.children.length > 0) {
-        return; // Liste identique, pas de recréation
-    }
-    
-    participantCountEl.textContent = userCount;
-    
-    if (userCount === 0) {
-        const message = getTranslation('no_participants') || 'Aucun participant';
-        participantsListEl.innerHTML = `<div class="loading">${message}</div>`;
-        return;
-    }
-    
-    const hostBadgeText = getTranslation('host_badge') || 'HÔTE';
-    
-    participantsListEl.innerHTML = roomData.users.map(user => `
-        <div class="participant">
-            <div>
-                <span class="participant-name">${escapeHtml(user.nickname)}</span>
-                ${user.is_host ? `<span class="host-badge">${hostBadgeText}</span>` : ''}
-            </div>
-            <span class="participant-language">${getLanguageName(user.language)}</span>
-        </div>
-    `).join('');
-    
-    // Animation staggerée des participants
-    const participants = document.querySelectorAll('.participant');
-    participants.forEach((participant, index) => {
-        setTimeout(() => {
-            animateElement(participant, 'slideInLeft');
-        }, index * 100);
-    });
-}
-
-/* ========================================
-   RECONNAISSANCE VOCALE - FINALISÉE
-======================================== */
-function setupSpeechRecognition() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-       
-        console.log('❌ API de reconnaissance vocale non disponible');
-        const message = getTranslation('speech_not_supported') || 
-            'Reconnaissance vocale non supportée. Utilisez le mode texte.';
-        showError(message);
-        cleanInterfaceForTextOnly();
-        return;
-    }
-    
-    try {
-        if (isHost) {
-            setupHostRecognition(SpeechRecognition);
-        } else {
-            setupParticipantRecognition(SpeechRecognition);
-        }
-        console.log('✅ Reconnaissance vocale configurée avec succès');
-    } catch (error) {
-        console.error('❌ Erreur configuration reconnaissance vocale:', error);
-        cleanInterfaceForTextOnly();
-    }
-}
-
-function setupHostRecognition(SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.lang = 'fr-FR';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-    
-    recognition.onresult = function(event) {
-        const lastResultIndex = event.results.length - 1;
-        const transcript = event.results[lastResultIndex][0].transcript;
-        
-        if (event.results[lastResultIndex].isFinal) {
-            sendHostTranslation(transcript);
-        } else {
-            updateHostOriginalText(transcript);
-        }
-    };
-    
-    recognition.onerror = function(event) {
-        console.error('❌ Erreur reconnaissance hôte:', event.error);
-        handleRecognitionError(event.error, 'host');
-    };
-    
-    recognition.onend = function() {
-        if (isListening) {
-            tryRestartRecognition(recognition, 'host');
-        }
-    };
-}
-
-function setupParticipantRecognition(SpeechRecognition) {
-    participantRecognition = new SpeechRecognition();
-    participantRecognition.lang = getRecognitionLanguageCode(userData.language);
-    participantRecognition.continuous = true;
-    participantRecognition.interimResults = true;
-    participantRecognition.maxAlternatives = 1;
-    
-    participantRecognition.onstart = function() {
-        console.log('🎤 Reconnaissance démarrée');
-    };
-    
-    participantRecognition.onaudiostart = function() {
-        console.log('🔊 Audio détecté !');
-    };
-    
-    participantRecognition.onsoundstart = function() {
-        console.log('🎵 Son détecté !');
-    };
-    
-    participantRecognition.onspeechstart = function() {
-        console.log('🗣️ Parole détectée !');
-    };
-    
-    participantRecognition.onresult = function(event) {
-        console.log('📝 Résultat reçu:', event.results);
-        
-        const lastResultIndex = event.results.length - 1;
-        const transcript = event.results[lastResultIndex][0].transcript;
-        
-        if (event.results[lastResultIndex].isFinal) {
-            sendParticipantTranslation(transcript);
-        } else {
-            const message = getTranslation('recognizing') || 'En cours: ';
-            showStatus(message + transcript, 'info');
-        }
-    };
-    
-    participantRecognition.onerror = function(event) {
-        console.error('❌ Erreur reconnaissance participant:', event.error);
-        handleRecognitionError(event.error, 'participant');
-    };
-    
-    participantRecognition.onend = function() {
-        if (isParticipantListening) {
-            tryRestartRecognition(participantRecognition, 'participant');
-        }
-    };
-}
-
-function tryRestartRecognition(recognitionInstance, type) {
-    try {
-        recognitionInstance.start();
-    } catch (error) {
-        console.warn(`⚠️ Impossible de redémarrer la reconnaissance ${type}:`, error);
-        if (type === 'host') {
-            stopHostListening();
-        } else {
-            stopParticipantListening();
-        }
-    }
-}
-
-function handleRecognitionError(error, type) {
-    switch (error) {
-        case 'network':
-            handleNetworkError(type);
-            break;
-        case 'not-allowed':
-            handlePermissionError(type);
-            break;
-        case 'no-speech':
-            console.log('🤫 Pas de parole détectée, continue...');
-            break;
-        default:
-            handleGenericError(error, type);
-    }
-}
-
-function handleNetworkError(type) {
-    networkErrorCount++;
-    console.log(`🌐 Problème réseau (${networkErrorCount}/3), réessai...`);
-    
-    if (networkErrorCount >= 3) {
-        console.log('❌ Trop d\'erreurs réseau, basculement mode texte');
-        
-        if (window.TradLive?.notifications) {
-            window.TradLive.notifications.show(
-                'Connexion instable détectée. Basculement en mode texte.',
-                'warning',
-                { duration: 8000 }
-            );
-        }
-        
-        cleanInterfaceForTextOnly();
-        type === 'host' ? stopHostListening() : stopParticipantListening();
-        return;
-    }
-    
-    const message = getTranslation('network_problem') || 
-        `Problème réseau, nouvelle tentative... (${networkErrorCount}/3)`;
-    showStatus(message, 'info');
-}
-
-function handlePermissionError(type) {
-    const message = getTranslation('mic_permission_error') || 
-        '❌ Autorisez le microphone et rechargez la page.';
-    showError(message);
-    
-    if (window.TradLive?.notifications) {
-        window.TradLive.notifications.show(
-            'Accès au microphone requis',
-            'error',
-            { duration: 10000 }
-        );
-    }
-    
-    type === 'host' ? stopHostListening() : stopParticipantListening();
-}
-
-function handleGenericError(error, type) {
-    console.log('❌ Erreur reconnaissance:', error);
-    const message = getTranslation('mic_problem') || 
-        'Problème micro. Mode texte activé.';
-    showError(message);
-    
-    if (type === 'host') {
-        showTextInput();
-        stopHostListening();
-    } else {
-        showParticipantTextInput();
-        stopParticipantListening();
-    }
-}
-
-/* ========================================
-   CONTRÔLES MICROPHONE - FINALISÉS
-======================================== */
-function toggleHostListening() {
-    console.log('🎤 Toggle micro hôte, état actuel:', isListening);
-    isListening ? stopHostListening() : startHostListening();
-}
-
-function startHostListening() {
-    console.log('🎤 Démarrage micro hôte...');
-    
-    if (!recognition) {
-        console.log('⚠️ Recréation de la reconnaissance...');
-        setupSpeechRecognition();
-        if (!recognition) {
-            console.log('❌ Échec création reconnaissance, mode texte');
-            showTextInput();
-            return;
-        }
-    }
-    
-    // Demander permission microphone
-    navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
-            try {
-                recognition.start();
-                isListening = true;
-                networkErrorCount = 0;
-                
-                updateMicButtonState(micButton, true, 'stop_button');
-                showElement(waveAnimation, true);
-                
-                const message = getTranslation('listening_french') || 
-                    'En écoute... Parlez en français.';
-                showStatus(message, 'info');
-                
-                notifySuccess('🎤 Microphone activé');
-                console.log('✅ Reconnaissance vocale hôte démarrée');
-            } catch (error) {
-                console.error('❌ Erreur démarrage reconnaissance:', error);
-                handleStartupError('host');
-            }
-        })
-        .catch(error => {
-            console.error('❌ Erreur accès microphone hôte:', error);
-            handleMicrophoneAccessError('host');
-        });
-}
-
-function stopHostListening() {
-    if (recognition) recognition.stop();
-    isListening = false;
-    
-    updateMicButtonState(micButton, false, 'speak_french');
-    hideElement(waveAnimation);
-    
-    const message = getTranslation('click_mic') || 
-        'Cliquez sur le micro pour parler.';
-    showStatus(message, 'connected');
-    
-    console.log('🎤 Microphone hôte arrêté');
-}
-
-function toggleParticipantListening() {
-    console.log('🎤 Toggle micro participant, état actuel:', isParticipantListening);
-    isParticipantListening ? stopParticipantListening() : startParticipantListening();
-}
-
-function startParticipantListening() {
-    console.log('🎤 Démarrage micro participant...');
-    
-    if (!participantRecognition) {
-        console.log('⚠️ Recréation de la reconnaissance participant...');
-        setupSpeechRecognition();
-        if (!participantRecognition) {
-            console.log('❌ Échec création reconnaissance participant, mode texte');
-            showParticipantTextInput();
-            return;
-        }
-    }
-    
-    navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
-            try {
-                participantRecognition.start();
-                isParticipantListening = true;
-                
-                updateMicButtonState(participantMicButton, true, 'stop_button');
-                showElement(participantWave, true);
-                
-                const langName = getLanguageName(userData.language);
-                const message = getTranslation('listening_your_language') || 
-                    `En écoute... Parlez en ${langName}.`;
-                showStatus(message, 'info');
-                
-                notifySuccess('🎤 Microphone activé');
-                console.log('✅ Reconnaissance vocale participant démarrée');
-            } catch (error) {
-                console.error('❌ Erreur démarrage reconnaissance participant:', error);
-                handleStartupError('participant');
-            }
-        })
-        .catch(error => {
-            console.error('❌ Erreur accès microphone participant:', error);
-            handleMicrophoneAccessError('participant');
-        });
-}
-
-function stopParticipantListening() {
-    if (participantRecognition) participantRecognition.stop();
-    isParticipantListening = false;
-    
-    updateMicButtonState(participantMicButton, false, 'speak_your_language');
-    hideElement(participantWave);
-    
-    const message = getTranslation('click_mic') || 
-        'Cliquez sur le micro pour parler.';
-    showStatus(message, 'connected');
-    
-    console.log('🎤 Microphone participant arrêté');
-}
-
-function updateMicButtonState(button, isActive, textKey) {
-    if (!button) return;
-    
-    const text = getTranslation(textKey) || button.textContent;
-    button.textContent = text;
-    
-    if (isActive) {
-        button.classList.add('active');
-    } else {
-        button.classList.remove('active');
-    }
-}
-
-function handleStartupError(type) {
-    const message = getTranslation('recognition_start_error') || 
-        'Erreur démarrage reconnaissance. Mode texte activé.';
-    showError(message);
-    
-    if (type === 'host') {
-        showTextInput();
-    } else {
-        showParticipantTextInput();
-    }
-}
-
-function handleMicrophoneAccessError(type) {
-    const message = getTranslation('mic_access_error') || 
-        'Impossible d\'accéder au microphone. Mode texte activé.';
-    showError(message);
-    
-    if (type === 'host') {
-        showTextInput();
-    } else {
-        showParticipantTextInput();
-    }
-}
-
-/* ========================================
-   ENVOI DES TRADUCTIONS - FINALISÉ
-======================================== */
-function sendHostTranslation(text) {
-    if (!text?.trim()) return;
-    
-    console.log('📤 Envoi traduction hôte:', text.substring(0, 50) + '...');
-    
-    const message = getTranslation('broadcasting') || 
-        'Diffusion de la traduction...';
-    showStatus(message, 'info');
-    
-    updateHostOriginalText(text);
-    
-    const requestData = {
-        user_id: userData.user_id,
-        text: text,
-        source_language: 'fr'
-    };
-    
-    console.log('🟢 Données envoyées:', requestData);
-    console.log('🟢 URL:', `/api/room/${userData.room_id}/translate`);
-    
-    makeApiRequest(`/api/room/${userData.room_id}/translate`, 'POST', requestData)
-        .then(data => {
-            console.log('🟢 Réponse API reçue:', data);
-            
-            if (data.success) {
-                const successMessage = getTranslation('message_sent') || 
-                    'Message diffusé avec synthèse vocale !';
-                showStatus(successMessage, 'connected');
-                
-                notifySuccess('📤 Message diffusé');
-                
-                // Émettre événement
-                emitEvent('translation:sent', {
-                    text: text,
-                    type: 'host',
-                    language: 'fr'
-                });
-            } else {
-                console.log('🔴 API erreur:', data.error);
-                throw new Error(data.error || 'Erreur de traduction');
-            }
-        })
-        .catch(error => {
-            console.error('🔴 Erreur complète:', error);
-            showError('Erreur envoi traduction: ' + error.message);
-            notifyError('Erreur d\'envoi');
-        });
-}
-
-function sendParticipantTranslation(text) {
-    if (!text?.trim()) return;
-    
-    console.log('📤 Envoi traduction participant:', text.substring(0, 50) + '...');
-    
-    const message = getTranslation('sending_response') || 
-        'Envoi de votre réponse...';
-    showStatus(message, 'info');
-    
-    updateParticipantOwnText(text);
-    
-    const requestData = {
-        user_id: userData.user_id,
-        text: text,
-        source_language: userData.language,
-        target_language: 'fr'
-    };
-    
-    makeApiRequest(`/api/room/${userData.room_id}/translate`, 'POST', requestData)
-        .then(data => {
-            if (data.success) {
-                const successMessage = getTranslation('response_sent') || 
-                    'Réponse envoyée à l\'hôte !';
-                showStatus(successMessage, 'connected');
-                
-                notifySuccess('📤 Réponse envoyée');
-                
-                updateParticipantFrenchText();
-                
-                // Émettre événement
-                emitEvent('translation:sent', {
-                    text: text,
-                    type: 'participant',
-                    language: userData.language
-                });
-            } else {
-                throw new Error(data.error || 'Erreur de traduction');
-            }
-        })
-        .catch(error => {
-            console.error('❌ Erreur envoi traduction participant:', error);
-            showError('Erreur envoi traduction: ' + error.message);
-            notifyError('Erreur d\'envoi');
-        });
-}
-
-function updateHostOriginalText(text) {
-    if (hostOriginalText) {
-        hostOriginalText.textContent = text;
-        hostOriginalText.classList.remove('empty-translation');
-        animateElement(hostOriginalText, 'pulse');
-    }
-}
-
-function updateParticipantOwnText(text) {
-    if (participantOwnText && participantMessageArea) {
-        participantOwnText.textContent = text;
-        showElement(participantMessageArea);
-        animateElement(participantMessageArea, 'slideInUp');
-    }
-}
-
-function updateParticipantFrenchText() {
-    if (participantFrenchText) {
-        const translatingMessage = getTranslation('translating') || 
-            'Traduction en cours...';
-        participantFrenchText.textContent = translatingMessage;
-        animateElement(participantFrenchText, 'pulse');
-    }
-}
-
-/* ========================================
-   MODE TEXTE - FINALISÉ
-======================================== */
-function showTextInput() {
-    console.log('📝 Affichage mode texte hôte');
-   // SOLUTION : Utiliser directement getElementById
-    const textInputFallback = document.getElementById('text-input-fallback');
-    
-    if (textInputFallback) {
-        textInputFallback.classList.add('show');
-        
-        const textInput = document.getElementById('text-input');
-        if (textInput) {
-            setTimeout(() => {
-             try {
-                 textInput.focus();
-             } catch (e) {
-                 console.log('Focus interrompu par extension, pas grave');
-             }
-         }, 300);
-        }
-        
-        animateElement(textInputFallback, 'slideInUp');
-        console.log('✅ Mode texte hôte activé');
-    } else {
-        console.log('❌ Élément text-input-fallback introuvable');
-    }
-}
-
-function hideTextInput() {
-    console.log('📝 Masquage mode texte hôte');
-    const textInputFallback = document.getElementById('text-input-fallback');
-    if (textInputFallback) {
-        textInputFallback.classList.remove('show');
-        animateElement(textInputFallback, 'fadeOut');
-    }
-}
-
-function sendHostText() {
-    console.log('🟢 sendHostText() appelée');
-    
-    const textInput = document.getElementById('text-input');
-    console.log('🟢 textInput trouvé:', textInput);
-    
-    if (!textInput) return;
-    
-    const text = textInput.value.trim();
-    console.log('🟢 Texte récupéré:', text);
-    
-    if (text) {
-        console.log('🟢 Appel sendHostTranslation avec:', text);
-        sendHostTranslation(text);
-        textInput.value = '';
-        hideTextInput();
-    } else {
-        console.log('🔴 Texte vide !');
-    }
-}
-
-function showParticipantTextInput() {
-    console.log('📝 Affichage mode texte participant');
-// SOLUTION : Utiliser directement getElementById
-    const participantTextInput = document.getElementById('participant-text-input');
-    
-    if (participantTextInput) {
-        participantTextInput.classList.add('show');
-        
-        const textInput = document.getElementById('participant-text');
-        if (textInput) {
-            setTimeout(() => {
-                try {
-                    textInput.focus();
-                } catch (e) {
-                    console.log('Focus interrompu par extension, pas grave');
-                }
-            }, 300);
-        }
-        
-        animateElement(participantTextInput, 'slideInUp');
-        console.log('✅ Mode texte participant activé');
-    } else {
-        console.log('❌ Élément participant-text-input introuvable');
-    }
-}
-
-function hideParticipantTextInput() {
-    console.log('📝 Masquage mode texte participant');
-    const participantTextInput = document.getElementById('participant-text-input');
-    if (participantTextInput) {
-        participantTextInput.classList.remove('show');
-        animateElement(participantTextInput, 'fadeOut');
-    }
-}
-
-function sendParticipantText() {
-    console.log('🟢 sendParticipantText() appelée');
-    
-    const textInput = document.getElementById('participant-text');
-    console.log('🟢 textInput trouvé:', textInput);
-    
-    if (!textInput) return;
-    
-    const text = textInput.value.trim();
-    console.log('🟢 Texte récupéré:', text);
-    
-    if (text) {
-        console.log('🟢 Appel sendParticipantTranslation avec:', text);
-        sendParticipantTranslation(text);
-        textInput.value = '';
-        hideParticipantTextInput();
-    } else {
-        console.log('🔴 Texte vide !');
-    }
-}
-
-/* ========================================
-   MISES À JOUR TEMPS RÉEL - FINALISÉES
-======================================== */
-function startRealTimeUpdates() {
-      // CORRECTION : Éviter les intervals multiples
-    if (updateInterval) {
-        clearInterval(updateInterval);
-        updateInterval = null;
-    }
-    
-    updateInterval = setInterval(() => {
-        const url = `/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`;
-        
-            makeApiRequest(url)
-    .then(data => {
-      //  console.log('🟢 Mises à jour reçues:', data);
-        
-        if (data.success) {
-            reconnectAttempts = 0;
-            updateConnectionStatus(true);
-            
-           // console.log('🟢 Appel processRoomUpdates avec:', data);
-            processRoomUpdates(data);
-            
-            // Émettre événement de mise à jour
-            emitEvent('room:updated', data);
-        }
-    })
-    .catch(error => {
-        console.error('❌ Erreur mise à jour:', error);
-        reconnectAttempts++;
-        updateConnectionStatus(false);
-        
-        // Notification après plusieurs échecs
-        if (reconnectAttempts >= 3) {
-            notifyWarning('Problème de connexion détecté');
-        }
-    });
-        
-        // Recharger les infos de salle périodiquement
-        if (Date.now() % 20000 < 3000) {
-            loadRoomInfo();
-        }
-    }, 3000);
-    
-    console.log('🔄 Mises à jour temps réel démarrées');
-}
-
-function processRoomUpdates(data) {
- //   console.log('🟢 processRoomUpdates appelée avec:', data);
-    
-    // CORRECTION : Accéder aux bonnes données
-    const actualData = data.data || data;
-   // console.log('🟢 isHost:', isHost);
-   // console.log('🟢 actualData.original:', actualData.original);
-   // console.log('🟢 actualData.translated:', actualData.translated);
-    
-    if (isHost) {
-        // Interface hôte : afficher les réponses des participants
-        if (actualData.original && !actualData.show_translation) {
-            const hostResponsesText = document.getElementById('host-responses-text');
-            if (hostResponsesText) {
-                hostResponsesText.textContent = actualData.original;
-                hostResponsesText.classList.remove('empty-translation');
-                animateElement(hostResponsesText, 'pulse');
-            }
-        }
-    } else {
-        // Interface participant : afficher les messages de l'hôte traduits
-        if (actualData.original && actualData.show_translation) {
-            const participantOriginalText = document.getElementById('participant-original-text');
-            if (participantOriginalText) {
-                participantOriginalText.textContent = actualData.original;
-                participantOriginalText.classList.remove('empty-translation');
-            }
-            
-            const participantTranslatedText = document.getElementById('participant-translated-text');
-            if (actualData.translated && participantTranslatedText) {
-                participantTranslatedText.textContent = actualData.translated;
-                participantTranslatedText.classList.remove('empty-translation');
-                animateElement(participantTranslatedText, 'pulse');
-                
-                // Synthèse vocale avec ID unique pour éviter les répétitions
-                if (actualData.enable_speech) {
-                    const translationId = `${actualData.timestamp}_${actualData.translated.substring(0, 20)}`;
-                    console.log('🎵 Lecture traduction:', actualData.translated.substring(0, 30) + '...');
-                    speakText(actualData.translated, userData.language, translationId);
-                }
-            }
-        }
-    }
-}
-
-function startHeartbeat() {
-    heartbeatInterval = setInterval(() => {
-        const url = `/api/room/${userData.room_id}/heartbeat`;
-        const requestData = { user_id: userData.user_id };
-        
-        makeApiRequest(url, 'POST', requestData)
-            .catch(error => {
-                console.warn('⚠️ Heartbeat échoué:', error);
-                reconnectAttempts++;
-                updateConnectionStatus(false);
-            });
-    }, 10000);
-    
-    console.log('💓 Heartbeat démarré');
-}
-
-/* ========================================
-   FONCTIONS UTILITAIRES - FINALISÉES
-======================================== */
-function setupButtonListeners() {
-    console.log('🔧 Configuration des événements boutons...');
-
-    // DIAGNOSTIC : Vérifier si les boutons existent
-    //console.log('micButton:', micButton);
-    //console.log('textModeButton:', textModeButton);
-    //console.log('participantMicButton:', participantMicButton);
-    //console.log('participantTextButton:', participantTextButton);
-
-    // DIAGNOSTIC DIRECT : Chercher les éléments dans le DOM
-    //console.log('Direct mic-button:', document.getElementById('mic-button'));
-    //console.log('Direct text-mode-button:', document.getElementById('text-mode-button'));
-    //console.log('Direct participant-mic-button:', document.getElementById('participant-mic-button'));
-    //console.log('Direct participant-text-button:', document.getElementById('participant-text-button'));
-
-       // SOLUTION : Utiliser directement getElementById
-    const micBtn = document.getElementById('mic-button');
-    const textBtn = document.getElementById('text-mode-button');
-    const partMicBtn = document.getElementById('participant-mic-button');
-    const partTextBtn = document.getElementById('participant-text-button');
-    
-    // Debouncing pour éviter les clics multiples
-    const debouncedToggleHost = debounce(toggleHostListening, 300);
-    const debouncedToggleParticipant = debounce(toggleParticipantListening, 300);
-    
-    // Boutons hôte
-    if (micBtn) micBtn.addEventListener('click', debouncedToggleHost);
-    if (textBtn) textBtn.addEventListener('click', showTextInput);
-    
-    // Boutons participant  
-    if (partMicBtn) partMicBtn.addEventListener('click', debouncedToggleParticipant);
-    if (partTextBtn) partTextBtn.addEventListener('click', showParticipantTextInput);
-    
-    console.log('✅ Événements boutons configurés');
-}
-
-function addEventListenerOnce(element, event, handler) {
-    if (element && !element.hasAttribute('data-listener')) {
-        element.addEventListener(event, handler);
-        element.setAttribute('data-listener', 'true');
-    }
-}
-
-function updateQRCode() {
-       console.log('🔍 updateQRCode() appelée');
-       console.log('🔍 qrCodeImage:', qrCodeImage);
-       console.log('🔍 userData:', userData);
-       console.log('🔍 userData.room_id:', userData.room_id);
-    if (!qrCodeImage) return;
-    
-    const roomUrl = `${window.location.origin}/?auto_join=true&room_id=${userData.room_id}`;
-    // SUPPRESSION du timestamp qui causait les rechargements
-    qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}`;
-    
-    qrCodeImage.onerror = function() {
-        console.warn('⚠️ Erreur chargement QR code');
-        this.style.display = 'none';
-        
-        const fallback = document.createElement('div');
-        fallback.innerHTML = `
-            <div style="padding: 20px; text-align: center; background: #f0f0f0; border-radius: 10px; color: #333;">
-                <h3>🔗 Lien de partage</h3>
-                <p style="font-family: monospace; word-break: break-all; font-size: 12px;">${roomUrl}</p>
-            </div>
-        `;
-        this.parentNode.appendChild(fallback);
-    };
-}
-
-function leaveRoom() {
-    const confirmMessage = getTranslation('confirm_leave') || 
-        'Êtes-vous sûr de vouloir quitter la salle ?';
-    
-    if (confirm(confirmMessage)) {
-        console.log('🚪 Départ de la salle...');
-        
-        notifyInfo('Déconnexion en cours...');
-        
-        // Arrêter toutes les activités
-        cleanup();
-        
-        // Émettre événement de départ
-        emitEvent('room:leaving', {
-            roomId: userData.room_id,
-            userId: userData.user_id
-        });
-        
-        // Notifier le serveur
-        const requestData = { user_id: userData.user_id };
-        makeApiRequest(`/api/room/${userData.room_id}/leave`, 'POST', requestData)
-            .finally(() => {
-                // Nettoyer le stockage et rediriger
-                removeStorageItem('tradlive_user');
-                window.location.href = '/rooms';
-            });
-    }
-}
-
-function cleanup() {
-    console.log('🧹 Nettoyage des ressources...');
-    
-    // Arrêter les intervalles
-    if (updateInterval) {
-        clearInterval(updateInterval);
-        updateInterval = null;
-    }
-    if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-    }
-    
-    // Arrêter la reconnaissance vocale
-    if (isListening) stopHostListening();
-    if (isParticipantListening) stopParticipantListening();
-    
-    // Arrêter la synthèse vocale
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-    }
-}
-
-/* ========================================
-   FONCTIONS D'AIDE - FINALISÉES
-======================================== */
-function getTranslation(key, defaultValue = null) {
-    if (window.TRADLIVE_TRANSLATIONS && window.interfaceLanguage) {
-        return window.TRADLIVE_TRANSLATIONS[window.interfaceLanguage][key] || defaultValue || key;
-    }
-    return defaultValue || key;
-}
-
-function getStorageItem(key, defaultValue = null) {
-    if (window.TradLive?.storage) {
-        return window.TradLive.storage.get(key, defaultValue);
-    }
-    try {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : defaultValue;
-    } catch {
-        return defaultValue;
-    }
-}
-
-function setStorageItem(key, value) {
-    if (window.TradLive?.storage) {
-        return window.TradLive.storage.set(key, value);
-    }
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-function removeStorageItem(key) {
-    if (window.TradLive?.storage) {
-        return window.TradLive.storage.remove(key);
-    }
-    try {
-        localStorage.removeItem(key);
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-function makeApiRequest(url, method = 'GET', data = null) {
-    if (window.TradLive?.network) {
-        return method === 'GET' ? 
-            window.TradLive.network.get(url) : 
-            window.TradLive.network.post(url, data);
-    }
-    
-    // Fallback sans TradLive
-    const options = {
-        method,
-        headers: { 'Content-Type': 'application/json' }
-    };
-    
-    if (data && method !== 'GET') {
-        options.body = JSON.stringify(data);
-    }
-    
-    return fetch(url, options)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            return response.json();
-        });
-}
-
-function animateElement(element, animationType = 'fadeIn') {
-    // Si c'est une string, récupérer l'élément par ID
-    if (typeof element === 'string') {
-        element = document.getElementById(element);
-    }
-    
-    if (!element) return;
-    
-    if (window.TradLive?.animations && window.TradLive.animations[animationType]) {
-        window.TradLive.animations[animationType](element);
-    } else {
-        // Fallback CSS simple
-        element.style.animation = `${animationType} 0.3s ease`;
-        setTimeout(() => {
-            element.style.animation = '';
-        }, 300);
-    }
-}
-
-function showElement(element, addClass = false) {
-    // Si c'est une string, récupérer l'élément par ID
-    if (typeof element === 'string') {
-        element = document.getElementById(element);
-    }
-    
-    if (element) {
-        element.style.display = 'block';
-        if (addClass && element.classList) {
-            element.classList.add('active');
-        }
-    }
-}
-
-function hideElement(element) {
-    if (element) {
-        element.style.display = 'none';
-        if (element.classList) {
-            element.classList.remove('active');
-        }
-    }
-}
-
-function showStatus(message, type = 'info') {
-    if (!statusEl) return;
-    
-    statusEl.textContent = message;
-    statusEl.className = `status ${type}`;
-    statusEl.style.display = 'block';
-    
-    animateElement(statusEl, 'slideInUp');
-}
-
-function showError(message) {
-    console.error('💥 Erreur:', message);
-    showStatus(message, 'error');
-    
-    if (statusEl) {
-        animateElement(statusEl, 'shake');
-    }
-    
-    notifyError(message);
-}
-
-function notifySuccess(message) {
-    if (window.TradLive?.notifications) {
-        window.TradLive.notifications.show(message, 'success', { duration: 3000 });
-    }
-}
-
-function notifyError(message) {
-    if (window.TradLive?.notifications) {
-        window.TradLive.notifications.show(message, 'error', { duration: 5000 });
-    }
-}
-
-function notifyWarning(message) {
-    if (window.TradLive?.notifications) {
-        window.TradLive.notifications.show(message, 'warning', { duration: 5000 });
-    }
-}
-
-function notifyInfo(message) {
-    if (window.TradLive?.notifications) {
-        window.TradLive.notifications.show(message, 'info', { duration: 2000 });
-    }
-}
-
-function emitEvent(eventName, data = {}) {
-    if (window.TradLive?.events) {
-        window.TradLive.events.emit(eventName, data);
-    }
-}
-
-function debounce(func, wait) {
-    if (window.TradLive?.utils?.debounce) {
-        return window.TradLive.utils.debounce(func, wait);
-    }
-    
-    // Fallback simple
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-/* ========================================
-   GESTION DES ÉVÉNEMENTS GLOBAUX - FINALISÉE
-======================================== */
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        if (document.getElementById('text-input') === document.activeElement) {
-            e.preventDefault();
-            sendHostText();
-        } else if (document.getElementById('participant-text') === document.activeElement) {
-            e.preventDefault();
-            sendParticipantText();
-        }
-    }
-    
-    // Raccourcis clavier avancés
-    if (e.ctrlKey || e.metaKey) {
-        switch(e.key) {
-            case 'm': // Ctrl+M pour microphone
-                e.preventDefault();
-                isHost ? toggleHostListening() : toggleParticipantListening();
-                break;
-            case 't': // Ctrl+T pour mode texte
-                e.preventDefault();
-                isHost ? showTextInput() : showParticipantTextInput();
-                break;
-            case 'q': // Ctrl+Q pour quitter
-                e.preventDefault();
-                leaveRoom();
-                break;
-        }
-    }
-});
-
-window.addEventListener('beforeunload', function(e) {
-    cleanup();
-    
-    // Envoyer signal de déconnexion optimisé
-    if (userData && navigator.sendBeacon) {
-        const data = JSON.stringify({ user_id: userData.user_id });
-        navigator.sendBeacon(`/api/room/${userData.room_id}/leave`, data);
-    }
-    
-    emitEvent('room:beforeunload', {
-        roomId: userData?.room_id,
-        userId: userData?.user_id
-    });
-});
-
-// Optimisation batterie pour mobile
-//document.addEventListener('visibilitychange', function() {
-//    if (document.hidden) {
-//        console.log('📱 Page cachée, optimisation batterie');
-//        // CORRECTION : Bien nettoyer l'ancien interval
-//        if (updateInterval) {
-//            clearInterval(updateInterval);
-//            updateInterval = null;
-//        }
-//        // Créer un interval moins fréquent pour heartbeat seulement
-//        updateInterval = setInterval(() => {
-//            const requestData = { user_id: userData.user_id };
-//            makeApiRequest(`/api/room/${userData.room_id}/heartbeat`, 'POST', requestData)
-//                .catch(() => console.warn('⚠️ Heartbeat failed while hidden'));
-//        }, 10000);
-//    } else {
-//        console.log('📱 Page visible, restauration normale');
-//        // CORRECTION : Bien nettoyer avant de recréer
-//        if (updateInterval) {
-//            clearInterval(updateInterval);
-//            updateInterval = null;
-//        }
-//        // Redémarrer les mises à jour normales
-//        startRealTimeUpdates();
-//    }
-//});
-
-/* ========================================
-   INITIALISATION AUTOMATIQUE - FINALISÉE
-======================================== */
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🏠 TradLive - Initialisation de la salle de traduction...');
-    
-    // Initialiser la langue d'interface
-    window.interfaceLanguage = getStorageItem('tradlive_language', 'fr');
-    
-    // Appliquer les traductions immédiatement
-    if (window.applyTranslations && window.interfaceLanguage) {
-        applyTranslations(window.interfaceLanguage);
-    }
-    
-    // Animation d'entrée de page
-    setTimeout(() => {
-        const container = document.querySelector('.room-container');
-        if (container) {
-            container.classList.add('loaded');
-        }
-    }, 100);
-    
-    // Initialiser la logique de la salle
-    try {
-        initializeRoom();
-    } catch (error) {
-        console.error('❌ Erreur critique lors de l\'initialisation:', error);
-        showError('Erreur d\'initialisation. Veuillez recharger la page.');
-    }
-});
-
-/* ========================================
-   EXPORT DES FONCTIONS GLOBALES - FINALISÉ
-======================================== */
-// Export sécurisé des fonctions principales
-const exportedFunctions = {
-    initializeRoom,
-    leaveRoom,
-    showTextInput,
-    hideTextInput,
-    sendHostText,
-    showParticipantTextInput,
-    hideParticipantTextInput,
-    sendParticipantText,
-    toggleHostListening,
-    toggleParticipantListening,
-    showStatus,
-    showError,
-    getLanguageName,
-    cleanup
 };
 
-Object.entries(exportedFunctions).forEach(([name, func]) => {
-    if (typeof func === 'function') {
-        window[name] = func;
-    }
-});
+/* ========================================
+   FONCTIONS D'APPLICATION DES TRADUCTIONS
+======================================== */
 
-// Émettre événement de chargement
-if (window.TradLive?.events) {
-    window.TradLive.events.on('app:ready', function() {
-        console.log('🎤 Room.js intégré avec le framework TradLive');
+// Fonction principale pour appliquer les traductions
+function applyTranslations(langCode) {
+    if (!TRADLIVE_TRANSLATIONS[langCode]) {
+        console.warn(`Langue ${langCode} non supportée, utilisation du français`);
+        langCode = 'fr';
+    }
+    
+    const translations = TRADLIVE_TRANSLATIONS[langCode];
+    
+    // Appliquer les traductions pour tous les éléments avec data-translate
+    document.querySelectorAll('[data-translate]').forEach(element => {
+        const key = element.getAttribute('data-translate');
+        if (translations[key]) {
+            element.textContent = translations[key];
+        }
     });
+    
+    // Appliquer les traductions pour les placeholders
+    document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+        const key = element.getAttribute('data-translate-placeholder');
+        if (translations[key]) {
+            element.placeholder = translations[key];
+        }
+    });
+    
+    console.log(`🌍 Traductions appliquées: ${langCode}`);
 }
 
-console.log('✅ TradLive Room.js VERSION FINALE chargé - Production Ready');
-console.log('🌐 Application déployée sur: https://tradlive-app.onrender.com');
+// Fonction pour obtenir une traduction spécifique
+function getTranslation(key, langCode = 'fr') {
+    if (!TRADLIVE_TRANSLATIONS[langCode] || !TRADLIVE_TRANSLATIONS[langCode][key]) {
+        return TRADLIVE_TRANSLATIONS.fr[key] || key;
+    }
+    return TRADLIVE_TRANSLATIONS[langCode][key];
+}
 
-// Vérification d'intégration finale
-setTimeout(() => {
-    const integrationCheck = {
-        translations: !!window.TRADLIVE_TRANSLATIONS,
-        common: !!window.TradLive,
-        roomLogic: typeof initializeRoom === 'function',
-        voiceRecognition: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
-        speechSynthesis: 'speechSynthesis' in window
-    };
-    
-    console.log('🔍 Vérification intégration finale:', integrationCheck);
-    
-    const score = Object.values(integrationCheck).filter(Boolean).length;
-    console.log(`📊 Score d'intégration: ${score}/5 (${score >= 4 ? '✅ Excellent' : score >= 3 ? '⚠️ Bon' : '❌ Problème'})`);
-}, 1000);
+// Export pour compatibilité
+if (typeof window !== 'undefined') {
+    window.TRADLIVE_TRANSLATIONS = TRADLIVE_TRANSLATIONS;
+    window.applyTranslations = applyTranslations;
+    window.getTranslation = getTranslation;
+}
+
+console.log('🌍 TradLive Translations.js chargé - 16 langues complètes !');
