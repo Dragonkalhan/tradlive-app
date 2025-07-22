@@ -60,14 +60,16 @@
             font-size: 18px;
             font-weight: bold;
             color: white;
-            width: 100%;               /* Toute la largeur */
-            margin: 0;
+            
         }
 
-        .leave-button-container {
-            position: absolute;        /* Position fixe en haut à droite */
-            top: 20px;
-            right: 20px;
+        .user-info {
+            text-align: center;              /* Nom centré */
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            width: 100%;                     /* Toute la largeur */
+            margin: 0;
         }
         
         #user-nickname {
@@ -98,15 +100,27 @@
             50% { opacity: 0.3; }
         }
         
-        .leave-button {
-            align-self: flex-end;      /* AJOUTE : se place à droite */
-            margin: 0;   
-                }
+       .leave-button {
+            background: #f44336;             /* Rouge */
+            color: white;
+            border: none;
+            border-radius: 8px;              /* Arrondi */
+            padding: 10px 20px;              /* Espacement interne */
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            align-self: flex-end;            /* Se place à droite */
+            transition: background 0.3s ease;
+        }
         
         .leave-button:hover {
             background: rgba(244, 67, 54, 1);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        }
+
+        .leave-button:hover {
+            background: #d32f2f;             /* Rouge plus foncé au survol */
         }
         
         /* QR Code pour l'hôte avec animations */
@@ -523,9 +537,10 @@
             
             .room-info {
                 display: flex;
-                flex-direction: column;    /* Vertical : nom puis bouton */
-                align-items: center;       /* Centre tout */
-                gap: 10px;                 /* Petit espace entre les lignes */
+                justify-content: space-between;  /* Nom à gauche, bouton à droite */
+                align-items: flex-start;         /* Alignement en haut */
+                flex-direction: column;          /* Un en dessous de l'autre */
+                gap: 15px;                       /* Espace entre nom et bouton */
             }
             
             .room-code {
@@ -577,22 +592,17 @@
             <div class="logo-container">
                 <img src="/static/images/Tradlive.png" alt="Tradlive" class="logo">
             </div>
-            <div class="room-info">
-                <div class="room-code">
+                <div class="room-info">
+                    <div class="room-code">
+                    </div>
+                    <div class="user-info">
+                        <span id="user-nickname">Chargement...</span> 
+                        (<span id="user-language">Chargement...</span>)
+                    </div>
+                    <button class="leave-button" onclick="leaveRoom()">
+                        🚪 <span data-translate="leave_button">Quitter</span>
+                    </button>
                 </div>
-                <!-- Nom centré sur toute la largeur -->
-                <div class="user-info">
-                    <span id="user-nickname">Chargement...</span> 
-                    (<span id="user-language">Chargement...</span>)
-                </div>
-            </div>
-            
-            <!-- Bouton séparé en haut à droite -->
-            <div class="leave-button-container">
-                <button class="leave-button" onclick="leaveRoom()">
-                    🚪 <span data-translate="leave_button">Quitter</span>
-                </button>
-            </div>
         </div>
         
         <!-- QR Code pour l'hôte -->
