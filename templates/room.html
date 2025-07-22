@@ -605,32 +605,36 @@
             display: block !important;
         }
 
-        /* ÉCRASE ABSOLUMENT TOUT */
-        #controls,
+        /* FORCE LES DIMENSIONS EXPLICITEMENT */
+        #controls {
+            display: block !important;
+            visibility: visible !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 200px !important;
+        }
+        
         #participant-controls,
         #participant-interface {
             display: block !important;
             visibility: visible !important;
-            opacity: 1 !important;
-            background: lime !important;
-            border: 10px solid red !important;
-            padding: 50px !important;
-            margin: 50px !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 300px !important;
-            height: 200px !important;
-            z-index: 999999 !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 150px !important;
+            background: rgba(255, 255, 255, 0.15) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            border-radius: 15px !important;
+            padding: 20px !important;
+            margin: 20px 0 !important;
+            box-sizing: border-box !important;
         }
         
-        /* SUPPRIME TOUTES LES AUTRES RÈGLES */
-        .is-host #participant-controls,
-        .is-host #participant-interface,
-        .is-participant #host-controls,
-        .is-participant #host-interface {
-            display: block !important;
+        #participant-controls * {
+            width: auto !important;
+            height: auto !important;
+            min-height: 40px !important;
         }
+                }
                 
     </style>
 </head>
