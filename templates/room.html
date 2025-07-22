@@ -605,33 +605,30 @@
             display: block !important;
         }
 
-      /* VERSION ALLÉGÉE POUR IDENTIFIER LE PROBLÈME */
-        #participant-controls,
-        #participant-interface {
+      /* TEST COMPLET - REMET ÇA */
+        body * {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
-            position: relative !important;
-            z-index: 999 !important;
-            background: rgba(0, 100, 0, 0.8) !important;
-            border: 3px solid yellow !important;
-            padding: 20px !important;
-            margin: 20px 0 !important;
-            width: 90% !important;
+            position: static !important;
             height: auto !important;
+            width: auto !important;
             overflow: visible !important;
-            color: white !important;
-            font-size: 16px !important;
+            clip: unset !important;
+            clip-path: unset !important;
         }
         
-        #participant-controls * {
+        #participant-controls,
+        #participant-interface {
+            background: red !important;
+            border: 20px solid yellow !important;
+            padding: 50px !important;
+            margin: 50px !important;
+            font-size: 30px !important;
             color: white !important;
-            background: rgba(0, 0, 200, 0.5) !important;
-            display: block !important;
-            margin: 5px !important;
-            padding: 10px !important;
+            z-index: 999999 !important;
         }
-        
+                
     </style>
 </head>
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: white;">
