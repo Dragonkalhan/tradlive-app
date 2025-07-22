@@ -1393,10 +1393,10 @@ function setupButtonListeners() {
     //console.log('Direct participant-text-button:', document.getElementById('participant-text-button'));
 
        // SOLUTION : Utiliser directement getElementById
-    const partMicBtn = document.getElementById('participant-mic-button');
-   const partTextBtn = document.getElementById('participant-text-button');
-    const partMicBtn = document.getElementById('participant-mic-button');
-    const partTextBtn = document.getElementById('participant-text-button');
+       const micBtn = document.getElementById('mic-button');
+       const textBtn = document.getElementById('text-mode-button');
+       const partMicBtn = document.getElementById('participant-mic-button');
+       const partTextBtn = document.getElementById('participant-text-button');
     
     // Debouncing pour éviter les clics multiples
     const debouncedToggleHost = debounce(toggleHostListening, 300);
