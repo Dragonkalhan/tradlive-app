@@ -604,6 +604,30 @@
         .is-participant #participant-interface {
             display: block !important;
         }
+
+        /* DIAGNOSTIC ULTIME - FORCE TOUT */
+        body * {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: static !important;
+            height: auto !important;
+            width: auto !important;
+            overflow: visible !important;
+            clip: unset !important;
+            clip-path: unset !important;
+        }
+        
+        #participant-controls,
+        #participant-interface {
+            background: red !important;
+            border: 20px solid yellow !important;
+            padding: 50px !important;
+            margin: 50px !important;
+            font-size: 30px !important;
+            color: white !important;
+            z-index: 999999 !important;
+        }
         
     </style>
 </head>
