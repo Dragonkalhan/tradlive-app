@@ -34,12 +34,12 @@
         }
         
         .room-info {
-           display: flex;
-           flex-direction: column;
-           align-items: center;
-           text-align: center;
-           gap: 15px;
-           position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         .room-code {
@@ -56,20 +56,11 @@
         }
         
         .user-info {
-            text-align: center;        /* Nom centré sur SA ligne */
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            
-        }
-
-        .user-info {
-            text-align: center;              /* Nom centré */
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            width: 100%;                     /* Toute la largeur */
-            margin: 0;
+            text-align: center;        /* Centre le nom + langue */
+            font-size: 18px;           /* Même taille que "Share room" */
+            font-weight: bold;         /* En gras */
+            color: white;              /* Blanc */
+            margin: 20px 0;            /* Espaces haut/bas */
         }
         
         #user-nickname {
@@ -100,27 +91,22 @@
             50% { opacity: 0.3; }
         }
         
-       .leave-button {
-            background: #f44336;             /* Rouge */
+        .leave-button {
+            padding: 10px 20px;
+            background: rgba(244, 67, 54, 0.8);
             color: white;
             border: none;
-            border-radius: 8px;              /* Arrondi */
-            padding: 10px 20px;              /* Espacement interne */
-            font-size: 14px;
-            font-weight: bold;
+            border-radius: 25px;
             cursor: pointer;
-            align-self: flex-end;            /* Se place à droite */
-            transition: background 0.3s ease;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
         .leave-button:hover {
             background: rgba(244, 67, 54, 1);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
-        }
-
-        .leave-button:hover {
-            background: #d32f2f;             /* Rouge plus foncé au survol */
         }
         
         /* QR Code pour l'hôte avec animations */
@@ -536,11 +522,9 @@
             }
             
             .room-info {
-                display: flex;
-                justify-content: space-between;  /* Nom à gauche, bouton à droite */
-                align-items: flex-start;         /* Alignement en haut */
-                flex-direction: column;          /* Un en dessous de l'autre */
-                gap: 15px;                       /* Espace entre nom et bouton */
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
             }
             
             .room-code {
@@ -583,59 +567,7 @@
             margin-bottom: -30px; /* Moins agressif que rooms */
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
         }
-
-          /* LOGIQUE CORRECTE D'AFFICHAGE */
-        .is-host #participant-controls,
-        .is-host #participant-interface {
-            display: none !important;
-        }
         
-        .is-participant #host-controls,
-        .is-participant #host-interface {
-            display: none !important;
-        }
-        
-        .is-host #host-controls,
-        .is-host #host-interface {
-            display: block !important;
-        }
-        
-        .is-participant #participant-controls,
-        .is-participant #participant-interface {
-            display: block !important;
-        }
-
-        /* CSS DESTRUCTEUR - FORCE POSITION FIXE */
-        body.is-participant #participant-controls {
-            display: block !important;
-            visibility: visible !important;
-            position: fixed !important;
-            top: 200px !important;
-            left: 50px !important;
-            width: 300px !important;
-            height: 200px !important;
-            background: rgba(0, 255, 0, 0.8) !important;
-            border: 5px solid red !important;
-            z-index: 99999 !important;
-            padding: 20px !important;
-            box-sizing: border-box !important;
-            overflow: visible !important;
-        }
-        
-        body.is-participant #participant-interface {
-            display: block !important;
-            visibility: visible !important;
-            position: fixed !important;
-            top: 450px !important;
-            left: 50px !important;
-            width: 300px !important;
-            height: 200px !important;
-            background: rgba(0, 0, 255, 0.8) !important;
-            border: 5px solid yellow !important;
-            z-index: 99999 !important;
-            padding: 20px !important;
-        }
-                
     </style>
 </head>
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: white;">
@@ -644,17 +576,17 @@
             <div class="logo-container">
                 <img src="/static/images/Tradlive.png" alt="Tradlive" class="logo">
             </div>
-                <div class="room-info">
-                    <div class="room-code">
-                    </div>
-                    <div class="user-info">
-                        <span id="user-nickname">Chargement...</span> 
-                        (<span id="user-language">Chargement...</span>)
-                    </div>
-                    <button class="leave-button" onclick="leaveRoom()">
-                        🚪 <span data-translate="leave_button">Quitter</span>
-                    </button>
+            <div class="room-info">
+                <div class="room-code">
                 </div>
+                <div class="user-info">
+                    <span id="user-nickname">Chargement...</span> 
+                    (<span id="user-language">Chargement...</span>)
+                </div>
+                <button class="leave-button" onclick="leaveRoom()">
+                    🚪 <span data-translate="leave_button">Quitter</span>
+                </button>
+            </div>
         </div>
         
         <!-- QR Code pour l'hôte -->
@@ -695,34 +627,26 @@
             </div>
             
             <!-- Contrôles pour les participants -->
-                    <div id="participant-controls-new" style="
-            position: relative;
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-        ">
-            <button id="participant-mic-button" class="mic-button" data-translate="speak_your_language">🎤 Appuyez et parlez</button>
-            <button id="participant-text-button" class="text-mode-button" data-translate="text_mode">💬 Mode Texte</button>
-            
-            <div class="wave-animation" id="participant-wave" style="display: none;">
-                <div class="wave-bar"></div>
-                <div class="wave-bar"></div>
-                <div class="wave-bar"></div>
-                <div class="wave-bar"></div>
-                <div class="wave-bar"></div>
+            <div id="participant-controls" style="display: none;">
+                <button id="participant-mic-button" class="mic-button" data-translate="speak_your_language">🎤 Parler dans votre langue</button>
+                <button id="participant-text-button" class="text-mode-button" data-translate="text_mode">💬 Mode Texte</button>
+                
+                <div class="wave-animation" id="participant-wave">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+                
+                <!-- Zone de saisie pour les participants -->
+                <div id="participant-text-input" class="text-input-fallback">
+                    <h4 data-translate="write_your_language_messages">✍️ Écrire dans votre langue</h4>
+                    <textarea id="participant-text" data-translate-placeholder="write_your_language_placeholder" placeholder="Écrivez votre message dans votre langue..."></textarea>
+                    <button onclick="sendParticipantText()" data-translate="send_to_french">📤 Envoyer au français</button>
+                    <button onclick="hideParticipantTextInput()" data-translate="close_button">❌ Fermer</button>
+                </div>
             </div>
-            
-            <!-- Zone de saisie pour les participants -->
-            <div id="participant-text-input" class="text-input-fallback">
-                <h4 data-translate="write_your_language_messages">✍️ Écrire dans votre langue</h4>
-                <textarea id="participant-text" data-translate-placeholder="write_your_language_placeholder" placeholder="Écrivez votre message dans votre langue..."></textarea>
-                <button onclick="sendParticipantText()" data-translate="send_to_french">📤 Envoyer au français</button>
-                <button onclick="hideParticipantTextInput()" data-translate="close_button">❌ Fermer</button>
-            </div>
-</div>
         </div>
         
         <div class="translation-area">
@@ -744,7 +668,7 @@
             </div>
             
             <!-- Interface pour les participants -->
-            <div id="participant-interface">
+            <div id="participant-interface" style="display: none;">
                 <div class="translation-section">
                     <div class="translation-label" data-translate="host_message">📝 Message de l'hôte (Français)</div>
                     <div id="participant-original-text" class="translation-text empty-translation" data-translate="waiting_host_message">
