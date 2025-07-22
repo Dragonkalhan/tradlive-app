@@ -34,12 +34,12 @@
         }
         
         .room-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
+           display: flex;
+           flex-direction: column;
+           align-items: center;
+           text-align: center;
+           gap: 15px;
+           position: relative;
         }
         
         .room-code {
@@ -56,11 +56,18 @@
         }
         
         .user-info {
-            text-align: center;        /* Centre le nom + langue */
-            font-size: 18px;           /* Même taille que "Share room" */
-            font-weight: bold;         /* En gras */
-            color: white;              /* Blanc */
-            margin: 20px 0;            /* Espaces haut/bas */
+            text-align: center;        /* Nom centré sur SA ligne */
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            width: 100%;               /* Toute la largeur */
+            margin: 0;
+        }
+
+        .leave-button-container {
+            position: absolute;        /* Position fixe en haut à droite */
+            top: 20px;
+            right: 20px;
         }
         
         #user-nickname {
@@ -92,16 +99,9 @@
         }
         
         .leave-button {
-            padding: 10px 20px;
-            background: rgba(244, 67, 54, 0.8);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
+            align-self: flex-end;      /* AJOUTE : se place à droite */
+            margin: 0;   
+                }
         
         .leave-button:hover {
             background: rgba(244, 67, 54, 1);
@@ -522,9 +522,10 @@
             }
             
             .room-info {
-                flex-direction: column;
-                text-align: center;
-                gap: 10px;
+                display: flex;
+                flex-direction: column;    /* Vertical : nom puis bouton */
+                align-items: center;       /* Centre tout */
+                gap: 10px;                 /* Petit espace entre les lignes */
             }
             
             .room-code {
@@ -579,10 +580,15 @@
             <div class="room-info">
                 <div class="room-code">
                 </div>
+                <!-- Nom centré sur toute la largeur -->
                 <div class="user-info">
                     <span id="user-nickname">Chargement...</span> 
                     (<span id="user-language">Chargement...</span>)
                 </div>
+            </div>
+            
+            <!-- Bouton séparé en haut à droite -->
+            <div class="leave-button-container">
                 <button class="leave-button" onclick="leaveRoom()">
                     🚪 <span data-translate="leave_button">Quitter</span>
                 </button>
