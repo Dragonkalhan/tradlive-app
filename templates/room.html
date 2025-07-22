@@ -56,20 +56,9 @@
         }
         
         .user-info {
-            text-align: center;        /* Centre le nom + langue */
-            font-size: 18px;           /* Même taille que "Share room" */
-            font-weight: bold;         /* En gras */
-            color: white;              /* Blanc */
-            margin: 20px 0;            /* Espaces haut/bas */
-        }
-        
-        #user-nickname {
-            font-size: 20px;           /* Nom un peu plus gros */
-        }
-        
-        #user-language {
-            font-size: 16px;           /* Langue un peu plus petite */
-            opacity: 0.9;              /* Légèrement transparent pour contraste */
+            font-size: 14px;
+            opacity: 0.9;
+            text-align: center;
         }
         
         .connection-status {
@@ -151,15 +140,9 @@
         }
         
         .qr-caption {
-    text-align: center;
-    font-size: 18px;        /* Plus gros texte */
-    font-weight: bold;      /* Plus gras */
-    margin-top: 15px;
-        }
-        
-        .qr-caption strong {
-            font-size: 20px;        /* Code encore plus gros */
-            color: #FFD700;         /* Doré pour le code */
+            font-size: 12px;
+            margin-top: 10px;
+            opacity: 0.8;
         }
         
         /* Status avec animations améliorées */
@@ -168,7 +151,6 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
-            margin-top: 25px;
             font-weight: bold;
             transform: scale(0.95);
             transition: all 0.3s ease;
@@ -578,10 +560,13 @@
             </div>
             <div class="room-info">
                 <div class="room-code">
+                    <span data-translate="room_label">Salle :</span> 
+                    <span id="room-id">{{ room_id }}</span>
                 </div>
                 <div class="user-info">
                     <span id="user-nickname">Chargement...</span> 
                     (<span id="user-language">Chargement...</span>)
+                    <div class="connection-status" id="connection-status" data-translate="connecting">Connexion...</div>
                 </div>
                 <button class="leave-button" onclick="leaveRoom()">
                     🚪 <span data-translate="leave_button">Quitter</span>
@@ -596,9 +581,11 @@
             <div class="qrcode-container">
                 <img src="/qrcode" alt="QR Code" id="qr-code-image">
             </div>
-           <div class="qr-caption">
-            <span data-translate="room_code_label">Code salle :</span> 
-            <strong id="qr-room-code">{{ room_id }}</strong>
+            <div class="qr-caption">
+                <span data-translate="room_code_label">Code salle :</span> 
+                <strong id="qr-room-code">{{ room_id }}</strong><br>
+                <span id="room-url" data-translate="qr_scan_instruction">Les participants scannent pour rejoindre automatiquement</span>
+            </div>
         </div>
         
         <div id="status" class="status info" data-translate="connecting_room">Connexion à la salle...</div>
