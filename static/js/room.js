@@ -448,7 +448,7 @@ function showBrowserCompatibilityMessage(compatibilityInfo) {
 ======================================== */
 function initializeDOMElements() {
     const elementIds = [
-        'status', 'controls', 'host-controls', 'participant-controls',
+        'status', 'controls', 'host-controls', 'participant-controls-new',
         'mic-button', 'participant-mic-button', 'text-mode-button', 'participant-text-button',
         'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image',
         'text-input-fallback', 'participant-text-input',
@@ -1393,8 +1393,8 @@ function setupButtonListeners() {
     //console.log('Direct participant-text-button:', document.getElementById('participant-text-button'));
 
        // SOLUTION : Utiliser directement getElementById
-    const micBtn = document.getElementById('mic-button');
-    const textBtn = document.getElementById('text-mode-button');
+    const partMicBtn = document.getElementById('participant-mic-button');
+   const partTextBtn = document.getElementById('participant-text-button');
     const partMicBtn = document.getElementById('participant-mic-button');
     const partTextBtn = document.getElementById('participant-text-button');
     
