@@ -140,9 +140,15 @@
         }
         
         .qr-caption {
-            font-size: 12px;
-            margin-top: 10px;
-            opacity: 0.8;
+    text-align: center;
+    font-size: 18px;        /* Plus gros texte */
+    font-weight: bold;      /* Plus gras */
+    margin-top: 15px;
+        }
+        
+        .qr-caption strong {
+            font-size: 20px;        /* Code encore plus gros */
+
         }
         
         /* Status avec animations améliorées */
@@ -578,11 +584,9 @@
             <div class="qrcode-container">
                 <img src="/qrcode" alt="QR Code" id="qr-code-image">
             </div>
-            <div class="qr-caption">
-                <span data-translate="room_code_label">Code salle :</span> 
-                <strong id="qr-room-code">{{ room_id }}</strong><br>
-                <span id="room-url" data-translate="qr_scan_instruction">Les participants scannent pour rejoindre automatiquement</span>
-            </div>
+           <div class="qr-caption">
+            <span data-translate="room_code_label">Code salle :</span> 
+            <strong id="qr-room-code">{{ room_id }}</strong>
         </div>
         
         <div id="status" class="status info" data-translate="connecting_room">Connexion à la salle...</div>
