@@ -593,6 +593,27 @@
             display: block !important;
             background: blue !important; /* Pour le voir */
         }
+
+          /* LOGIQUE CORRECTE D'AFFICHAGE */
+        .is-host #participant-controls,
+        .is-host #participant-interface {
+            display: none !important;
+        }
+        
+        .is-participant #host-controls,
+        .is-participant #host-interface {
+            display: none !important;
+        }
+        
+        .is-host #host-controls,
+        .is-host #host-interface {
+            display: block !important;
+        }
+        
+        .is-participant #participant-controls,
+        .is-participant #participant-interface {
+            display: block !important;
+        }
         
     </style>
 </head>
