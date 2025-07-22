@@ -605,18 +605,10 @@ function handleConnectionError() {
 }
 
 function updateConnectionStatus(connected) {
-    // Mettre à jour les DEUX éléments de statut
-    const connectionStatus = document.getElementById('connection-status');
     const mainStatus = document.getElementById('status');
     
     if (connected) {
         const message = getTranslation('connected') || 'Connecté ✅';
-        
-        // Petit statut en-tête
-        if (connectionStatus) {
-            connectionStatus.textContent = message;
-            connectionStatus.style.color = '#4CAF50';
-        }
         
         // Gros statut principal
         if (mainStatus) {
@@ -624,24 +616,15 @@ function updateConnectionStatus(connected) {
             mainStatus.className = 'status connected show';
         }
         
-        animateElement('connection-status', 'pulse');
     } else {
         const message = getTranslation('reconnecting') || 
             `Reconnexion... (${reconnectAttempts}/${maxReconnectAttempts})`;
             
-        // Petit statut en-tête
-        if (connectionStatus) {
-            connectionStatus.textContent = message;
-            connectionStatus.style.color = '#f44336';
-        }
-        
         // Gros statut principal  
         if (mainStatus) {
             mainStatus.textContent = message;
             mainStatus.className = 'status error show';
         }
-        
-        animateElement('connection-status', 'shake');
     }
 }
 
