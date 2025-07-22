@@ -448,9 +448,9 @@ function showBrowserCompatibilityMessage(compatibilityInfo) {
 ======================================== */
 function initializeDOMElements() {
     const elementIds = [
-        'status', 'controls', 'host-controls', 'participant-controls-new',
+        'status', 'controls', 'host-controls', 'participant-controls',
         'mic-button', 'participant-mic-button', 'text-mode-button', 'participant-text-button',
-        'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image',
+        'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image', 'connection-status',
         'text-input-fallback', 'participant-text-input',
         'host-interface', 'participant-interface',
         'host-original-text', 'host-responses-text',
@@ -549,8 +549,6 @@ function setupRoleInterface() {
         // Interface hôte
         showElement('host-controls');
         showElement('host-interface');
-
-       document.body.classList.add('is-host');
         
         const qrSection = document.getElementById('qr-section');
         if (qrSection) {
@@ -569,8 +567,6 @@ function setupRoleInterface() {
         // Interface participant
         showElement('participant-controls');
         showElement('participant-interface');
-
-       document.body.classList.add('is-participant');
         
         // Marquer comme configuré  
         document.body.classList.add('role-configured');
@@ -1393,10 +1389,10 @@ function setupButtonListeners() {
     //console.log('Direct participant-text-button:', document.getElementById('participant-text-button'));
 
        // SOLUTION : Utiliser directement getElementById
-       const micBtn = document.getElementById('mic-button');
-       const textBtn = document.getElementById('text-mode-button');
-       const partMicBtn = document.getElementById('participant-mic-button');
-       const partTextBtn = document.getElementById('participant-text-button');
+    const micBtn = document.getElementById('mic-button');
+    const textBtn = document.getElementById('text-mode-button');
+    const partMicBtn = document.getElementById('participant-mic-button');
+    const partTextBtn = document.getElementById('participant-text-button');
     
     // Debouncing pour éviter les clics multiples
     const debouncedToggleHost = debounce(toggleHostListening, 300);
