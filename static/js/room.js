@@ -29,15 +29,13 @@ let networkErrorCount = 0;
 // Éléments DOM (seront initialisés au chargement)
 let statusEl, controlsEl, hostControlsEl, participantControlsEl;
 let micButton, participantMicButton, textModeButton, participantTextButton;
-let waveAnimation, participantWave, qrSection, qrCodeImage, connectionStatus;
+let waveAnimation, participantWave, qrSection, qrCodeImage;
 let textInputFallback, participantTextInput;
 let hostInterface, participantInterface;
 let hostOriginalText, hostResponsesText;
 let participantOriginalText, participantTranslatedText, participantMessageArea;
 let participantOwnText, participantFrenchText, participantTargetLanguage;
 let participantsListEl, participantCountEl;
-
-
 
 /* ========================================
    NOMS DES LANGUES (MAPPING) - INTÉGRÉ AVEC TRANSLATIONS.JS
@@ -444,13 +442,14 @@ function showBrowserCompatibilityMessage(compatibilityInfo) {
 }
 
 /* ========================================
-   GESTION DES ÉLÉMENTS DOM - FINALISÉE
+   GESTION DES ÉLÉMENTS DOM - CORRIGÉE SANS CONNECTION-STATUS
 ======================================== */
 function initializeDOMElements() {
+    // CORRECTION : Suppression de 'connection-status' qui causait l'erreur
     const elementIds = [
         'status', 'controls', 'host-controls', 'participant-controls',
         'mic-button', 'participant-mic-button', 'text-mode-button', 'participant-text-button',
-        'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image', 'connection-status',
+        'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image',
         'text-input-fallback', 'participant-text-input',
         'host-interface', 'participant-interface',
         'host-original-text', 'host-responses-text',
@@ -480,7 +479,6 @@ function initializeDOMElements() {
         waveAnimation: elements['wave-animation'],
         participantWave: elements['participant-wave'],
         qrSection: elements['qr-section'],
-        connectionStatus: elements['connection-status'],
         textInputFallback: elements['text-input-fallback'],
         participantTextInput: elements['participant-text-input'],
         hostInterface: elements['host-interface'],
@@ -539,11 +537,7 @@ function loadRoomInfo() {
 }
 
 function setupRoleInterface() {
-    // CORRECTION : Éviter les appels multiples
-    const alreadyConfigured = document.querySelector('.role-configured');
-    if (alreadyConfigured) {
-        return; // Interface déjà configurée
-    }
+    console.log('🔧 Configuration interface pour rôle:', isHost ? 'HÔTE' : 'PARTICIPANT');
     
     if (isHost) {
         // Interface hôte
@@ -554,22 +548,35 @@ function setupRoleInterface() {
         if (qrSection) {
             qrSection.classList.add('show');
         }
-       // Initialiser le QR code
-      qrCodeImage = document.getElementById('qr-code-image'); // ou l'ID correct
-      console.log('🔍 qrCodeImage initialisé:', qrCodeImage);
-      updateQRCode();
         
-        // Marquer comme configuré
-        document.body.classList.add('role-configured');
+        // Initialiser le QR code
+        qrCodeImage = document.getElementById('qr-code-image');
+        updateQRCode();
         
         console.log('👑 Interface hôte configurée');
     } else {
-        // Interface participant
-        showElement('participant-controls');
-        showElement('participant-interface');
+        // Interface participant - LOGIQUE SIMPLE ET DIRECTE
+        console.log('👤 Configuration interface participant...');
         
-        // Marquer comme configuré  
-        document.body.classList.add('role-configured');
+        // Force l'affichage direct avec JavaScript simple
+        const participantControls = document.getElementById('participant-controls');
+        const participantInterface = document.getElementById('participant-interface');
+        
+        if (participantControls) {
+            participantControls.style.display = 'block';
+            participantControls.style.visibility = 'visible';
+            console.log('✅ participant-controls affiché');
+        } else {
+            console.error('❌ participant-controls non trouvé !');
+        }
+        
+        if (participantInterface) {
+            participantInterface.style.display = 'block';
+            participantInterface.style.visibility = 'visible';
+            console.log('✅ participant-interface affiché');
+        } else {
+            console.error('❌ participant-interface non trouvé !');
+        }
         
         console.log('👤 Interface participant configurée');
     }
@@ -577,6 +584,8 @@ function setupRoleInterface() {
     // Afficher les contrôles communs
     showElement('controls');
     animateElement('controls', 'slideInUp');
+    
+    console.log('✅ Configuration interface terminée');
 }
 
 function handleConnectionError() {
@@ -605,18 +614,10 @@ function handleConnectionError() {
 }
 
 function updateConnectionStatus(connected) {
-    // Mettre à jour les DEUX éléments de statut
-    const connectionStatus = document.getElementById('connection-status');
     const mainStatus = document.getElementById('status');
     
     if (connected) {
         const message = getTranslation('connected') || 'Connecté ✅';
-        
-        // Petit statut en-tête
-        if (connectionStatus) {
-            connectionStatus.textContent = message;
-            connectionStatus.style.color = '#4CAF50';
-        }
         
         // Gros statut principal
         if (mainStatus) {
@@ -624,24 +625,15 @@ function updateConnectionStatus(connected) {
             mainStatus.className = 'status connected show';
         }
         
-        animateElement('connection-status', 'pulse');
     } else {
         const message = getTranslation('reconnecting') || 
             `Reconnexion... (${reconnectAttempts}/${maxReconnectAttempts})`;
             
-        // Petit statut en-tête
-        if (connectionStatus) {
-            connectionStatus.textContent = message;
-            connectionStatus.style.color = '#f44336';
-        }
-        
         // Gros statut principal  
         if (mainStatus) {
             mainStatus.textContent = message;
             mainStatus.className = 'status error show';
         }
-        
-        animateElement('connection-status', 'shake');
     }
 }
 
@@ -1168,7 +1160,6 @@ function updateParticipantFrenchText() {
 ======================================== */
 function showTextInput() {
     console.log('📝 Affichage mode texte hôte');
-   // SOLUTION : Utiliser directement getElementById
     const textInputFallback = document.getElementById('text-input-fallback');
     
     if (textInputFallback) {
@@ -1224,7 +1215,6 @@ function sendHostText() {
 
 function showParticipantTextInput() {
     console.log('📝 Affichage mode texte participant');
-// SOLUTION : Utiliser directement getElementById
     const participantTextInput = document.getElementById('participant-text-input');
     
     if (participantTextInput) {
@@ -1282,7 +1272,7 @@ function sendParticipantText() {
    MISES À JOUR TEMPS RÉEL - FINALISÉES
 ======================================== */
 function startRealTimeUpdates() {
-      // CORRECTION : Éviter les intervals multiples
+    // CORRECTION : Éviter les intervals multiples
     if (updateInterval) {
         clearInterval(updateInterval);
         updateInterval = null;
@@ -1291,15 +1281,12 @@ function startRealTimeUpdates() {
     updateInterval = setInterval(() => {
         const url = `/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`;
         
-            makeApiRequest(url)
+        makeApiRequest(url)
     .then(data => {
-      //  console.log('🟢 Mises à jour reçues:', data);
-        
         if (data.success) {
             reconnectAttempts = 0;
             updateConnectionStatus(true);
             
-           // console.log('🟢 Appel processRoomUpdates avec:', data);
             processRoomUpdates(data);
             
             // Émettre événement de mise à jour
@@ -1327,13 +1314,8 @@ function startRealTimeUpdates() {
 }
 
 function processRoomUpdates(data) {
- //   console.log('🟢 processRoomUpdates appelée avec:', data);
-    
     // CORRECTION : Accéder aux bonnes données
     const actualData = data.data || data;
-   // console.log('🟢 isHost:', isHost);
-   // console.log('🟢 actualData.original:', actualData.original);
-   // console.log('🟢 actualData.translated:', actualData.translated);
     
     if (isHost) {
         // Interface hôte : afficher les réponses des participants
@@ -1393,19 +1375,7 @@ function startHeartbeat() {
 function setupButtonListeners() {
     console.log('🔧 Configuration des événements boutons...');
 
-    // DIAGNOSTIC : Vérifier si les boutons existent
-    //console.log('micButton:', micButton);
-    //console.log('textModeButton:', textModeButton);
-    //console.log('participantMicButton:', participantMicButton);
-    //console.log('participantTextButton:', participantTextButton);
-
-    // DIAGNOSTIC DIRECT : Chercher les éléments dans le DOM
-    //console.log('Direct mic-button:', document.getElementById('mic-button'));
-    //console.log('Direct text-mode-button:', document.getElementById('text-mode-button'));
-    //console.log('Direct participant-mic-button:', document.getElementById('participant-mic-button'));
-    //console.log('Direct participant-text-button:', document.getElementById('participant-text-button'));
-
-       // SOLUTION : Utiliser directement getElementById
+    // SOLUTION : Utiliser directement getElementById
     const micBtn = document.getElementById('mic-button');
     const textBtn = document.getElementById('text-mode-button');
     const partMicBtn = document.getElementById('participant-mic-button');
@@ -1426,18 +1396,11 @@ function setupButtonListeners() {
     console.log('✅ Événements boutons configurés');
 }
 
-function addEventListenerOnce(element, event, handler) {
-    if (element && !element.hasAttribute('data-listener')) {
-        element.addEventListener(event, handler);
-        element.setAttribute('data-listener', 'true');
-    }
-}
-
 function updateQRCode() {
-       console.log('🔍 updateQRCode() appelée');
-       console.log('🔍 qrCodeImage:', qrCodeImage);
-       console.log('🔍 userData:', userData);
-       console.log('🔍 userData.room_id:', userData.room_id);
+    console.log('🔍 updateQRCode() appelée');
+    console.log('🔍 qrCodeImage:', qrCodeImage);
+    console.log('🔍 userData:', userData);
+    console.log('🔍 userData.room_id:', userData.room_id);
     if (!qrCodeImage) return;
     
     const roomUrl = `${window.location.origin}/?auto_join=true&room_id=${userData.room_id}`;
@@ -1746,33 +1709,6 @@ window.addEventListener('beforeunload', function(e) {
         userId: userData?.user_id
     });
 });
-
-// Optimisation batterie pour mobile
-//document.addEventListener('visibilitychange', function() {
-//    if (document.hidden) {
-//        console.log('📱 Page cachée, optimisation batterie');
-//        // CORRECTION : Bien nettoyer l'ancien interval
-//        if (updateInterval) {
-//            clearInterval(updateInterval);
-//            updateInterval = null;
-//        }
-//        // Créer un interval moins fréquent pour heartbeat seulement
-//        updateInterval = setInterval(() => {
-//            const requestData = { user_id: userData.user_id };
-//            makeApiRequest(`/api/room/${userData.room_id}/heartbeat`, 'POST', requestData)
-//                .catch(() => console.warn('⚠️ Heartbeat failed while hidden'));
-//        }, 10000);
-//    } else {
-//        console.log('📱 Page visible, restauration normale');
-//        // CORRECTION : Bien nettoyer avant de recréer
-//        if (updateInterval) {
-//            clearInterval(updateInterval);
-//            updateInterval = null;
-//        }
-//        // Redémarrer les mises à jour normales
-//        startRealTimeUpdates();
-//    }
-//});
 
 /* ========================================
    INITIALISATION AUTOMATIQUE - FINALISÉE
