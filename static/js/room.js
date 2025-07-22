@@ -549,6 +549,8 @@ function setupRoleInterface() {
         // Interface hôte
         showElement('host-controls');
         showElement('host-interface');
+
+       document.body.classList.add('is-host');
         
         const qrSection = document.getElementById('qr-section');
         if (qrSection) {
@@ -567,6 +569,8 @@ function setupRoleInterface() {
         // Interface participant
         showElement('participant-controls');
         showElement('participant-interface');
+
+       document.body.classList.add('is-participant');
         
         // Marquer comme configuré  
         document.body.classList.add('role-configured');
