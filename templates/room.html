@@ -605,39 +605,28 @@
             display: block !important;
         }
 
-        /* SOLUTION FINALE - FORCE SEULEMENT LES ÉLÉMENTS PARTICIPANT */
+       /* FORCE LE CONTAINER PARENT AUSSI */
+        #controls {
+            display: block !important;
+            visibility: visible !important;
+        }
+        
         #participant-controls,
         #participant-interface {
             display: block !important;
             visibility: visible !important;
-            opacity: 1 !important;
-            background: rgba(255, 255, 255, 0.15) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            border-radius: 15px !important;
+            background: rgba(0, 255, 0, 0.8) !important;
+            border: 3px solid yellow !important;
             padding: 20px !important;
             margin: 20px 0 !important;
             color: white !important;
-            position: relative !important;
-            z-index: 10 !important;
         }
         
         #participant-controls * {
             display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-        
-        #participant-controls .mic-button,
-        #participant-controls .text-mode-button {
-            background: linear-gradient(45deg, #4CAF50, #45a049) !important;
             color: white !important;
-            border: none !important;
-            padding: 15px 30px !important;
-            border-radius: 50px !important;
-            margin: 10px !important;
-            font-size: 16px !important;
-            font-weight: bold !important;
-            cursor: pointer !important;
+            margin: 5px !important;
+            padding: 5px !important;
         }
                 
     </style>
