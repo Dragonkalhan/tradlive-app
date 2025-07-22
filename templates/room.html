@@ -584,16 +584,6 @@
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
         }
 
-        #participant-controls {
-            display: block !important;
-            background: red !important; /* Pour le voir */
-        }
-        
-        #participant-interface {
-            display: block !important;
-            background: blue !important; /* Pour le voir */
-        }
-
           /* LOGIQUE CORRECTE D'AFFICHAGE */
         .is-host #participant-controls,
         .is-host #participant-interface {
@@ -613,27 +603,6 @@
         .is-participant #participant-controls,
         .is-participant #participant-interface {
             display: block !important;
-        }
-
-        /* TEST FORCE ROUGE/BLEU */
-        #participant-controls {
-            display: block !important;
-            background: red !important;
-            height: 200px !important;
-            width: 100% !important;
-            position: relative !important;
-            z-index: 9999 !important;
-            border: 5px solid yellow !important;
-        }
-        
-        #participant-interface {
-            display: block !important;
-            background: blue !important;
-            height: 200px !important;
-            width: 100% !important;
-            position: relative !important;
-            z-index: 9999 !important;
-            border: 5px solid green !important;
         }
         
     </style>
