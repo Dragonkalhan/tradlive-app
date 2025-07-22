@@ -56,9 +56,20 @@
         }
         
         .user-info {
-            font-size: 14px;
-            opacity: 0.9;
             text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            margin: 20px 0;
+        }
+        
+        #user-nickname {
+            font-size: 20px;
+        }
+        
+        #user-language {
+            font-size: 16px;
+            opacity: 0.9;
         }
         
         .connection-status {
@@ -140,9 +151,15 @@
         }
         
         .qr-caption {
-            font-size: 12px;
-            margin-top: 10px;
-            opacity: 0.8;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        
+        .qr-caption strong {
+            font-size: 20px;
+            color: #FFD700;
         }
         
         /* Status avec animations améliorées */
@@ -151,6 +168,7 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
+            margin-top: 25px;
             font-weight: bold;
             transform: scale(0.95);
             transition: all 0.3s ease;
@@ -546,7 +564,7 @@
         .logo {
             width: 350px;        
             height: auto;
-            margin-bottom: -30px; /* Moins agressif que rooms */
+            margin-bottom: -30px;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
         }
         
@@ -566,7 +584,6 @@
                 <div class="user-info">
                     <span id="user-nickname">Chargement...</span> 
                     (<span id="user-language">Chargement...</span>)
-                    <div class="connection-status" id="connection-status" data-translate="connecting">Connexion...</div>
                 </div>
                 <button class="leave-button" onclick="leaveRoom()">
                     🚪 <span data-translate="leave_button">Quitter</span>
@@ -583,8 +600,7 @@
             </div>
             <div class="qr-caption">
                 <span data-translate="room_code_label">Code salle :</span> 
-                <strong id="qr-room-code">{{ room_id }}</strong><br>
-                <span id="room-url" data-translate="qr_scan_instruction">Les participants scannent pour rejoindre automatiquement</span>
+                <strong id="qr-room-code">{{ room_id }}</strong>
             </div>
         </div>
         
