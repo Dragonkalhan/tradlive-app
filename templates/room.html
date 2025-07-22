@@ -537,12 +537,27 @@
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+        
+        .logo-container {
+            margin-bottom: -50px;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 300px;         /* Peut-être plus petit que dans rooms */
+            height: auto;
+            margin-bottom: -30px; /* Moins agressif que rooms */
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+        
     </style>
 </head>
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: white;">
     <div class="room-container">
         <div class="header">
-            <h1>🌍 TradLive</h1>
+            <div class="logo-container">
+                <img src="/static/images/Tradlive.png" alt="Tradlive" class="logo">
+            </div>
             <div class="room-info">
                 <div class="room-code">
                     <span data-translate="room_label">Salle :</span> 
