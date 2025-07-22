@@ -605,25 +605,39 @@
             display: block !important;
         }
 
-      /* TEST COMPLET - REMET ÇA */
-        body * {
-            
-            visibility: visible !important;
-            opacity: 1 !important;
-          
-            
-
-        }
-        
+        /* SOLUTION FINALE - FORCE SEULEMENT LES ÉLÉMENTS PARTICIPANT */
         #participant-controls,
         #participant-interface {
-            background: red !important;
-            border: 20px solid yellow !important;
-            padding: 50px !important;
-            margin: 50px !important;
-            font-size: 30px !important;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: rgba(255, 255, 255, 0.15) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            border-radius: 15px !important;
+            padding: 20px !important;
+            margin: 20px 0 !important;
             color: white !important;
-            z-index: 999999 !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        
+        #participant-controls * {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        #participant-controls .mic-button,
+        #participant-controls .text-mode-button {
+            background: linear-gradient(45deg, #4CAF50, #45a049) !important;
+            color: white !important;
+            border: none !important;
+            padding: 15px 30px !important;
+            border-radius: 50px !important;
+            margin: 10px !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            cursor: pointer !important;
         }
                 
     </style>
