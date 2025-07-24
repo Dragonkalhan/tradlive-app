@@ -694,13 +694,14 @@
     }, 1000);
                                     
                                 
-                                   // SOLUTION RENFORCÉE - Masquage total du bouton fantôme
-                                    const createTab = document.querySelector('.tab[onclick*="create"]');
-                                    const createTabContent = document.getElementById('create-tab');
                                     
-                                    if (createTab) {
-                                        createTab.style.display = 'none';
+                                    // Cacher tout le conteneur du bouton "Créer" (inclut le tooltip)
+                                    const createTabContainer = document.querySelector('.tab-container:first-child');
+                                    if (createTabContainer) {
+                                        createTabContainer.style.display = 'none';
                                     }
+                                    
+                                    // Cacher aussi le contenu de l'onglet
                                     if (createTabContent) {
                                         createTabContent.style.display = 'none';
                                     }
