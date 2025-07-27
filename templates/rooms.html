@@ -677,7 +677,7 @@
                     // Pré-remplir le code de salle et basculer sur l'onglet Rejoindre
                     document.getElementById('join-room-id').value = data.room_id;
                     showTab('join');
-            
+
                     // Forcer traduction de la bulle pseudo spécifiquement
                     setTimeout(() => {
                         const savedLanguage = window.TradLive?.storage ? 
@@ -700,30 +700,20 @@
                             }
                         });
                     }, 1000);
-                                    
-                    // 🔧 SOLUTION CORRIGÉE - Masquage du bouton "Créer" 
-                    // ✅ TOUTES LES VARIABLES SONT MAINTENANT DÉCLARÉES
-                    const createTab = document.querySelector('.tab[onclick*="create"]');
-                    const createTabContent = document.getElementById('create-tab');
+                                            
+                    // 🎯 SOLUTION PARFAITE - Ton ancien code + variable corrigée
+                    // ✅ DÉCLARATION DES VARIABLES (ça manquait avant !)
                     const createTabContainer = document.querySelector('.tab-container:first-child');
+                    const createTabContent = document.getElementById('create-tab');
                     
-                    // Masquage ultra-renforcé du bouton "Créer"
-                    if (createTab) {
-                        createTab.style.display = 'none !important';
-                        createTab.style.visibility = 'hidden !important';
-                        createTab.style.width = '0 !important';
-                        createTab.style.height = '0 !important';
-                        createTab.style.opacity = '0 !important';
-                    }
-                    
-                    // Masquage du contenu
-                    if (createTabContent) {
-                        createTabContent.style.display = 'none !important';
-                    }
-                    
-                    // Masquage du container complet (inclut le tooltip)
+                    // 🔥 TON ANCIEN CODE QUI MARCHAIT POUR CACHER LE BOUTON
                     if (createTabContainer) {
-                        createTabContainer.style.display = 'none !important';
+                        createTabContainer.style.display = 'none';
+                    }
+                    
+                    // Cacher aussi le contenu de l'onglet
+                    if (createTabContent) {
+                        createTabContent.style.display = 'none';
                     }
                     
                     // NOUVEAU - Masquer le tooltip "Rejoindre" avec debug
