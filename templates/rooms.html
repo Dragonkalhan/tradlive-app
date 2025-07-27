@@ -674,8 +674,6 @@
                 console.log('🔍 Données auto-join:', data);
                 console.log('🔍 currentLanguage avant auto-join:', currentLanguage);
                 
-                // DEBUG VISUEL pour mobile
-                alert('DEBUG auto-join: currentLanguage = ' + currentLanguage);
                 
                // FORCER la récupération de la langue sauvegardée - CORRECTION JSON
                 const savedLang = localStorage.getItem('tradlive_language');
@@ -685,7 +683,6 @@
                         const parsed = JSON.parse(savedLang);
                         currentLanguage = parsed.value || 'fr';
                         console.log('🔧 Langue extraite du JSON:', currentLanguage);
-                        alert('Langue extraite: ' + currentLanguage);
                     } catch (error) {
                         // Fallback si ce n'est pas du JSON
                         currentLanguage = savedLang;
@@ -783,7 +780,7 @@
                     document.querySelector('.tab[onclick*="join"]').classList.add('active');
                     
                     // Garder le pending_auto_join pour les retours en arrière
-                    //localStorage.removeItem('pending_auto_join');
+                    localStorage.removeItem('pending_auto_join');
                     
                     // Mettre le focus sur le champ pseudo
                     setTimeout(() => {
@@ -904,6 +901,11 @@
                 language: currentLanguage,
                 password: document.getElementById('join-password').value.trim() || null
             };
+
+            // DEBUG : Vérifier les données envoyées à l'API
+            console.log('🔍 Données envoyées à l\'API:', data);
+            alert('API DATA: ' + JSON.stringify(data));
+
             
             // Validation côté client
             if (!data.room_id || !data.nickname) {
