@@ -670,6 +670,21 @@
             const pendingJoin = localStorage.getItem('pending_auto_join');
             if (pendingJoin) {
                 const data = JSON.parse(pendingJoin);
+                // DEBUG : Vérifier les données auto-join  
+                console.log('🔍 Données auto-join:', data);
+                console.log('🔍 currentLanguage avant auto-join:', currentLanguage);
+                
+                // DEBUG VISUEL pour mobile
+                alert('DEBUG auto-join: currentLanguage = ' + currentLanguage);
+                
+                // FORCER la récupération de la langue sauvegardée
+                const savedLang = localStorage.getItem('tradlive_language');
+                if (savedLang && savedLang !== 'null') {
+                    currentLanguage = savedLang;
+                    console.log('🔧 Langue restaurée pour auto-join:', currentLanguage);
+                    // DEBUG VISUEL
+                    alert('Langue restaurée: ' + currentLanguage);
+                }
                 if (data.auto_join && data.room_id) {
                     // Afficher la notice d'auto-join
                     document.getElementById('auto-join-notice').classList.add('show');
