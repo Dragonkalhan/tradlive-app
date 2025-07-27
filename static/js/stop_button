@@ -902,7 +902,8 @@ function startHostListening() {
                 isListening = true;
                 networkErrorCount = 0;
                 
-                updateMicButtonState(micButton, true, 'stop_button');
+               console.log('🔍 DEBUG micButton:', micButton); 
+               updateMicButtonState(micButton, true, 'stop_button');
                 showElement(waveAnimation, true);
                 
                 const message = getTranslation('listening_french') || 
