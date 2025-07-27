@@ -637,10 +637,18 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🏠 Page des salles chargée');
             
-            // Récupérer et afficher la langue d'interface
-            currentLanguage = window.TradLive?.storage ? 
-                window.TradLive.storage.get('tradlive_language', 'fr') : 
-                localStorage.getItem('tradlive_language') || 'fr';
+        // Récupérer et afficher la langue d'interface
+         currentLanguage = window.TradLive?.storage ? 
+            window.TradLive.storage.get('tradlive_language', 'fr') : 
+            localStorage.getItem('tradlive_language') || 'fr';
+        
+        // CORRECTION QR CODE : Forcer une langue par défaut si undefined
+        if (!currentLanguage || currentLanguage === 'null') {
+            currentLanguage = 'fr';
+            console.log('🔧 currentLanguage forcé à fr');
+        }
+
+        console.log('🌍 currentLanguage final:', currentLanguage);
             
             // Appliquer les traductions
             applyTranslations(currentLanguage);
