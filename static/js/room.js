@@ -1376,27 +1376,37 @@ function startHeartbeat() {
 function setupButtonListeners() {
     console.log('🔧 Configuration des événements boutons...');
 
-    // SOLUTION : Utiliser directement getElementById
-    const micBtn = document.getElementById('mic-button');
-    const textBtn = document.getElementById('text-mode-button');
-    const partMicBtn = document.getElementById('participant-mic-button');
-    const partTextBtn = document.getElementById('participant-text-button');
-    
-    // Debouncing pour éviter les clics multiples
-    const debouncedToggleHost = debounce(toggleHostListening, 300);
-    const debouncedToggleParticipant = debounce(toggleParticipantListening, 300);
-    
-    // Boutons hôte
-    if (micBtn) micBtn.addEventListener('click', debouncedToggleHost);
-    if (textBtn) textBtn.addEventListener('click', showTextInput);
-    
-    // Boutons participant  
-    if (partMicBtn) partMicBtn.addEventListener('click', debouncedToggleParticipant);
-    if (partTextBtn) partTextBtn.addEventListener('click', showParticipantTextInput);
-    
-    console.log('✅ Événements boutons configurés');
-}
-
+    // CORRECTION TIMING : Récupérer les boutons au bon moment
+   let micBtn = null;
+   let textBtn = null; 
+   let partMicBtn = null;
+   let partTextBtn = null;
+   
+   // Debouncing pour éviter les clics multiples
+   const debouncedToggleHost = debounce(toggleHostListening, 300);
+   const debouncedToggleParticipant = debounce(toggleParticipantListening, 300);
+   
+   // Attendre que l'interface soit affichée puis récupérer les boutons
+   setTimeout(() => {
+       micBtn = document.getElementById('mic-button');
+       textBtn = document.getElementById('text-mode-button');
+       partMicBtn = document.getElementById('participant-mic-button');
+       partTextBtn = document.getElementById('participant-text-button');
+       
+       // DEBUG pour voir si c'est corrigé
+       console.log('🔍 NOUVEAU DEBUG micBtn:', micBtn);
+       console.log('🔍 NOUVEAU DEBUG partMicBtn:', partMicBtn);
+       
+       // MAINTENANT ajouter les événements (à l'intérieur du setTimeout !)
+       if (micBtn) micBtn.addEventListener('click', debouncedToggleHost);
+       if (textBtn) textBtn.addEventListener('click', showTextInput);
+       
+       // Boutons participant  
+       if (partMicBtn) partMicBtn.addEventListener('click', debouncedToggleParticipant);
+       if (partTextBtn) partTextBtn.addEventListener('click', showParticipantTextInput);
+       
+       console.log('✅ Événements boutons configurés');
+   }, 500);
 function updateQRCode() {
     console.log('🔍 updateQRCode() appelée');
     console.log('🔍 qrCodeImage:', qrCodeImage);
