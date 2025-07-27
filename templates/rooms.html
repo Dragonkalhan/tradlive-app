@@ -637,10 +637,18 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🏠 Page des salles chargée');
             
-            // Récupérer et afficher la langue d'interface
-            currentLanguage = window.TradLive?.storage ? 
-                window.TradLive.storage.get('tradlive_language', 'fr') : 
-                localStorage.getItem('tradlive_language') || 'fr';
+        // Récupérer et afficher la langue d'interface
+         currentLanguage = window.TradLive?.storage ? 
+            window.TradLive.storage.get('tradlive_language', 'fr') : 
+            localStorage.getItem('tradlive_language') || 'fr';
+        
+        // CORRECTION QR CODE : Forcer une langue par défaut si undefined
+        if (!currentLanguage || currentLanguage === 'null') {
+            currentLanguage = 'fr';
+            console.log('🔧 currentLanguage forcé à fr');
+        }
+
+        console.log('🌍 currentLanguage final:', currentLanguage);
             
             // Appliquer les traductions
             applyTranslations(currentLanguage);
@@ -694,28 +702,16 @@
     }, 1000);
                                     
                                 
-                                   // SOLUTION RENFORCÉE - Masquage total du bouton fantôme
-                                    const createTab = document.querySelector('.tab[onclick*="create"]');
-                                    const createTabContent = document.getElementById('create-tab');
+                                    
+                                    // Cacher tout le conteneur du bouton "Créer" (inclut le tooltip)
                                     const createTabContainer = document.querySelector('.tab-container:first-child');
-                                    
-                                    // Masquage ultra-renforcé du bouton "Créer"
-                                    if (createTab) {
-                                        createTab.style.display = 'none !important';
-                                        createTab.style.visibility = 'hidden !important';
-                                        createTab.style.width = '0 !important';
-                                        createTab.style.height = '0 !important';
-                                        createTab.style.opacity = '0 !important';
-                                    }
-                                    
-                                    // Masquage du contenu
-                                    if (createTabContent) {
-                                        createTabContent.style.display = 'none !important';
-                                    }
-                                    
-                                    // Masquage du container complet (inclut le tooltip)
                                     if (createTabContainer) {
-                                        createTabContainer.style.display = 'none !important';
+                                        createTabContainer.style.display = 'none';
+                                    }
+                                    
+                                    // Cacher aussi le contenu de l'onglet
+                                    if (createTabContent) {
+                                        createTabContent.style.display = 'none';
                                     }
                                     
                                    // NOUVEAU - Masquer le tooltip "Rejoindre" avec debug
