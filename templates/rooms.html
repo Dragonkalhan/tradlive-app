@@ -677,13 +677,20 @@
                 // DEBUG VISUEL pour mobile
                 alert('DEBUG auto-join: currentLanguage = ' + currentLanguage);
                 
-                // FORCER la récupération de la langue sauvegardée
+               // FORCER la récupération de la langue sauvegardée - CORRECTION JSON
                 const savedLang = localStorage.getItem('tradlive_language');
                 if (savedLang && savedLang !== 'null') {
-                    currentLanguage = savedLang;
-                    console.log('🔧 Langue restaurée pour auto-join:', currentLanguage);
-                    // DEBUG VISUEL
-                    alert('Langue restaurée: ' + currentLanguage);
+                    try {
+                        // Parser le JSON complexe de TradLive
+                        const parsed = JSON.parse(savedLang);
+                        currentLanguage = parsed.value || 'fr';
+                        console.log('🔧 Langue extraite du JSON:', currentLanguage);
+                        alert('Langue extraite: ' + currentLanguage);
+                    } catch (error) {
+                        // Fallback si ce n'est pas du JSON
+                        currentLanguage = savedLang;
+                        alert('Langue fallback: ' + currentLanguage);
+                    }
                 }
                 if (data.auto_join && data.room_id) {
                     // Afficher la notice d'auto-join
