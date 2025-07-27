@@ -694,16 +694,28 @@
     }, 1000);
                                     
                                 
-                                    
-                                    // Cacher tout le conteneur du bouton "Créer" (inclut le tooltip)
+                                   // SOLUTION RENFORCÉE - Masquage total du bouton fantôme
+                                    const createTab = document.querySelector('.tab[onclick*="create"]');
+                                    const createTabContent = document.getElementById('create-tab');
                                     const createTabContainer = document.querySelector('.tab-container:first-child');
-                                    if (createTabContainer) {
-                                        createTabContainer.style.display = 'none';
+                                    
+                                    // Masquage ultra-renforcé du bouton "Créer"
+                                    if (createTab) {
+                                        createTab.style.display = 'none !important';
+                                        createTab.style.visibility = 'hidden !important';
+                                        createTab.style.width = '0 !important';
+                                        createTab.style.height = '0 !important';
+                                        createTab.style.opacity = '0 !important';
                                     }
                                     
-                                    // Cacher aussi le contenu de l'onglet
+                                    // Masquage du contenu
                                     if (createTabContent) {
-                                        createTabContent.style.display = 'none';
+                                        createTabContent.style.display = 'none !important';
+                                    }
+                                    
+                                    // Masquage du container complet (inclut le tooltip)
+                                    if (createTabContainer) {
+                                        createTabContainer.style.display = 'none !important';
                                     }
                                     
                                    // NOUVEAU - Masquer le tooltip "Rejoindre" avec debug
