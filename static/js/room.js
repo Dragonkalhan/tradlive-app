@@ -902,6 +902,7 @@ function startHostListening() {
                 isListening = true;
                 networkErrorCount = 0;
                 
+               const micButton = document.getElementById('mic-button');
                console.log('🔍 DEBUG micButton:', micButton); 
                updateMicButtonState(micButton, true, 'stop_button');
                 showElement(waveAnimation, true);
@@ -927,7 +928,8 @@ function stopHostListening() {
     if (recognition) recognition.stop();
     isListening = false;
     
-    updateMicButtonState(micButton, false, 'speak_french');
+   const micButton = document.getElementById('mic-button'); 
+   updateMicButtonState(micButton, false, 'speak_french');
     hideElement(waveAnimation);
     
     const message = getTranslation('click_mic') || 
@@ -961,7 +963,8 @@ function startParticipantListening() {
                 participantRecognition.start();
                 isParticipantListening = true;
                 
-                updateMicButtonState(participantMicButton, true, 'stop_button');
+               const participantMicButton = document.getElementById('participant-mic-button'); 
+               updateMicButtonState(participantMicButton, true, 'stop_button');
                 showElement(participantWave, true);
                 
                 const langName = getLanguageName(userData.language);
@@ -986,7 +989,8 @@ function stopParticipantListening() {
     if (participantRecognition) participantRecognition.stop();
     isParticipantListening = false;
     
-    updateMicButtonState(participantMicButton, false, 'speak_your_language');
+   const participantMicButton = document.getElementById('participant-mic-button'); 
+   updateMicButtonState(participantMicButton, false, 'speak_your_language');
     hideElement(participantWave);
     
     const message = getTranslation('click_mic') || 
