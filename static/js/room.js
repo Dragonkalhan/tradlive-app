@@ -1407,6 +1407,7 @@ function setupButtonListeners() {
        
        console.log('✅ Événements boutons configurés');
    }, 500);
+}
 function updateQRCode() {
     console.log('🔍 updateQRCode() appelée');
     console.log('🔍 qrCodeImage:', qrCodeImage);
