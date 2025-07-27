@@ -780,7 +780,7 @@
                     document.querySelector('.tab[onclick*="join"]').classList.add('active');
                     
                     // Garder le pending_auto_join pour les retours en arrière
-                    localStorage.removeItem('pending_auto_join');
+                    // localStorage.removeItem('pending_auto_join');
                     
                     // Mettre le focus sur le champ pseudo
                     setTimeout(() => {
@@ -901,11 +901,6 @@
                 language: currentLanguage,
                 password: document.getElementById('join-password').value.trim() || null
             };
-
-            // DEBUG : Vérifier les données envoyées à l'API
-            console.log('🔍 Données envoyées à l\'API:', data);
-            alert('API DATA: ' + JSON.stringify(data));
-
             
             // Validation côté client
             if (!data.room_id || !data.nickname) {
