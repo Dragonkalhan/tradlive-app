@@ -129,7 +129,7 @@ function monitorVoiceActivity() {
     }
     const average = sum / dataArray.length;
     
-    // Si du son est détecté
+    // 🔧 LOGIQUE CORRIGÉE : Si du son est détecté
     if (average > silenceThreshold) {
         // Réinitialiser le timer de silence
         if (silenceTimer) {
@@ -138,6 +138,18 @@ function monitorVoiceActivity() {
         }
         
         // Programmer l'arrêt automatique après 15s de silence
+        silenceTimer = setTimeout(() => {
+            console.log('🔇 15s de silence détectées - Arrêt automatique');
+            
+            if (isHost && isListening) {
+                stopHostListening();
+            } else if (!isHost && isParticipantListening) {
+                stopParticipantListening();
+            }
+        }, silenceTimeout);
+    }
+    // 🆕 NOUVEAU : Si pas de timer en cours, en lancer un
+    else if (!silenceTimer) {
         silenceTimer = setTimeout(() => {
             console.log('🔇 15s de silence détectées - Arrêt automatique');
             
