@@ -26,6 +26,15 @@ let lastSpokenTimestamp = 0;
 let lastTranslationId = null;
 let networkErrorCount = 0;
 
+// VARIABLES POUR AUTO-STOP 15S
+let silenceTimer = null;
+let audioContext = null;
+let analyser = null;
+let microphone = null;
+let dataArray = null;
+let silenceThreshold = 30; // Seuil de silence (0-255)
+let silenceTimeout = 15000; // 15 secondes
+
 // Éléments DOM (seront initialisés au chargement)
 let statusEl, controlsEl, hostControlsEl, participantControlsEl;
 let micButton, participantMicButton, textModeButton, participantTextButton;
@@ -77,6 +86,91 @@ function getRecognitionLanguageCode(code) {
         'bn': 'bn-IN', 'te': 'te-IN', 'mr': 'mr-IN', 'fr': 'fr-FR'
     };
     return mapping[code] || 'fr-FR';
+}
+
+/* ========================================
+   🆕 SYSTÈME AUTO-STOP 15S
+======================================== */
+function startVoiceDetection() {
+    if (!navigator.mediaDevices || !window.AudioContext) {
+        console.log('⚠️ Audio Context non disponible');
+        return;
+    }
+    
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            microphone = audioContext.createMediaStreamSource(stream);
+            
+            analyser.fftSize = 512;
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            microphone.connect(analyser);
+            
+            console.log('🎤 Détection vocale auto-stop initialisée');
+            monitorVoiceActivity();
+        })
+        .catch(error => {
+            console.warn('⚠️ Erreur accès micro pour détection:', error);
+        });
+}
+
+function monitorVoiceActivity() {
+    if (!analyser || !dataArray) return;
+    
+    analyser.getByteFrequencyData(dataArray);
+    
+    // Calculer le niveau audio moyen
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+        sum += dataArray[i];
+    }
+    const average = sum / dataArray.length;
+    
+    // Si du son est détecté
+    if (average > silenceThreshold) {
+        // Réinitialiser le timer de silence
+        if (silenceTimer) {
+            clearTimeout(silenceTimer);
+            silenceTimer = null;
+        }
+        
+        // Programmer l'arrêt automatique après 15s de silence
+        silenceTimer = setTimeout(() => {
+            console.log('🔇 15s de silence détectées - Arrêt automatique');
+            
+            if (isHost && isListening) {
+                stopHostListening();
+            } else if (!isHost && isParticipantListening) {
+                stopParticipantListening();
+            }
+        }, silenceTimeout);
+    }
+    
+    // Continuer la surveillance si le micro est actif
+    if ((isHost && isListening) || (!isHost && isParticipantListening)) {
+        requestAnimationFrame(monitorVoiceActivity);
+    }
+}
+
+function stopVoiceDetection() {
+    if (silenceTimer) {
+        clearTimeout(silenceTimer);
+        silenceTimer = null;
+    }
+    
+    if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+    }
+    
+    analyser = null;
+    microphone = null;
+    dataArray = null;
+    
+    console.log('🔇 Détection vocale arrêtée');
 }
 
 /* ========================================
@@ -913,6 +1007,7 @@ function startHostListening() {
                 
                 notifySuccess('🎤 Microphone activé');
                 console.log('✅ Reconnaissance vocale hôte démarrée');
+                startVoiceDetection();
             } catch (error) {
                 console.error('❌ Erreur démarrage reconnaissance:', error);
                 handleStartupError('host');
@@ -935,8 +1030,14 @@ function stopHostListening() {
     const message = getTranslation('click_mic') || 
         'Cliquez sur le micro pour parler.';
     showStatus(message, 'connected');
+
+   // 🆕 POP-UP ROUGE + ARRÊT DÉTECTION
+   if (window.TradLive?.notifications) {
+       window.TradLive.notifications.show(getTranslation('mic_closed', 'Microphone fermé'), 'error', { duration: 2000 });
+   }
+   stopVoiceDetection();
     
-    console.log('🎤 Microphone hôte arrêté');
+   console.log('🎤 Microphone hôte arrêté');
 }
 
 function toggleParticipantListening() {
@@ -974,6 +1075,7 @@ function startParticipantListening() {
                 
                 notifySuccess('🎤 Microphone activé');
                 console.log('✅ Reconnaissance vocale participant démarrée');
+                startVoiceDetection();
             } catch (error) {
                 console.error('❌ Erreur démarrage reconnaissance participant:', error);
                 handleStartupError('participant');
@@ -996,8 +1098,14 @@ function stopParticipantListening() {
     const message = getTranslation('click_mic') || 
         'Cliquez sur le micro pour parler.';
     showStatus(message, 'connected');
+
+   // POP-UP ROUGE + ARRÊT DÉTECTION
+   if (window.TradLive?.notifications) {
+       window.TradLive.notifications.show(getTranslation('mic_closed', 'Microphone fermé'), 'error', { duration: 2000 });
+   }
+   stopVoiceDetection();
     
-    console.log('🎤 Microphone participant arrêté');
+   console.log('🎤 Microphone participant arrêté');
 }
 
 function updateMicButtonState(button, isActive, textKey) {
