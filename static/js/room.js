@@ -1086,8 +1086,9 @@ function startParticipantListening() {
     }
     
     navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
+        .then((stream) => {
             try {
+                currentStream = stream;
                 participantRecognition.start();
                 isParticipantListening = true;
                 
@@ -1102,6 +1103,12 @@ function startParticipantListening() {
                 
                 notifySuccess('🎤 Microphone activé');
                 console.log('✅ Reconnaissance vocale participant démarrée');
+               // 🎵 NOUVEAU - Démarrer les vagues audio participant
+               if (initAudioAnalyser(stream)) {
+                   startWaveAnimation(false); // false = participant
+                   console.log('🎵 Vagues participant connectées au micro');
+               }
+
                 startVoiceDetection();
             } catch (error) {
                 console.error('❌ Erreur démarrage reconnaissance participant:', error);
@@ -1133,6 +1140,13 @@ function stopParticipantListening() {
    stopVoiceDetection();
     
    console.log('🎤 Microphone participant arrêté');
+// 🎵 NOUVEAU - Arrêter les vagues audio participant
+stopWaveAnimation(false); // false = participant
+
+// 🎵 NOUVEAU - Fermer le stream audio
+if (currentStream) {
+    currentStream.getTracks().forEach(track => track.stop());
+    currentStream = null;
 }
 
 function updateMicButtonState(button, isActive, textKey) {
