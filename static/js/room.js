@@ -1990,3 +1990,168 @@ function testWaveAnimation() {
 // Ajouter les fonctions de test au window pour pouvoir les appeler
 window.testWaveVisibility = testWaveVisibility;
 window.testWaveAnimation = testWaveAnimation;
+
+/* ========================================
+   🎵 SYSTÈME VAGUES AUDIO TEMPS RÉEL
+======================================== */
+
+// Variables globales pour l'analyse audio
+let audioAnalyser = null;
+let audioDataArray = null;
+let waveAnimationFrame = null;
+let isWaveActive = false;
+
+// Initialiser l'analyseur audio
+function initAudioAnalyser(stream) {
+    try {
+        // Créer le contexte audio s'il n'existe pas déjà
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // Créer l'analyseur
+        audioAnalyser = audioContext.createAnalyser();
+        audioAnalyser.fftSize = 256;
+        audioAnalyser.smoothingTimeConstant = 0.8;
+        
+        // Connecter le microphone à l'analyseur
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(audioAnalyser);
+        
+        // Préparer le buffer de données
+        const bufferLength = audioAnalyser.frequencyBinCount;
+        audioDataArray = new Uint8Array(bufferLength);
+        
+        console.log('🎵 Analyseur audio initialisé');
+        return true;
+    } catch (error) {
+        console.error('❌ Erreur init analyseur audio:', error);
+        return false;
+    }
+}
+
+// Démarrer l'animation des vagues
+function startWaveAnimation(isHost = true) {
+    if (!audioAnalyser || !audioDataArray) {
+        console.warn('⚠️ Analyseur audio non initialisé');
+        return;
+    }
+    
+    isWaveActive = true;
+    const waveElement = isHost ? 
+        document.getElementById('wave-animation') : 
+        document.getElementById('participant-wave');
+    
+    if (!waveElement) {
+        console.warn('⚠️ Élément vague non trouvé');
+        return;
+    }
+    
+    // Afficher les vagues
+    waveElement.style.display = 'flex';
+    waveElement.classList.add('active');
+    
+    console.log('🎵 Animation vagues démarrée:', isHost ? 'HÔTE' : 'PARTICIPANT');
+    
+    // Démarrer la boucle d'animation
+    animateWaves(waveElement);
+}
+
+// Arrêter l'animation des vagues
+function stopWaveAnimation(isHost = true) {
+    isWaveActive = false;
+    
+    if (waveAnimationFrame) {
+        cancelAnimationFrame(waveAnimationFrame);
+        waveAnimationFrame = null;
+    }
+    
+    const waveElement = isHost ? 
+        document.getElementById('wave-animation') : 
+        document.getElementById('participant-wave');
+    
+    if (waveElement) {
+        waveElement.style.display = 'none';
+        waveElement.classList.remove('active');
+        
+        // Remettre les barres à leur taille par défaut
+        const bars = waveElement.querySelectorAll('.wave-bar');
+        bars.forEach(bar => {
+            bar.style.height = '10px';
+            bar.style.opacity = '0.5';
+        });
+    }
+    
+    console.log('🔇 Animation vagues arrêtée:', isHost ? 'HÔTE' : 'PARTICIPANT');
+}
+
+// Animer les vagues en temps réel
+function animateWaves(waveElement) {
+    if (!isWaveActive || !audioAnalyser || !audioDataArray) {
+        return;
+    }
+    
+    // Obtenir les données audio
+    audioAnalyser.getByteFrequencyData(audioDataArray);
+    
+    // Calculer le niveau audio moyen
+    let sum = 0;
+    for (let i = 0; i < audioDataArray.length; i++) {
+        sum += audioDataArray[i];
+    }
+    const average = sum / audioDataArray.length;
+    
+    // Normaliser le niveau (0-1)
+    const normalizedLevel = Math.min(average / 128, 1);
+    
+    // Animer les barres de vagues
+    const bars = waveElement.querySelectorAll('.wave-bar');
+    bars.forEach((bar, index) => {
+        // Créer une variation pour chaque barre
+        const variation = Math.sin((Date.now() / 200) + (index * 0.5)) * 0.3 + 0.7;
+        const height = Math.max(10, normalizedLevel * 40 * variation);
+        const opacity = Math.max(0.3, normalizedLevel + 0.2);
+        
+        bar.style.height = `${height}px`;
+        bar.style.opacity = opacity;
+        
+        // Effet de couleur selon l'intensité
+        if (normalizedLevel > 0.6) {
+            bar.style.background = 'linear-gradient(45deg, #FF6B6B, #FF8E53)';
+        } else if (normalizedLevel > 0.3) {
+            bar.style.background = 'linear-gradient(45deg, #FFD700, #FFA000)';
+        } else {
+            bar.style.background = 'linear-gradient(45deg, #4ECDC4, #44A08D)';
+        }
+    });
+    
+    // Continuer l'animation
+    waveAnimationFrame = requestAnimationFrame(() => animateWaves(waveElement));
+}
+
+// Test manuel des vagues avec micro
+function testRealWaves() {
+    console.log('🎵 TEST - Vagues avec micro réel...');
+    
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            if (initAudioAnalyser(stream)) {
+                startWaveAnimation(true);
+                
+                console.log('🎵 Test en cours... Parlez dans le micro !');
+                
+                // Arrêter après 10 secondes
+                setTimeout(() => {
+                    stopWaveAnimation(true);
+                    stream.getTracks().forEach(track => track.stop());
+                    console.log('🎵 Test terminé');
+                }, 10000);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erreur accès micro pour test:', error);
+        });
+}
+
+// Ajouter la fonction de test au window
+window.testRealWaves = testRealWaves;
