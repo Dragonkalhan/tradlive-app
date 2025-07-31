@@ -1148,7 +1148,8 @@ if (currentStream) {
     currentStream.getTracks().forEach(track => track.stop());
     currentStream = null;
 }
-
+}
+   
 function updateMicButtonState(button, isActive, textKey) {
     if (!button) return;
     
