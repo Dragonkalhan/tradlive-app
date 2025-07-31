@@ -1929,3 +1929,64 @@ setTimeout(() => {
     const score = Object.values(integrationCheck).filter(Boolean).length;
     console.log(`📊 Score d'intégration: ${score}/5 (${score >= 4 ? '✅ Excellent' : score >= 3 ? '⚠️ Bon' : '❌ Problème'})`);
 }, 1000);
+
+/* ========================================
+   🎵 MISSION 13 - DIAGNOSTIC VAGUES AUDIO
+======================================== */
+
+// Test pour voir si les vagues s'affichent
+function testWaveVisibility() {
+    console.log('🔍 TEST - Vérification des vagues...');
+    
+    const hostWave = document.getElementById('wave-animation');
+    const participantWave = document.getElementById('participant-wave');
+    
+    console.log('🎵 Vague hôte trouvée:', hostWave ? '✅' : '❌');
+    console.log('🎵 Vague participant trouvée:', participantWave ? '✅' : '❌');
+    
+    if (hostWave) {
+        console.log('🎵 Style vague hôte:', window.getComputedStyle(hostWave).display);
+    }
+    
+    if (participantWave) {
+        console.log('🎵 Style vague participant:', window.getComputedStyle(participantWave).display);
+    }
+}
+
+// Test pour forcer l'affichage des vagues pendant 3 secondes
+function testWaveAnimation() {
+    console.log('🎵 TEST - Forçage animation vagues pendant 3s...');
+    
+    const hostWave = document.getElementById('wave-animation');
+    const participantWave = document.getElementById('participant-wave');
+    
+    // Forcer l'affichage
+    if (hostWave) {
+        hostWave.style.display = 'flex';
+        hostWave.classList.add('active');
+    }
+    
+    if (participantWave) {
+        participantWave.style.display = 'flex';  
+        participantWave.classList.add('active');
+    }
+    
+    // Cacher après 3 secondes
+    setTimeout(() => {
+        if (hostWave) {
+            hostWave.style.display = 'none';
+            hostWave.classList.remove('active');
+        }
+        
+        if (participantWave) {
+            participantWave.style.display = 'none';
+            participantWave.classList.remove('active');
+        }
+        
+        console.log('🎵 Test terminé');
+    }, 3000);
+}
+
+// Ajouter les fonctions de test au window pour pouvoir les appeler
+window.testWaveVisibility = testWaveVisibility;
+window.testWaveAnimation = testWaveAnimation;
