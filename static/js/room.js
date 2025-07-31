@@ -17,6 +17,7 @@ let isParticipantListening = false;
 let isHost = false;
 let updateInterval = null;
 let heartbeatInterval = null;
+let currentStream = null; // Pour stocker le stream audio
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 
@@ -1000,27 +1001,33 @@ function startHostListening() {
         }
     }
     
-    // Demander permission microphone
-    navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
-            try {
-                recognition.start();
-                isListening = true;
-                networkErrorCount = 0;
-                
-               const micButton = document.getElementById('mic-button');
-               console.log('🔍 DEBUG micButton:', micButton); 
-               updateMicButtonState(micButton, true, 'stop_button');
-                showElement(waveAnimation, true);
-                
-                const message = getTranslation('listening_french') || 
-                    'En écoute... Parlez en français.';
-                showStatus(message, 'info');
-                
-                notifySuccess('🎤 Microphone activé');
-                console.log('✅ Reconnaissance vocale hôte démarrée');
-                startVoiceDetection();
-            } catch (error) {
+   // Demander permission microphone
+   navigator.mediaDevices.getUserMedia({ audio: true })
+       .then((stream) => {  // ← AJOUT (stream) ici !
+           try {
+               currentStream = stream;  // ← NOUVEAU : sauvegarder le stream
+               recognition.start();
+               isListening = true;
+               networkErrorCount = 0;
+               
+              const micButton = document.getElementById('mic-button');
+              console.log('🔍 DEBUG micButton:', micButton); 
+              updateMicButtonState(micButton, true, 'stop_button');
+               showElement(waveAnimation, true);
+               
+               const message = getTranslation('listening_french') || 
+                   'En écoute... Parlez en français.';
+               showStatus(message, 'info');
+               
+               notifySuccess('🎤 Microphone activé');
+               console.log('✅ Reconnaissance vocale hôte démarrée');
+               startVoiceDetection();
+              // 🎵 NOUVEAU - Démarrer les vagues audio
+              if (initAudioAnalyser(stream)) {
+                  startWaveAnimation(true); // true = hôte
+                  console.log('🎵 Vagues hôte connectées au micro');
+              }
+           } catch (error) {
                 console.error('❌ Erreur démarrage reconnaissance:', error);
                 handleStartupError('host');
             }
@@ -1050,6 +1057,8 @@ function stopHostListening() {
    stopVoiceDetection();
     
    console.log('🎤 Microphone hôte arrêté');
+   // 🎵 NOUVEAU - Arrêter les vagues audio
+stopWaveAnimation(true); // true = hôte
 }
 
 function toggleParticipantListening() {
