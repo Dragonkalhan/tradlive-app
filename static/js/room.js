@@ -1059,6 +1059,12 @@ function stopHostListening() {
    console.log('🎤 Microphone hôte arrêté');
    // 🎵 NOUVEAU - Arrêter les vagues audio
 stopWaveAnimation(true); // true = hôte
+
+// 🎵 NOUVEAU - Fermer le stream audio
+if (currentStream) {
+    currentStream.getTracks().forEach(track => track.stop());
+    currentStream = null;
+}
 }
 
 function toggleParticipantListening() {
