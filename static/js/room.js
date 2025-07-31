@@ -2115,7 +2115,7 @@ function stopWaveAnimation(isHost = true) {
     console.log('🔇 Animation vagues arrêtée:', isHost ? 'HÔTE' : 'PARTICIPANT');
 }
 
-// Animer les vagues en temps réel - VERSION ULTRA-SENSIBLE
+// Animer les vagues en temps réel - VERSION COMPACTE
 function animateWaves(waveElement) {
     if (!isWaveActive || !audioAnalyser || !audioDataArray) {
         return;
@@ -2131,53 +2131,47 @@ function animateWaves(waveElement) {
     }
     const average = sum / audioDataArray.length;
     
-    // 🔧 CORRECTION ULTRA-SENSIBLE : Seuil très bas et amplification
-    const baseLevel = 15; // Niveau de bruit de fond (au lieu de 20)
-    const normalizedLevel = Math.max(0, Math.min(1, (average - baseLevel) / 30)); // Amplification x4
+    // Seuils de sensibilité
+    const baseLevel = 15;
+    const normalizedLevel = Math.max(0, Math.min(1, (average - baseLevel) / 30));
     
-    // 🎯 DEBUG : Afficher les niveaux audio
+    // 🎯 DEBUG (optionnel - retire si trop de logs)
     if (average > baseLevel) {
-        console.log(`🎵 Audio: ${Math.round(average)} | Base: ${baseLevel} | Normalisé: ${normalizedLevel.toFixed(2)}`);
+        console.log(`🎵 Audio: ${Math.round(average)} | Normalisé: ${normalizedLevel.toFixed(2)}`);
     }
     
-    // Animer les barres de vagues
+    // Animer les barres avec les nouvelles classes CSS - VERSION COMPACTE
     const bars = waveElement.querySelectorAll('.wave-bar');
     bars.forEach((bar, index) => {
-        if (normalizedLevel > 0.02) { // Seuil très très bas !
-            // 🎵 VOIX DÉTECTÉE - Animation amplifiée
-            const variation = Math.sin((Date.now() / 150) + (index * 1.2)) * 0.5 + 0.5;
-            const baseHeight = 12;
-            const maxHeight = 45;
+        // Nettoyer les anciennes classes
+        bar.classList.remove('silence', 'low', 'medium', 'high');
+        
+        if (normalizedLevel > 0.02) {
+            // Calcul de la hauteur avec variation fluide - ADAPTÉE POUR CONTAINER 40px
+            const variation = Math.sin((Date.now() / 120) + (index * 0.8)) * 0.4 + 0.6;
+            const baseHeight = 8;  // Plus petit
+            const maxHeight = 28;  // Plus petit (était 55)
             const height = Math.max(baseHeight, baseHeight + (normalizedLevel * maxHeight * variation));
-            const opacity = Math.max(0.4, normalizedLevel * 2 + 0.3); // Amplifiée
             
+            // Animation fluide de la hauteur
             bar.style.height = `${height}px`;
-            bar.style.opacity = opacity;
+            bar.style.transition = 'height 0.08s ease-out';
             
-            // Couleur selon l'intensité vocale (seuils abaissés)
+            // Classes selon l'intensité (couleurs automatiques via CSS)
             if (normalizedLevel > 0.6) {
-                bar.style.background = 'linear-gradient(45deg, #FF4444, #FF6B6B)'; // Rouge intense
+                bar.classList.add('high');
             } else if (normalizedLevel > 0.25) {
-                bar.style.background = 'linear-gradient(45deg, #FFD700, #FFA000)'; // Doré actif  
+                bar.classList.add('medium');
             } else if (normalizedLevel > 0.08) {
-                bar.style.background = 'linear-gradient(45deg, #4ECDC4, #44A08D)'; // Vert calme
+                bar.classList.add('low');
             } else {
-                bar.style.background = 'linear-gradient(45deg, #87CEEB, #20B2AA)'; // Bleu très léger
+                bar.classList.add('silence');
             }
-            
-            // Effet de pulsation pour les niveaux très faibles
-            if (normalizedLevel < 0.1) {
-                bar.style.transform = `scaleY(${1 + normalizedLevel * 2})`;
-            } else {
-                bar.style.transform = 'scaleY(1)';
-            }
-            
         } else {
-            // 🔇 SILENCE TOTAL - Barres au minimum absolu
-            bar.style.height = '6px';
-            bar.style.opacity = '0.2';
-            bar.style.background = 'linear-gradient(45deg, #666, #888)';
-            bar.style.transform = 'scaleY(1)';
+            // Silence - état de base compact
+            bar.style.height = '8px';
+            bar.style.transition = 'height 0.2s ease-out';
+            bar.classList.add('silence');
         }
     });
     
