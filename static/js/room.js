@@ -2085,7 +2085,7 @@ function stopWaveAnimation(isHost = true) {
     console.log('🔇 Animation vagues arrêtée:', isHost ? 'HÔTE' : 'PARTICIPANT');
 }
 
-// Animer les vagues en temps réel
+// Animer les vagues en temps réel - VERSION CORRIGÉE
 function animateWaves(waveElement) {
     if (!isWaveActive || !audioAnalyser || !audioDataArray) {
         return;
@@ -2101,27 +2101,39 @@ function animateWaves(waveElement) {
     }
     const average = sum / audioDataArray.length;
     
-    // Normaliser le niveau (0-1)
-    const normalizedLevel = Math.min(average / 128, 1);
+    // 🔧 CORRECTION : Seuil plus élevé pour détecter vraiment la voix
+    const normalizedLevel = Math.max(0, (average - 20) / 100); // Seuil de 20, max 120
+    
+    // 🎯 DEBUG : Afficher les niveaux audio
+    if (average > 10) { // Seulement si il y a du son
+        console.log(`🎵 Niveau audio: ${Math.round(average)} | Normalisé: ${normalizedLevel.toFixed(2)}`);
+    }
     
     // Animer les barres de vagues
     const bars = waveElement.querySelectorAll('.wave-bar');
     bars.forEach((bar, index) => {
-        // Créer une variation pour chaque barre
-        const variation = Math.sin((Date.now() / 200) + (index * 0.5)) * 0.3 + 0.7;
-        const height = Math.max(10, normalizedLevel * 40 * variation);
-        const opacity = Math.max(0.3, normalizedLevel + 0.2);
-        
-        bar.style.height = `${height}px`;
-        bar.style.opacity = opacity;
-        
-        // Effet de couleur selon l'intensité
-        if (normalizedLevel > 0.6) {
-            bar.style.background = 'linear-gradient(45deg, #FF6B6B, #FF8E53)';
-        } else if (normalizedLevel > 0.3) {
-            bar.style.background = 'linear-gradient(45deg, #FFD700, #FFA000)';
+        if (normalizedLevel > 0.1) {
+            // 🎵 VRAIE VOIX DÉTECTÉE - Animation basée sur l'audio
+            const variation = Math.sin((Date.now() / 100) + (index * 0.8)) * 0.4 + 0.6;
+            const height = Math.max(15, normalizedLevel * 50 * variation);
+            const opacity = Math.max(0.6, normalizedLevel + 0.4);
+            
+            bar.style.height = `${height}px`;
+            bar.style.opacity = opacity;
+            
+            // Couleur selon l'intensité vocale
+            if (normalizedLevel > 0.7) {
+                bar.style.background = 'linear-gradient(45deg, #FF4444, #FF6B6B)'; // Rouge intense
+            } else if (normalizedLevel > 0.4) {
+                bar.style.background = 'linear-gradient(45deg, #FFD700, #FFA000)'; // Doré actif
+            } else {
+                bar.style.background = 'linear-gradient(45deg, #4ECDC4, #44A08D)'; // Vert calme
+            }
         } else {
-            bar.style.background = 'linear-gradient(45deg, #4ECDC4, #44A08D)';
+            // 🔇 SILENCE - Barres au minimum
+            bar.style.height = '8px';
+            bar.style.opacity = '0.3';
+            bar.style.background = 'linear-gradient(45deg, #666, #888)'; // Gris silence
         }
     });
     
