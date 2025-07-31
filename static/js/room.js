@@ -2085,7 +2085,7 @@ function stopWaveAnimation(isHost = true) {
     console.log('🔇 Animation vagues arrêtée:', isHost ? 'HÔTE' : 'PARTICIPANT');
 }
 
-// Animer les vagues en temps réel - VERSION CORRIGÉE
+// Animer les vagues en temps réel - VERSION ULTRA-SENSIBLE
 function animateWaves(waveElement) {
     if (!isWaveActive || !audioAnalyser || !audioDataArray) {
         return;
@@ -2101,39 +2101,53 @@ function animateWaves(waveElement) {
     }
     const average = sum / audioDataArray.length;
     
-    // 🔧 CORRECTION : Seuil plus élevé pour détecter vraiment la voix
-    const normalizedLevel = Math.max(0, (average - 20) / 100); // Seuil de 20, max 120
+    // 🔧 CORRECTION ULTRA-SENSIBLE : Seuil très bas et amplification
+    const baseLevel = 12; // Niveau de bruit de fond (au lieu de 20)
+    const normalizedLevel = Math.max(0, Math.min(1, (average - baseLevel) / 25)); // Amplification x4
     
     // 🎯 DEBUG : Afficher les niveaux audio
-    if (average > 10) { // Seulement si il y a du son
-        console.log(`🎵 Niveau audio: ${Math.round(average)} | Normalisé: ${normalizedLevel.toFixed(2)}`);
+    if (average > baseLevel) {
+        console.log(`🎵 Audio: ${Math.round(average)} | Base: ${baseLevel} | Normalisé: ${normalizedLevel.toFixed(2)}`);
     }
     
     // Animer les barres de vagues
     const bars = waveElement.querySelectorAll('.wave-bar');
     bars.forEach((bar, index) => {
-        if (normalizedLevel > 0.1) {
-            // 🎵 VRAIE VOIX DÉTECTÉE - Animation basée sur l'audio
-            const variation = Math.sin((Date.now() / 100) + (index * 0.8)) * 0.4 + 0.6;
-            const height = Math.max(15, normalizedLevel * 50 * variation);
-            const opacity = Math.max(0.6, normalizedLevel + 0.4);
+        if (normalizedLevel > 0.02) { // Seuil très très bas !
+            // 🎵 VOIX DÉTECTÉE - Animation amplifiée
+            const variation = Math.sin((Date.now() / 150) + (index * 1.2)) * 0.5 + 0.5;
+            const baseHeight = 12;
+            const maxHeight = 45;
+            const height = Math.max(baseHeight, baseHeight + (normalizedLevel * maxHeight * variation));
+            const opacity = Math.max(0.4, normalizedLevel * 2 + 0.3); // Amplifiée
             
             bar.style.height = `${height}px`;
             bar.style.opacity = opacity;
             
-            // Couleur selon l'intensité vocale
-            if (normalizedLevel > 0.7) {
+            // Couleur selon l'intensité vocale (seuils abaissés)
+            if (normalizedLevel > 0.4) {
                 bar.style.background = 'linear-gradient(45deg, #FF4444, #FF6B6B)'; // Rouge intense
-            } else if (normalizedLevel > 0.4) {
-                bar.style.background = 'linear-gradient(45deg, #FFD700, #FFA000)'; // Doré actif
-            } else {
+            } else if (normalizedLevel > 0.15) {
+                bar.style.background = 'linear-gradient(45deg, #FFD700, #FFA000)'; // Doré actif  
+            } else if (normalizedLevel > 0.05) {
                 bar.style.background = 'linear-gradient(45deg, #4ECDC4, #44A08D)'; // Vert calme
+            } else {
+                bar.style.background = 'linear-gradient(45deg, #87CEEB, #20B2AA)'; // Bleu très léger
             }
+            
+            // Effet de pulsation pour les niveaux très faibles
+            if (normalizedLevel < 0.1) {
+                bar.style.transform = `scaleY(${1 + normalizedLevel * 2})`;
+            } else {
+                bar.style.transform = 'scaleY(1)';
+            }
+            
         } else {
-            // 🔇 SILENCE - Barres au minimum
-            bar.style.height = '8px';
-            bar.style.opacity = '0.3';
-            bar.style.background = 'linear-gradient(45deg, #666, #888)'; // Gris silence
+            // 🔇 SILENCE TOTAL - Barres au minimum absolu
+            bar.style.height = '6px';
+            bar.style.opacity = '0.2';
+            bar.style.background = 'linear-gradient(45deg, #666, #888)';
+            bar.style.transform = 'scaleY(1)';
         }
     });
     
