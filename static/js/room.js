@@ -2102,8 +2102,8 @@ function animateWaves(waveElement) {
     const average = sum / audioDataArray.length;
     
     // 🔧 CORRECTION ULTRA-SENSIBLE : Seuil très bas et amplification
-    const baseLevel = 12; // Niveau de bruit de fond (au lieu de 20)
-    const normalizedLevel = Math.max(0, Math.min(1, (average - baseLevel) / 25)); // Amplification x4
+    const baseLevel = 15; // Niveau de bruit de fond (au lieu de 20)
+    const normalizedLevel = Math.max(0, Math.min(1, (average - baseLevel) / 30)); // Amplification x4
     
     // 🎯 DEBUG : Afficher les niveaux audio
     if (average > baseLevel) {
@@ -2125,11 +2125,11 @@ function animateWaves(waveElement) {
             bar.style.opacity = opacity;
             
             // Couleur selon l'intensité vocale (seuils abaissés)
-            if (normalizedLevel > 0.4) {
+            if (normalizedLevel > 0.6) {
                 bar.style.background = 'linear-gradient(45deg, #FF4444, #FF6B6B)'; // Rouge intense
-            } else if (normalizedLevel > 0.15) {
+            } else if (normalizedLevel > 0.25) {
                 bar.style.background = 'linear-gradient(45deg, #FFD700, #FFA000)'; // Doré actif  
-            } else if (normalizedLevel > 0.05) {
+            } else if (normalizedLevel > 0.08) {
                 bar.style.background = 'linear-gradient(45deg, #4ECDC4, #44A08D)'; // Vert calme
             } else {
                 bar.style.background = 'linear-gradient(45deg, #87CEEB, #20B2AA)'; // Bleu très léger
