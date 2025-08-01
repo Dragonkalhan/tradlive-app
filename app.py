@@ -328,21 +328,17 @@ def room_updates(room_id):
         room_manager.update_user_activity(room_id, user_id)
         
         user = room.get_user(user_id)
-        user_language = user.language
-        
         last_translation = room.last_translation
         
-        # Interface différente selon le rôle (hôte vs participant)
+        # Récupérer l'utilisateur actuel pour connaître sa langue
+        current_user = room.get_user(user_id)
+        user_language = current_user.language if current_user else 'fr'
+        
+        # Identifier qui a envoyé le dernier message
+        sender = room.get_user(last_translation.get('sender_id')) if last_translation.get('sender_id') else None
+        is_host_message = sender and sender.is_host
+        
         if user.is_host:
-# Récupérer l'utilisateur actuel pour connaître sa langue
-current_user = room.get_user(user_id)
-user_language = current_user.language if current_user else 'fr'
-
-# Identifier qui a envoyé le dernier message
-sender = room.get_user(last_translation.get('sender_id')) if last_translation.get('sender_id') else None
-is_host_message = sender and sender.is_host
-
-if user.is_host:
     # Pour l'hôte : voir les réponses des participants dans sa langue
     if not is_host_message:  # Message d'un participant
         participant_response = last_translation['translated'].get(user_language, '')
@@ -499,5 +495,6 @@ if __name__ == "__main__":
     print(f"🌐 URL d'accès: {BASE_URL}")
     
     app.run(debug=False, host='0.0.0.0', port=port)
+
 
 
