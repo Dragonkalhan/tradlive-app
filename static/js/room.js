@@ -1204,7 +1204,8 @@ function sendHostTranslation(text) {
     const requestData = {
         user_id: userData.user_id,
         text: text,
-        source_language: userData.language
+        source_language: userData.language,
+        sender_id: userData.user_id
     };
     
     console.log('🟢 Données envoyées:', requestData);
@@ -1254,7 +1255,7 @@ function sendParticipantTranslation(text) {
         user_id: userData.user_id,
         text: text,
         source_language: userData.language,
-        target_language: 'fr'
+        sender_id: userData.user_id
     };
     
     makeApiRequest(`/api/room/${userData.room_id}/translate`, 'POST', requestData)
@@ -2205,4 +2206,5 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
