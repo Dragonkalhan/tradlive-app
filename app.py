@@ -296,7 +296,8 @@ def room_translate(room_id):
         room_manager.update_user_activity(room_id, user_id)
         
         # Diffuser la traduction avec synthèse vocale côté client
-        success = room_manager.broadcast_translation(room_id, text, source_language, enable_speech=True)
+        sender_id = data.get('sender_id', user_id)
+        success = room_manager.broadcast_translation(room_id, text, source_language, sender_id, enable_speech=True)
         
         if success:
             return jsonify({
@@ -334,7 +335,8 @@ def room_updates(room_id):
         # Interface différente selon le rôle (hôte vs participant)
         if user.is_host:
             # Pour l'hôte : voir les réponses des participants traduites en français
-            if last_translation.get('source_language') != 'fr':  # C'est une réponse d'un utilisateur
+            host_language = user.language
+            if last_translation.get('source_language') != host_language:  # C'est une réponse d'un utilisateur
                 return jsonify({
                     'success': True,
                     'original': last_translation['translated'].get('fr', ''),
@@ -482,3 +484,4 @@ if __name__ == "__main__":
     print(f"🌐 URL d'accès: {BASE_URL}")
     
     app.run(debug=False, host='0.0.0.0', port=port)
+
