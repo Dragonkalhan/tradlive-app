@@ -818,7 +818,7 @@ function setupSpeechRecognition() {
 
 function setupHostRecognition(SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.lang = 'fr-FR';
+    recognition.lang = getRecognitionLanguageCode(userData.language);
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
@@ -1204,7 +1204,7 @@ function sendHostTranslation(text) {
     const requestData = {
         user_id: userData.user_id,
         text: text,
-        source_language: 'fr'
+        source_language: userData.language
     };
     
     console.log('🟢 Données envoyées:', requestData);
@@ -2205,3 +2205,4 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
