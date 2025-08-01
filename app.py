@@ -334,62 +334,77 @@ def room_updates(room_id):
         
         # Interface différente selon le rôle (hôte vs participant)
         if user.is_host:
-            # Pour l'hôte : voir les réponses des participants traduites en français
-            host_language = user.language
-            if last_translation.get('source_language') != host_language:  # C'est une réponse d'un utilisateur
-                return jsonify({
-                    'success': True,
-                    'original': last_translation['translated'].get('fr', ''),
-                    'translated': '',
-                    'timestamp': last_translation['timestamp'].isoformat(),
-                    'is_host': True,
-                    'show_translation': False
-                })
-            else:  # C'est le message de l'hôte
-                return jsonify({
-                    'success': True,
-                    'original': last_translation['original'],
-                    'translated': '',
-                    'timestamp': last_translation['timestamp'].isoformat(),
-                    'is_host': True,
-                    'show_translation': False
-                })
+# Récupérer l'utilisateur actuel pour connaître sa langue
+current_user = room.get_user(user_id)
+user_language = current_user.language if current_user else 'fr'
+
+# Identifier qui a envoyé le dernier message
+sender = room.get_user(last_translation.get('sender_id')) if last_translation.get('sender_id') else None
+is_host_message = sender and sender.is_host
+
+if user.is_host:
+    # Pour l'hôte : voir les réponses des participants dans sa langue
+    if not is_host_message:  # Message d'un participant
+        participant_response = last_translation['translated'].get(user_language, '')
+        return jsonify({
+            'success': True,
+            'original': participant_response,
+            'translated': '',
+            'timestamp': last_translation['timestamp'].isoformat(),
+            'is_host': True,
+            'show_translation': False
+        })
+    else:  # Propre message de l'hôte
+        return jsonify({
+            'success': True,
+            'original': last_translation['original'],
+            'translated': '',
+            'timestamp': last_translation['timestamp'].isoformat(),
+            'is_host': True,
+            'show_translation': False
+        })
+
+else:
+    # Pour les participants : voir les messages de l'hôte traduits
+    if is_host_message:  # Message de l'hôte
+        translated_text = last_translation['translated'].get(user_language, '')
         
-        else:
-            # Pour les participants : voir le français original + traduction dans leur langue
-            if last_translation.get('source_language') == 'fr':  # Message de l'hôte
-                translated_text = last_translation['translated'].get(user_language, '')
-                
-                return jsonify({
-                    'success': True,
-                    'original': last_translation['original'],
-                    'translated': translated_text,
-                    'timestamp': last_translation['timestamp'].isoformat(),
-                    'is_host': False,
-                    'show_translation': True,
-                    'enable_speech': last_translation.get('enable_speech', False)
-                })
-            elif last_translation.get('source_language') == user_language:  # Son propre message
-                # Le participant voit sa propre traduction française
-                french_translation = last_translation['translated'].get('fr', '')
-                return jsonify({
-                    'success': True,
-                    'original': last_translation['original'],  # Son texte original
-                    'translated': french_translation,  # Traduction française
-                    'timestamp': last_translation['timestamp'].isoformat(),
-                    'is_host': False,
-                    'show_own_message': True,
-                    'show_translation': False
-                })
-            else:  # Message d'un autre utilisateur
-                return jsonify({
-                    'success': True,
-                    'original': '',
-                    'translated': '',
-                    'timestamp': last_translation['timestamp'].isoformat(),
-                    'is_host': False,
-                    'show_translation': False
-                })
+        return jsonify({
+            'success': True,
+            'original': last_translation['original'],
+            'translated': translated_text,
+            'timestamp': last_translation['timestamp'].isoformat(),
+            'is_host': False,
+            'show_translation': True,
+            'enable_speech': last_translation.get('enable_speech', False)
+        })
+    elif last_translation.get('source_language') == user_language:  # Son propre message
+        # Le participant voit sa propre traduction vers la langue de l'hôte
+        host_user = None
+        for u in room.users.values():
+            if u.is_host:
+                host_user = u
+                break
+        host_language = host_user.language if host_user else 'fr'
+        host_translation = last_translation['translated'].get(host_language, '')
+        return jsonify({
+            'success': True,
+            'original': last_translation['original'],  # Son texte original
+            'translated': host_translation,  # Traduction vers langue hôte
+            'timestamp': last_translation['timestamp'].isoformat(),
+            'is_host': False,
+            'show_own_message': True,
+            'show_translation': False
+        })
+    else:  # Message d'un autre utilisateur
+        return jsonify({
+            'success': True,
+            'original': '',
+            'translated': '',
+            'timestamp': last_translation['timestamp'].isoformat(),
+            'is_host': False,
+            'show_translation': False
+        })
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -484,4 +499,5 @@ if __name__ == "__main__":
     print(f"🌐 URL d'accès: {BASE_URL}")
     
     app.run(debug=False, host='0.0.0.0', port=port)
+
 
