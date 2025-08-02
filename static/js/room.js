@@ -2327,28 +2327,40 @@ function processRoomUpdatesWithLanguageDetection(data) {
     
     console.log('📝 Message de l\'hôte ?', isHostMessage);
     console.log('📝 Je suis hôte ?', isHost);
-    console.log('📝 Données:', actualData);
     
     if (isHost) {
-        // Interface hôte
+        const hostOriginalText = document.getElementById('host-original-text');
+        const hostResponsesText = document.getElementById('host-responses-text');
+        
         if (isHostMessage) {
-            // L'HÔTE a envoyé → afficher dans "What you say"
-            console.log('👑 Hôte a parlé, affichage dans "What you say"');
-            const hostOriginalText = document.getElementById('host-original-text');
+            // L'HÔTE a parlé → afficher SEULEMENT dans "What you say"
+            console.log('👑 Hôte a parlé, affichage dans "What you say" UNIQUEMENT');
+            
             if (hostOriginalText && actualData.original) {
                 hostOriginalText.textContent = actualData.original;
                 hostOriginalText.classList.remove('empty-translation');
                 animateElement(hostOriginalText, 'pulse');
             }
+            
+            // 🔧 VIDER "Participant responses" pour éviter la duplication
+            if (hostResponsesText) {
+                hostResponsesText.textContent = hostResponsesText.getAttribute('data-translate') ? 
+                    getTranslation('waiting_responses') || 'En attente des réponses...' : 
+                    'En attente des réponses...';
+                hostResponsesText.classList.add('empty-translation');
+            }
+            
         } else {
-            // PARTICIPANT a répondu → afficher dans "Participant responses"  
-            console.log('👤 Participant a répondu, affichage dans "Participant responses"');
-            const hostResponsesText = document.getElementById('host-responses-text');
+            // PARTICIPANT a répondu → afficher SEULEMENT dans "Participant responses"  
+            console.log('👤 Participant a répondu, affichage dans "Participant responses" UNIQUEMENT');
+            
             if (hostResponsesText && actualData.original) {
                 hostResponsesText.textContent = actualData.original;
                 hostResponsesText.classList.remove('empty-translation');
                 animateElement(hostResponsesText, 'pulse');
             }
+            
+            // 🔧 NE PAS toucher à "What you say" pour les réponses de participants
         }
     } else {
         // Interface participant - logique normale
@@ -2372,12 +2384,26 @@ function processRoomUpdatesWithLanguageDetection(data) {
                 }
             }
         }
+        
+        // Affichage des propres messages du participant
+        if (actualData.show_own_message) {
+            const participantOwnText = document.getElementById('participant-own-text');
+            const participantMessageArea = document.getElementById('participant-message-area');
+            
+            if (participantOwnText && actualData.original) {
+                participantOwnText.textContent = actualData.original;
+                if (participantMessageArea) {
+                    participantMessageArea.style.display = 'block';
+                    animateElement(participantMessageArea, 'slideInUp');
+                }
+            }
+        }
     }
     
     // Ajouter la détection de langue APRÈS
-    setTimeout(() => {
+    requestAnimationFrame(() => {
         updateLanguageIndicatorsOnly();
-    }, 100);
+    });
 }
 
 /**
@@ -2418,6 +2444,7 @@ function updateLanguageIndicatorsOnly() {
 window.processRoomUpdates = processRoomUpdatesWithLanguageDetection;
 
 console.log('🎯 Solution minimale appliquée - Détection de langue sans interférence');
+
 
 
 
