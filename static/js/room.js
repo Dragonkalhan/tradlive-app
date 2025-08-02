@@ -1443,7 +1443,7 @@ function startRealTimeUpdates() {
             reconnectAttempts = 0;
             updateConnectionStatus(true);
             
-            processRoomUpdates(data);
+            window.originalProcessRoomUpdates(data);
             
             // Émettre événement de mise à jour
             emitEvent('room:updated', data);
@@ -2495,21 +2495,6 @@ function startRealTimeUpdatesWithLanguageDetection() {
 if (typeof processRoomUpdates === 'function') {
     window.originalProcessRoomUpdates = processRoomUpdates;
     window.processRoomUpdates = processRoomUpdatesWithLanguageDetection;
-}
-
-if (typeof setupRoleInterface === 'function') {
-    window.originalSetupRoleInterface = setupRoleInterface;
-    window.setupRoleInterface = setupRoleInterfaceWithLanguageIndicators;
-}
-
-if (typeof loadRoomInfo === 'function') {
-    window.originalLoadRoomInfo = loadRoomInfo;
-    window.loadRoomInfo = loadRoomInfoWithLanguageSetup;
-}
-
-if (typeof startRealTimeUpdates === 'function') {
-    window.originalStartRealTimeUpdates = startRealTimeUpdates;
-    window.startRealTimeUpdates = startRealTimeUpdatesWithLanguageDetection;
 }
 
 // Export des nouvelles fonctions utilitaires
