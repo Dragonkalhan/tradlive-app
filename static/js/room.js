@@ -2314,21 +2314,44 @@ function updateAllLanguageIndicators() {
  * par cette version qui N'INTERFÈRE PAS avec l'affichage
  */
 function processRoomUpdatesWithLanguageDetection(data) {
-    // 1. APPELER LA FONCTION ORIGINALE NORMALE (pas de window.original)
     const actualData = data.data || data;
     
+    // Trouver qui a envoyé le dernier message
+    let isHostMessage = false;
+    if (roomData?.last_translation?.sender_id) {
+        const sender = roomData.users ? 
+            Object.values(roomData.users).find(user => user.user_id === roomData.last_translation.sender_id) : 
+            null;
+        isHostMessage = sender && sender.is_host;
+    }
+    
+    console.log('📝 Message de l\'hôte ?', isHostMessage);
+    console.log('📝 Je suis hôte ?', isHost);
+    console.log('📝 Données:', actualData);
+    
     if (isHost) {
-        // Interface hôte : afficher les réponses des participants
-        if (actualData.original && !actualData.show_translation) {
+        // Interface hôte
+        if (isHostMessage) {
+            // L'HÔTE a envoyé → afficher dans "What you say"
+            console.log('👑 Hôte a parlé, affichage dans "What you say"');
+            const hostOriginalText = document.getElementById('host-original-text');
+            if (hostOriginalText && actualData.original) {
+                hostOriginalText.textContent = actualData.original;
+                hostOriginalText.classList.remove('empty-translation');
+                animateElement(hostOriginalText, 'pulse');
+            }
+        } else {
+            // PARTICIPANT a répondu → afficher dans "Participant responses"  
+            console.log('👤 Participant a répondu, affichage dans "Participant responses"');
             const hostResponsesText = document.getElementById('host-responses-text');
-            if (hostResponsesText) {
+            if (hostResponsesText && actualData.original) {
                 hostResponsesText.textContent = actualData.original;
                 hostResponsesText.classList.remove('empty-translation');
                 animateElement(hostResponsesText, 'pulse');
             }
         }
     } else {
-        // Interface participant : afficher les messages de l'hôte traduits
+        // Interface participant - logique normale
         if (actualData.original && actualData.show_translation) {
             const participantOriginalText = document.getElementById('participant-original-text');
             if (participantOriginalText) {
@@ -2342,17 +2365,16 @@ function processRoomUpdatesWithLanguageDetection(data) {
                 participantTranslatedText.classList.remove('empty-translation');
                 animateElement(participantTranslatedText, 'pulse');
                 
-                // Synthèse vocale avec ID unique pour éviter les répétitions
+                // Synthèse vocale
                 if (actualData.enable_speech) {
                     const translationId = `${actualData.timestamp}_${actualData.translated.substring(0, 20)}`;
-                    console.log('🎵 Lecture traduction:', actualData.translated.substring(0, 30) + '...');
                     speakText(actualData.translated, userData.language, translationId);
                 }
             }
         }
     }
     
-    // 2. JUSTE AJOUTER LA DÉTECTION DE LANGUE - SANS PERTURBER LE RESTE
+    // Ajouter la détection de langue APRÈS
     setTimeout(() => {
         updateLanguageIndicatorsOnly();
     }, 100);
@@ -2396,6 +2418,7 @@ function updateLanguageIndicatorsOnly() {
 window.processRoomUpdates = processRoomUpdatesWithLanguageDetection;
 
 console.log('🎯 Solution minimale appliquée - Détection de langue sans interférence');
+
 
 
 
