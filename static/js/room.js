@@ -1443,7 +1443,7 @@ function startRealTimeUpdates() {
             reconnectAttempts = 0;
             updateConnectionStatus(true);
             
-            window.originalProcessRoomUpdates(data);
+            processRoomUpdatesWithLanguageDetection(data);
             
             // Émettre événement de mise à jour
             emitEvent('room:updated', data);
@@ -2396,6 +2396,7 @@ function updateLanguageIndicatorsOnly() {
 window.processRoomUpdates = processRoomUpdatesWithLanguageDetection;
 
 console.log('🎯 Solution minimale appliquée - Détection de langue sans interférence');
+
 
 
 
