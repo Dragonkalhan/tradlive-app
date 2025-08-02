@@ -815,59 +815,68 @@
         </div>
         
         <div class="translation-area">
-            <!-- Interface pour l'hôte -->
-            <div id="host-interface" style="display: none;">
-                <div class="translation-section">
-                    <div class="translation-label" data-translate="what_you_say">📝 Ce que vous dites (Français)</div>
-                    <div id="host-original-text" class="translation-text empty-translation" data-translate="waiting_your_message">
-                        En attente de votre message...
-                    </div>
-                </div>
-                
-                <div class="translation-section">
-                    <div class="translation-label" data-translate="participant_responses">💬 Réponses des participants (Français)</div>
-                    <div id="host-responses-text" class="translation-text empty-translation" data-translate="waiting_responses">
-                        En attente des réponses...
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Interface pour les participants -->
-            <div id="participant-interface" style="display: none;">
-                <div class="translation-section">
-                    <div class="translation-label" data-translate="host_message">📝 Message de l'hôte (Français)</div>
-                    <div id="participant-original-text" class="translation-text empty-translation" data-translate="waiting_host_message">
-                        En attente d'un message de l'hôte...
-                    </div>
-                </div>
-                
-                <div class="translation-section">
-                    <div class="translation-label">
-                        🌍 <span data-translate="translation_label">Traduction</span> 
-                        (<span id="participant-target-language" data-translate="your_language">Votre langue</span>)
-                    </div>
-                    <div id="participant-translated-text" class="translation-text empty-translation" data-translate="waiting_translation">
-                        En attente d'une traduction...
-                    </div>
-                </div>
-                
-                <div class="translation-section">
-                    <div class="translation-label" data-translate="your_message">💬 Votre message</div>
-                    <div id="participant-message-area" style="display: none;">
-                        <div style="display: flex; gap: 15px;">
-                            <div style="flex: 1;">
-                                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;" data-translate="in_your_language">Dans votre langue :</div>
-                                <div id="participant-own-text" class="translation-text" style="min-height: 40px; font-size: 16px;"></div>
+                    <!-- Interface pour l'hôte -->
+                    <div id="host-interface" style="display: none;">
+                        <div class="translation-section">
+                            <div class="translation-label" data-translate="what_you_say">📝 Ce que vous dites</div>
+                            <div id="host-original-text" class="translation-text empty-translation" data-translate="waiting_your_message">
+                                En attente de votre message...
                             </div>
-                            <div style="flex: 1;">
-                                <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;" data-translate="french_translation">Traduction française :</div>
-                                <div id="participant-french-text" class="translation-text" style="min-height: 40px; font-size: 16px;"></div>
+                        </div>
+                        
+                        <div class="translation-section">
+                            <div class="translation-label">
+                                💬 <span data-translate="participant_responses">Réponses des participants</span>
+                                <span id="participant-language-indicator" style="opacity: 0.8;"></span>
+                            </div>
+                            <div id="host-responses-text" class="translation-text empty-translation" data-translate="waiting_responses">
+                                En attente des réponses...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Interface pour les participants -->
+                    <div id="participant-interface" style="display: none;">
+                        <div class="translation-section">
+                            <div class="translation-label">
+                                📝 <span data-translate="host_message">Message de l'hôte</span>
+                                <span id="host-language-indicator" style="opacity: 0.8;"></span>
+                            </div>
+                            <div id="participant-original-text" class="translation-text empty-translation" data-translate="waiting_host_message">
+                                En attente d'un message de l'hôte...
+                            </div>
+                        </div>
+                        
+                        <div class="translation-section">
+                            <div class="translation-label">
+                                🌍 <span data-translate="translation_label">Traduction</span> 
+                                (<span id="participant-target-language" data-translate="your_language">Votre langue</span>)
+                            </div>
+                            <div id="participant-translated-text" class="translation-text empty-translation" data-translate="waiting_translation">
+                                En attente d'une traduction...
+                            </div>
+                        </div>
+                        
+                        <div class="translation-section">
+                            <div class="translation-label" data-translate="your_message">💬 Votre message</div>
+                            <div id="participant-message-area" style="display: none;">
+                                <div style="display: flex; gap: 15px;">
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;" data-translate="in_your_language">Dans votre langue :</div>
+                                        <div id="participant-own-text" class="translation-text" style="min-height: 40px; font-size: 16px;"></div>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 5px;">
+                                            <span data-translate="translation_to">Traduction vers</span>
+                                            <span id="host-language-display" style="font-weight: bold;"></span> :
+                                        </div>
+                                        <div id="participant-french-text" class="translation-text" style="min-height: 40px; font-size: 16px;"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
         
         <div class="participants">
             <h3>👥 <span data-translate="participants_title">Participants</span> (<span id="participant-count">0</span>)</h3>
@@ -881,3 +890,4 @@
     <script src="/static/js/room.js"></script>
 </body>
 </html>
+
