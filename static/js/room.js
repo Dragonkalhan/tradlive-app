@@ -412,7 +412,7 @@ function initializeRoom() {
     loadRoomInfo();
     
     // Démarrer les systèmes temps réel
-    startRealTimeUpdates();
+    window.originalStartRealTimeUpdates();
     startHeartbeat();
     
     // Configurer la reconnaissance vocale
@@ -620,7 +620,7 @@ function loadRoomInfo() {
                 const currentUser = roomData.users.find(u => u.user_id === userData.user_id);
                 if (currentUser) {
                     isHost = currentUser.is_host;
-                    setupRoleInterface();
+                    window.originalSetupRoleInterface();
                     updateParticipantsList();
                     
                     // Émettre événement de connexion
@@ -1462,7 +1462,7 @@ function startRealTimeUpdates() {
         
         // Recharger les infos de salle périodiquement
         if (Date.now() % 20000 < 3000) {
-            loadRoomInfo();
+            window.originalLoadRoomInfo();
         }
     }, 3000);
     
@@ -2310,7 +2310,7 @@ function updateAllLanguageIndicators() {
  */
 function processRoomUpdatesWithLanguageDetection(data) {
     // Appeler l'ancienne fonction d'abord
-    processRoomUpdates(data);
+    window.originalProcessRoomUpdates(data);
     
     // Accéder aux bonnes données
     const actualData = data.data || data;
@@ -2520,4 +2520,5 @@ window.updateAllLanguageIndicators = updateAllLanguageIndicators;
 
 console.log('🌍 Détection automatique des langues initialisée !');
 console.log('✅ Fonctions surchargées pour la détection de langue');
+
 
