@@ -140,7 +140,18 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "Le code doit contenir exactement 4 chiffres (ex: 1234)",
         validation_nickname: "Le prénom est requis",
         validation_room_name: "Le nom de salle est requis", 
-        validation_room_code: "Le code de salle est requis"   
+        validation_room_code: "Le code de salle est requis",
+
+         // Nouveaux textes sans mention de langue
+        "what_you_say": "📝 Ce que vous dites",
+        "participant_responses": "Réponses des participants", 
+        "host_message": "Message de l'hôte",
+        "translation_to": "Traduction vers",
+        
+        // Messages de détection automatique
+        "detecting_language": "Détection de la langue...",
+        "language_detected": "Langue détectée",
+        "unknown_language": "Langue inconnue"
     },
 
     // 🇬🇧 ENGLISH
@@ -273,7 +284,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "Code must contain exactly 4 digits (e.g. 1234)",
         validation_nickname: "First name is required",
         validation_room_name: "Room name is required",
-        validation_room_code: "Room code is required"
+        validation_room_code: "Room code is required",
+
+        "what_you_say": "📝 What you say",
+        "participant_responses": "Participant responses",
+        "host_message": "Host message", 
+        "translation_to": "Translation to",
+        
+        "detecting_language": "Detecting language...",
+        "language_detected": "Language detected",
+        "unknown_language": "Unknown language"
     },
 
     // 🇪🇸 ESPAÑOL
@@ -406,7 +426,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "El código debe contener exactamente 4 dígitos (ej: 1234)",
         validation_nickname: "El nombre es requerido",
         validation_room_name: "El nombre de sala es requerido",
-        validation_room_code: "El código de sala es requerido"
+        validation_room_code: "El código de sala es requerido",
+
+        "what_you_say": "📝 Lo que dices",
+        "participant_responses": "Respuestas de participantes",
+        "host_message": "Mensaje del anfitrión",
+        "translation_to": "Traducción a",
+        
+        "detecting_language": "Detectando idioma...",
+        "language_detected": "Idioma detectado", 
+        "unknown_language": "Idioma desconocido"
         
             },
 
@@ -541,7 +570,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "Code muss genau 4 Ziffern enthalten (z.B. 1234)",
         validation_nickname: "Vorname ist erforderlich",
         validation_room_name: "Raumname ist erforderlich",
-        validation_room_code: "Raumcode ist erforderlich"
+        validation_room_code: "Raumcode ist erforderlich",
+
+        "what_you_say": "📝 Was Sie sagen",
+        "participant_responses": "Teilnehmerantworten",
+        "host_message": "Gastgeber-Nachricht",
+        "translation_to": "Übersetzung zu",
+        
+        "detecting_language": "Sprache erkennen...",
+        "language_detected": "Sprache erkannt",
+        "unknown_language": "Unbekannte Sprache"
             
     },
 
@@ -675,7 +713,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "Il codice deve contenere esattamente 4 cifre (es: 1234)",
         validation_nickname: "Il nome è richiesto",
         validation_room_name: "Il nome della stanza è richiesto",
-        validation_room_code: "Il codice stanza è richiesto"
+        validation_room_code: "Il codice stanza è richiesto",
+
+        "what_you_say": "📝 Quello che dici",
+        "participant_responses": "Risposte dei partecipanti", 
+        "host_message": "Messaggio dell'ospite",
+        "translation_to": "Traduzione in",
+        
+        "detecting_language": "Rilevamento lingua...",
+        "language_detected": "Lingua rilevata",
+        "unknown_language": "Lingua sconosciuta"
         
     },
 
@@ -809,7 +856,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "O código deve conter exatamente 4 dígitos (ex: 1234)",
         validation_nickname: "O nome é obrigatório",
         validation_room_name: "O nome da sala é obrigatório",
-        validation_room_code: "O código da sala é obrigatório"
+        validation_room_code: "O código da sala é obrigatório",
+
+        "what_you_say": "📝 O que você diz",
+        "participant_responses": "Respostas dos participantes",
+        "host_message": "Mensagem do anfitrião", 
+        "translation_to": "Tradução para",
+        
+        "detecting_language": "Detectando idioma...",
+        "language_detected": "Idioma detectado",
+        "unknown_language": "Idioma desconhecido"
         
     },
 
@@ -943,7 +999,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "Код должен содержать ровно 4 цифры (например: 1234)",
         validation_nickname: "Имя обязательно",
         validation_room_name: "Название комнаты обязательно",
-        validation_room_code: "Код комнаты обязателен"
+        validation_room_code: "Код комнаты обязателен",
+
+        "what_you_say": "📝 Что вы говорите",
+        "participant_responses": "Ответы участников",
+        "host_message": "Сообщение хозяина",
+        "translation_to": "Перевод на",
+        
+        "detecting_language": "Определение языка...",
+        "language_detected": "Язык определен",
+        "unknown_language": "Неизвестный язык"
         
     },
 
@@ -1077,7 +1142,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "代码必须包含4位数字（例如：1234）",
         validation_nickname: "姓名是必填项",
         validation_room_name: "房间名称是必填项",
-        validation_room_code: "房间代码是必填项"
+        validation_room_code: "房间代码是必填项",
+
+        "what_you_say": "📝 您说的话",
+        "participant_responses": "参与者回应",
+        "host_message": "主持人消息",
+        "translation_to": "翻译为",
+        
+        "detecting_language": "正在检测语言...",
+        "language_detected": "已检测语言",
+        "unknown_language": "未知语言"
         
     },
 
@@ -1211,7 +1285,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "コードは4桁の数字である必要があります（例：1234）",
         validation_nickname: "お名前は必須です",
         validation_room_name: "ルーム名は必須です",
-        validation_room_code: "ルームコードは必須です"
+        validation_room_code: "ルームコードは必須です",
+
+        "what_you_say": "📝 あなたの発言",
+        "participant_responses": "参加者の回答",
+        "host_message": "ホストメッセージ",
+        "translation_to": "翻訳先",
+        
+        "detecting_language": "言語を検出中...",
+        "language_detected": "言語が検出されました",
+        "unknown_language": "不明な言語"
         
     },
 
@@ -1345,7 +1428,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "يجب أن يحتوي الرمز على 4 أرقام بالضبط (مثال: 1234)",
         validation_nickname: "الاسم مطلوب",
         validation_room_name: "اسم الغرفة مطلوب",
-        validation_room_code: "كود الغرفة مطلوب"
+        validation_room_code: "كود الغرفة مطلوب",
+
+         "what_you_say": "📝 ما تقوله",
+        "participant_responses": "ردود المشاركين",
+        "host_message": "رسالة المضيف",
+        "translation_to": "ترجمة إلى",
+        
+        "detecting_language": "جاري اكتشاف اللغة...",
+        "language_detected": "تم اكتشاف اللغة",
+        "unknown_language": "لغة غير معروفة"
         
     },
 
@@ -1479,7 +1571,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "Код повинен містити рівно 4 цифри (наприклад: 1234)",
         validation_nickname: "Ім'я обов'язкове",
         validation_room_name: "Назва кімнати обов'язкова",
-        validation_room_code: "Код кімнати обов'язковий"
+        validation_room_code: "Код кімнати обов'язковий",
+
+        "what_you_say": "📝 Те, що ви говорите",
+        "participant_responses": "Відповіді учасників",
+        "host_message": "Повідомлення ведучого",
+        "translation_to": "Переклад на",
+        
+        "detecting_language": "Визначення мови...",
+        "language_detected": "Мову визначено",
+        "unknown_language": "Невідома мова"
         
     },
 
@@ -1613,7 +1714,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "کد باید دقیقاً شامل 4 رقم باشد (مثال: 1234)",
         validation_nickname: "نام الزامی است",
         validation_room_name: "نام اتاق الزامی است",
-        validation_room_code: "کد اتاق الزامی است"
+        validation_room_code: "کد اتاق الزامی است",
+
+        "what_you_say": "📝 آنچه می‌گویید",
+        "participant_responses": "پاسخ‌های شرکت‌کنندگان",
+        "host_message": "پیام میزبان",
+        "translation_to": "ترجمه به",
+        
+        "detecting_language": "در حال تشخیص زبان...",
+        "language_detected": "زبان تشخیص داده شد",
+        "unknown_language": "زبان ناشناخته"
         
     },
 
@@ -1747,7 +1857,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "कोड में बिल्कुल 4 अंक होने चाहिए (उदाहरण: 1234)",
         validation_nickname: "नाम आवश्यक है",
         validation_room_name: "कमरे का नाम आवश्यक है",
-        validation_room_code: "कमरे का कोड आवश्यक है"
+        validation_room_code: "कमरे का कोड आवश्यक है",
+
+         "what_you_say": "📝 आप क्या कहते हैं",
+        "participant_responses": "प्रतिभागियों के उत्तर",
+        "host_message": "होस्ट संदेश",
+        "translation_to": "अनुवाद",
+        
+        "detecting_language": "भाषा का पता लगाना...",
+        "language_detected": "भाषा का पता चला",
+        "unknown_language": "अज्ञात भाषा"
         
     },
 
@@ -1881,7 +2000,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "কোডে ঠিক ৪টি সংখ্যা থাকতে হবে (উদাহরণ: ১২৩৪)",
         validation_nickname: "নাম আবশ্যক",
         validation_room_name: "রুমের নাম আবশ্যক",
-        validation_room_code: "রুম কোড আবশ্যক"
+        validation_room_code: "রুম কোড আবশ্যক",
+
+        "what_you_say": "📝 আপনি যা বলেন",
+        "participant_responses": "অংশগ্রহণকারীদের উত্তর",
+        "host_message": "হোস্ট বার্তা",
+        "translation_to": "অনুবাদ",
+        
+        "detecting_language": "ভাষা সনাক্তকরণ...",
+        "language_detected": "ভাষা সনাক্ত",
+        "unknown_language": "অজানা ভাষা"
         
     },
 
@@ -2015,7 +2143,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "కోడ్‌లో సరిగ్గా 4 అంకెలు ఉండాలి (ఉదాహరణ: 1234)",
         validation_nickname: "పేరు అవసరం",
         validation_room_name: "గది పేరు అవసరం",
-        validation_room_code: "గది కోడ్ అవసరం"
+        validation_room_code: "గది కోడ్ అవసరం",
+
+        "what_you_say": "📝 మీరు చెప్పేది",
+        "participant_responses": "పార్టిసిపెంట్ల స్పందనలు",
+        "host_message": "హోస్ట్ సందేశం",
+        "translation_to": "అనువాదం",
+        
+        "detecting_language": "భాష గుర్తిస్తోంది...",
+        "language_detected": "భాష గుర్తించబడింది",
+        "unknown_language": "తెలియని భాష"
         
     },
 
@@ -2149,7 +2286,16 @@ const TRADLIVE_TRANSLATIONS = {
         validation_pattern: "कोडमध्ये नक्की 4 अंक असावेत (उदाहरण: 1234)",
         validation_nickname: "नाव आवश्यक आहे",
         validation_room_name: "खोलीचे नाव आवश्यक आहे",
-        validation_room_code: "खोलीचा कोड आवश्यक आहे"
+        validation_room_code: "खोलीचा कोड आवश्यक आहे",
+
+         "what_you_say": "📝 तुम्ही काय म्हणता",
+        "participant_responses": "सहभागींचे उत्तर",
+        "host_message": "होस्ट संदेश",
+        "translation_to": "भाषांतर",
+        
+        "detecting_language": "भाषा ओळखत आहे...",
+        "language_detected": "भाषा ओळखली",
+        "unknown_language": "अज्ञात भाषा"
         
     }
 };
@@ -2202,3 +2348,4 @@ if (typeof window !== 'undefined') {
 }
 
 console.log('🌍 TradLive Translations.js chargé - 16 langues complètes !');
+
