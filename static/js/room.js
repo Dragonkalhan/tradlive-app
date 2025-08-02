@@ -2313,6 +2313,10 @@ function updateAllLanguageIndicators() {
  * REMPLACER la fonction processRoomUpdatesWithLanguageDetection existante
  * par cette version qui N'INTERFÈRE PAS avec l'affichage
  */
+/**
+ * REMPLACER la fonction processRoomUpdatesWithLanguageDetection
+ * pour éviter d'écraser l'affichage immédiat de l'hôte
+ */
 function processRoomUpdatesWithLanguageDetection(data) {
     const actualData = data.data || data;
     
@@ -2329,20 +2333,13 @@ function processRoomUpdatesWithLanguageDetection(data) {
     console.log('📝 Je suis hôte ?', isHost);
     
     if (isHost) {
-        const hostOriginalText = document.getElementById('host-original-text');
-        const hostResponsesText = document.getElementById('host-responses-text');
-        
         if (isHostMessage) {
-            // L'HÔTE a parlé → afficher SEULEMENT dans "What you say"
-            console.log('👑 Hôte a parlé, affichage dans "What you say" UNIQUEMENT');
+            // 🔧 NE RIEN FAIRE pour les messages de l'hôte !
+            // L'affichage a déjà été fait par updateHostOriginalText
+            console.log('👑 Hôte a parlé - IGNORER (déjà affiché)');
             
-            if (hostOriginalText && actualData.original) {
-                hostOriginalText.textContent = actualData.original;
-                hostOriginalText.classList.remove('empty-translation');
-                animateElement(hostOriginalText, 'pulse');
-            }
-            
-            // 🔧 VIDER "Participant responses" pour éviter la duplication
+            // Juste vider les réponses pour éviter la duplication
+            const hostResponsesText = document.getElementById('host-responses-text');
             if (hostResponsesText) {
                 hostResponsesText.textContent = hostResponsesText.getAttribute('data-translate') ? 
                     getTranslation('waiting_responses') || 'En attente des réponses...' : 
@@ -2351,16 +2348,15 @@ function processRoomUpdatesWithLanguageDetection(data) {
             }
             
         } else {
-            // PARTICIPANT a répondu → afficher SEULEMENT dans "Participant responses"  
-            console.log('👤 Participant a répondu, affichage dans "Participant responses" UNIQUEMENT');
+            // PARTICIPANT a répondu → afficher dans "Participant responses"  
+            console.log('👤 Participant a répondu, affichage dans "Participant responses"');
             
+            const hostResponsesText = document.getElementById('host-responses-text');
             if (hostResponsesText && actualData.original) {
                 hostResponsesText.textContent = actualData.original;
                 hostResponsesText.classList.remove('empty-translation');
                 animateElement(hostResponsesText, 'pulse');
             }
-            
-            // 🔧 NE PAS toucher à "What you say" pour les réponses de participants
         }
     } else {
         // Interface participant - logique normale
@@ -2405,7 +2401,6 @@ function processRoomUpdatesWithLanguageDetection(data) {
         updateLanguageIndicatorsOnly();
     });
 }
-
 /**
  * NOUVELLE FONCTION : Juste mettre à jour les indicateurs, rien d'autre
  */
@@ -2444,6 +2439,7 @@ function updateLanguageIndicatorsOnly() {
 window.processRoomUpdates = processRoomUpdatesWithLanguageDetection;
 
 console.log('🎯 Solution minimale appliquée - Détection de langue sans interférence');
+
 
 
 
