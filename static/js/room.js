@@ -2305,206 +2305,97 @@ function updateAllLanguageIndicators() {
    🔧 MODIFICATIONS DES FONCTIONS EXISTANTES
 ======================================== */
 
-/**
- * MODIFICATION de processRoomUpdates - Ajouter détection automatique
- */
-function processRoomUpdatesWithLanguageDetection(data) {
-    // Appeler l'ancienne fonction d'abord
-    window.originalProcessRoomUpdates(data);
-    
-    // Accéder aux bonnes données
-    const actualData = data.data || data;
-    
-    if (isHost) {
-        // L'hôte reçoit des réponses de participants
-        if (actualData.original && !actualData.show_translation) {
-            // C'est une réponse de participant, détecter sa langue
-            const participantLanguage = detectMessageLanguage(roomData?.last_translation || {});
-            
-            if (participantLanguage) {
-                updateParticipantLanguageIndicator(participantLanguage);
-            }
-        }
-    } else {
-        // Le participant doit voir la langue de l'hôte
-        updateHostLanguageIndicator();
-    }
-}
-
-/**
- * MODIFICATION de setupRoleInterface - Initialiser les indicateurs
- */
-function setupRoleInterfaceWithLanguageIndicators() {
-    console.log('🔧 Configuration interface pour rôle:', isHost ? 'HÔTE' : 'PARTICIPANT');
-    
-    if (isHost) {
-        // Interface hôte
-        showElement('host-controls');
-        showElement('host-interface');
-        
-        const qrSection = document.getElementById('qr-section');
-        if (qrSection) {
-            qrSection.classList.add('show');
-        }
-        
-        // Initialiser le QR code
-        qrCodeImage = document.getElementById('qr-code-image');
-        updateQRCode();
-        
-        // 🆕 Initialiser l'indicateur participant (vide au début)
-        const participantIndicator = document.getElementById('participant-language-indicator');
-        if (participantIndicator) {
-            participantIndicator.textContent = '';
-        }
-        
-        console.log('👑 Interface hôte configurée avec indicateurs');
-    } else {
-        // Interface participant
-        console.log('👤 Configuration interface participant...');
-        
-        const participantControls = document.getElementById('participant-controls');
-        const participantInterface = document.getElementById('participant-interface');
-        
-        if (participantControls) {
-            participantControls.style.display = 'block';
-            participantControls.style.visibility = 'visible';
-            console.log('✅ participant-controls affiché');
-        }
-        
-        if (participantInterface) {
-            participantInterface.style.display = 'block';
-            participantInterface.style.visibility = 'visible';
-            console.log('✅ participant-interface affiché');
-        }
-        
-        // 🆕 Initialiser l'indicateur hôte
-        setTimeout(() => {
-            updateHostLanguageIndicator();
-        }, 500);
-        
-        console.log('👤 Interface participant configurée avec indicateurs');
-    }
-    
-    // Afficher les contrôles communs
-    showElement('controls');
-    animateElement('controls', 'slideInUp');
-    
-    console.log('✅ Configuration interface terminée');
-}
-
-/**
- * MODIFICATION de loadRoomInfo - Ajouter initialisation indicateurs
- */
-function loadRoomInfoWithLanguageSetup() {
-    const url = `/api/room/${userData.room_id}/info`;
-    
-    makeApiRequest(url)
-        .then(data => {
-            if (data.success) {
-                roomData = data.data ? data.data.room : data.room;
-                reconnectAttempts = 0;
-                updateConnectionStatus(true);
-                
-                // Identifier le rôle de l'utilisateur
-                const currentUser = roomData.users.find(u => u.user_id === userData.user_id);
-                if (currentUser) {
-                    isHost = currentUser.is_host;
-                    setupRoleInterfaceWithLanguageIndicators(); // 🆕 Utiliser la nouvelle fonction
-                    updateParticipantsList();
-                    
-                    // 🆕 Initialiser les indicateurs de langue
-                    setTimeout(() => {
-                        updateAllLanguageIndicators();
-                    }, 1000);
-                    
-                    // Émettre événement de connexion
-                    if (window.TradLive?.events) {
-                        window.TradLive.events.emit('room:connected', {
-                            roomData: roomData,
-                            isHost: isHost
-                        });
-                    }
-                } else {
-                    throw new Error('Utilisateur non trouvé dans la salle');
-                }
-            } else {
-                throw new Error(data.error || 'Erreur inconnue');
-            }
-        })
-        .catch(error => {
-            console.error('❌ Erreur chargement salle:', error);
-            handleConnectionError();
-        });
-}
-
 /* ========================================
-   🔄 REMPLACEMENT DES FONCTIONS DANS LE PROCESSUS TEMPS RÉEL
+   🎯 SOLUTION MINIMALE - JUSTE DÉTECTION DE LANGUE
 ======================================== */
 
 /**
- * MODIFICATION de startRealTimeUpdates - Utiliser la nouvelle fonction
+ * REMPLACER la fonction processRoomUpdatesWithLanguageDetection existante
+ * par cette version qui N'INTERFÈRE PAS avec l'affichage
  */
-function startRealTimeUpdatesWithLanguageDetection() {
-    // CORRECTION : Éviter les intervals multiples
-    if (updateInterval) {
-        clearInterval(updateInterval);
-        updateInterval = null;
+function processRoomUpdatesWithLanguageDetection(data) {
+    // 1. APPELER LA FONCTION ORIGINALE NORMALE (pas de window.original)
+    const actualData = data.data || data;
+    
+    if (isHost) {
+        // Interface hôte : afficher les réponses des participants
+        if (actualData.original && !actualData.show_translation) {
+            const hostResponsesText = document.getElementById('host-responses-text');
+            if (hostResponsesText) {
+                hostResponsesText.textContent = actualData.original;
+                hostResponsesText.classList.remove('empty-translation');
+                animateElement(hostResponsesText, 'pulse');
+            }
+        }
+    } else {
+        // Interface participant : afficher les messages de l'hôte traduits
+        if (actualData.original && actualData.show_translation) {
+            const participantOriginalText = document.getElementById('participant-original-text');
+            if (participantOriginalText) {
+                participantOriginalText.textContent = actualData.original;
+                participantOriginalText.classList.remove('empty-translation');
+            }
+            
+            const participantTranslatedText = document.getElementById('participant-translated-text');
+            if (actualData.translated && participantTranslatedText) {
+                participantTranslatedText.textContent = actualData.translated;
+                participantTranslatedText.classList.remove('empty-translation');
+                animateElement(participantTranslatedText, 'pulse');
+                
+                // Synthèse vocale avec ID unique pour éviter les répétitions
+                if (actualData.enable_speech) {
+                    const translationId = `${actualData.timestamp}_${actualData.translated.substring(0, 20)}`;
+                    console.log('🎵 Lecture traduction:', actualData.translated.substring(0, 30) + '...');
+                    speakText(actualData.translated, userData.language, translationId);
+                }
+            }
+        }
     }
     
-    updateInterval = setInterval(() => {
-        const url = `/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`;
-        
-        makeApiRequest(url)
-            .then(data => {
-                if (data.success) {
-                    reconnectAttempts = 0;
-                    updateConnectionStatus(true);
-                    
-                    // 🆕 Utiliser la nouvelle fonction avec détection de langue
-                    processRoomUpdatesWithLanguageDetection(data);
-                    
-                    // Émettre événement de mise à jour
-                    emitEvent('room:updated', data);
-                }
-            })
-            .catch(error => {
-                console.error('❌ Erreur mise à jour:', error);
-                reconnectAttempts++;
-                updateConnectionStatus(false);
-                
-                // Notification après plusieurs échecs
-                if (reconnectAttempts >= 3) {
-                    notifyWarning('Problème de connexion détecté');
-                }
-            });
-            
-        // Recharger les infos de salle périodiquement
-        if (Date.now() % 20000 < 3000) {
-            loadRoomInfoWithLanguageSetup(); // 🆕 Utiliser la nouvelle fonction
-        }
-    }, 3000);
+    // 2. JUSTE AJOUTER LA DÉTECTION DE LANGUE - SANS PERTURBER LE RESTE
+    setTimeout(() => {
+        updateLanguageIndicatorsOnly();
+    }, 100);
+}
+
+/**
+ * NOUVELLE FONCTION : Juste mettre à jour les indicateurs, rien d'autre
+ */
+function updateLanguageIndicatorsOnly() {
+    if (!roomData?.last_translation) return;
     
-    console.log('🔄 Mises à jour temps réel démarrées avec détection de langue');
+    const lastTranslation = roomData.last_translation;
+    
+    // Trouver qui a envoyé le dernier message
+    const sender = roomData.users ? 
+        Object.values(roomData.users).find(user => user.user_id === lastTranslation.sender_id) : 
+        null;
+    
+    if (sender) {
+        if (isHost) {
+            // L'hôte voit les langues des participants
+            if (!sender.is_host) {
+                console.log('🎯 Participant a envoyé:', sender.language);
+                updateParticipantLanguageIndicator(sender.language);
+            }
+        } else {
+            // Le participant voit la langue de l'hôte
+            if (sender.is_host) {
+                console.log('🎯 Hôte a envoyé:', sender.language);
+                updateHostLanguageIndicator();
+            }
+        }
+    }
 }
 
-/* ======================================================
-   📝 EXPORT DES NOUVELLES FONCTIONS DE LANGUAGE DETECTE
-====================================================== */
+/* ========================================
+   🔧 REMPLACER LA FONCTION PROBLÉMATIQUE
+======================================== */
 
-// Remplacer les anciennes fonctions par les nouvelles versions
-if (typeof processRoomUpdates === 'function') {
-    window.originalProcessRoomUpdates = processRoomUpdates;
-    window.processRoomUpdates = processRoomUpdatesWithLanguageDetection;
-}
+// Remplacer la fonction qui pose problème
+window.processRoomUpdates = processRoomUpdatesWithLanguageDetection;
 
-// Export des nouvelles fonctions utilitaires
-window.updateHostLanguageIndicator = updateHostLanguageIndicator;
-window.updateParticipantLanguageIndicator = updateParticipantLanguageIndicator;
-window.detectMessageLanguage = detectMessageLanguage;
-window.updateAllLanguageIndicators = updateAllLanguageIndicators;
-
-console.log('🌍 Détection automatique des langues initialisée !');
-console.log('✅ Fonctions surchargées pour la détection de langue');
+console.log('🎯 Solution minimale appliquée - Détection de langue sans interférence');
 
 
 
