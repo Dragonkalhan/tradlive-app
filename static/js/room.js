@@ -1443,7 +1443,7 @@ function startRealTimeUpdates() {
             reconnectAttempts = 0;
             updateConnectionStatus(true);
             
-            processRoomUpdatesWithLanguageDetection(data);
+            processRoomUpdates(data);
             
             // Émettre événement de mise à jour
             emitEvent('room:updated', data);
@@ -2206,6 +2206,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
