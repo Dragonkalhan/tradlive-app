@@ -1494,8 +1494,16 @@ function processRoomUpdates(data) {
         // Interface hôte : afficher SEULEMENT les réponses des participants
         if (actualData.original && !actualData.show_translation) {
             
-            // 🔧 NOUVELLE VÉRIFICATION : Est-ce que c'est MOI qui ai envoyé ce message ?
+            // 🔧 DEBUG COMPLET pour comprendre pourquoi ça échoue
+            console.log('🔍 DEBUG - roomData:', roomData);
+            console.log('🔍 DEBUG - roomData?.last_translation:', roomData?.last_translation);
+            console.log('🔍 DEBUG - sender_id:', roomData?.last_translation?.sender_id);
+            console.log('🔍 DEBUG - userData.user_id:', userData.user_id);
+            console.log('🔍 DEBUG - Égalité:', roomData?.last_translation?.sender_id === userData.user_id);
+            
             const isMyMessage = roomData?.last_translation?.sender_id === userData.user_id;
+            
+            console.log('🔍 DEBUG - isMyMessage final:', isMyMessage);
             
             if (!isMyMessage) {
                 // Ce n'est PAS mon message → C'est un participant qui répond
@@ -2234,6 +2242,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
