@@ -1489,6 +1489,10 @@ function startRealTimeUpdates() {
 function processRoomUpdates(data) {
     // CORRECTION : Accéder aux bonnes données
     const actualData = data.data || data;
+   // 🔍 DEBUG : Voir ce qui arrive du serveur
+    console.log('📦 DEBUG - actualData complète:', actualData);
+    console.log('📦 DEBUG - actualData.sender_id:', actualData.sender_id);
+    console.log('📦 DEBUG - actualData.user_id:', actualData.user_id);
     
     if (isHost) {
         // Interface hôte : afficher SEULEMENT les réponses des participants
@@ -2242,6 +2246,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
