@@ -1474,13 +1474,24 @@ function processRoomUpdates(data) {
     const actualData = data.data || data;
     
     if (isHost) {
-        // Interface hôte : afficher les réponses des participants
+        // Interface hôte : afficher SEULEMENT les réponses des participants
         if (actualData.original && !actualData.show_translation) {
-            const hostResponsesText = document.getElementById('host-responses-text');
-            if (hostResponsesText) {
-                hostResponsesText.textContent = actualData.original;
-                hostResponsesText.classList.remove('empty-translation');
-                animateElement(hostResponsesText, 'pulse');
+            
+            // 🔧 NOUVELLE VÉRIFICATION : Est-ce que c'est MOI qui ai envoyé ce message ?
+            const isMyMessage = roomData?.last_translation?.sender_id === userData.user_id;
+            
+            if (!isMyMessage) {
+                // Ce n'est PAS mon message → C'est un participant qui répond
+                console.log('👤 Message d\'un participant, affichage dans Participant responses');
+                const hostResponsesText = document.getElementById('host-responses-text');
+                if (hostResponsesText) {
+                    hostResponsesText.textContent = actualData.original;
+                    hostResponsesText.classList.remove('empty-translation');
+                    animateElement(hostResponsesText, 'pulse');
+                }
+            } else {
+                // C'est MON message → Ignorer (déjà affiché dans "What you say")
+                console.log('👑 Mon propre message, ignoré (déjà dans What you say)');
             }
         }
     } else {
@@ -2206,6 +2217,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
