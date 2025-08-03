@@ -46,6 +46,10 @@ let hostOriginalText, hostResponsesText;
 let participantOriginalText, participantTranslatedText, participantMessageArea;
 let participantOwnText, participantFrenchText, participantTargetLanguage;
 let participantsListEl, participantCountEl;
+let participantMessageArea = null;
+let participantFrenchText = null;
+
+
 
 /* ========================================
    NOMS DES LANGUES (MAPPING) - INTÉGRÉ AVEC TRANSLATIONS.JS
@@ -1287,27 +1291,42 @@ function sendParticipantTranslation(text) {
 }
 
 function updateHostOriginalText(text) {
-    if (hostOriginalText) {
-        hostOriginalText.textContent = text;
-        hostOriginalText.classList.remove('empty-translation');
-        animateElement(hostOriginalText, 'pulse');
+    // Récupérer l'élément à chaque fois (plus sûr)
+    const hostOriginalTextEl = document.getElementById('host-original-text');
+    if (hostOriginalTextEl) {
+        hostOriginalTextEl.textContent = text;
+        hostOriginalTextEl.classList.remove('empty-translation');
+        animateElement(hostOriginalTextEl, 'pulse');
+        console.log('✅ Texte hôte affiché dans "What you say":', text.substring(0, 30) + '...');
+    } else {
+        console.log('❌ Élément host-original-text non trouvé !');
     }
 }
 
 function updateParticipantOwnText(text) {
-    if (participantOwnText && participantMessageArea) {
-        participantOwnText.textContent = text;
-        showElement(participantMessageArea);
-        animateElement(participantMessageArea, 'slideInUp');
+    // Récupérer les éléments à chaque fois
+    const participantOwnTextEl = document.getElementById('participant-own-text');
+    const participantMessageAreaEl = document.getElementById('participant-message-area');
+    
+    if (participantOwnTextEl && participantMessageAreaEl) {
+        participantOwnTextEl.textContent = text;
+        participantMessageAreaEl.style.display = 'block';
+        animateElement(participantMessageAreaEl, 'slideInUp');
+        console.log('✅ Texte participant affiché dans "Votre message":', text.substring(0, 30) + '...');
+    } else {
+        console.log('❌ Éléments participant non trouvés !');
+        console.log('participantOwnText:', participantOwnTextEl);
+        console.log('participantMessageArea:', participantMessageAreaEl);
     }
 }
 
 function updateParticipantFrenchText() {
-    if (participantFrenchText) {
+    const participantFrenchTextEl = document.getElementById('participant-french-text');
+    if (participantFrenchTextEl) {
         const translatingMessage = getTranslation('translating') || 
             'Traduction en cours...';
-        participantFrenchText.textContent = translatingMessage;
-        animateElement(participantFrenchText, 'pulse');
+        participantFrenchTextEl.textContent = translatingMessage;
+        animateElement(participantFrenchTextEl, 'pulse');
     }
 }
 
@@ -2217,6 +2236,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
