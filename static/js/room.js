@@ -1487,27 +1487,18 @@ function startRealTimeUpdates() {
 }
 
 function processRoomUpdates(data) {
-    // CORRECTION : Accéder aux bonnes données
     const actualData = data.data || data;
-   // 🔍 DEBUG : Voir ce qui arrive du serveur
-    console.log('📦 DEBUG - actualData complète:', actualData);
-    console.log('📦 DEBUG - actualData.sender_id:', actualData.sender_id);
-    console.log('📦 DEBUG - actualData.user_id:', actualData.user_id);
     
     if (isHost) {
         // Interface hôte : afficher SEULEMENT les réponses des participants
         if (actualData.original && !actualData.show_translation) {
             
-            // 🔧 DEBUG COMPLET pour comprendre pourquoi ça échoue
-            console.log('🔍 DEBUG - roomData:', roomData);
-            console.log('🔍 DEBUG - roomData?.last_translation:', roomData?.last_translation);
-            console.log('🔍 DEBUG - sender_id:', roomData?.last_translation?.sender_id);
+            // 🔧 NOUVELLE LOGIQUE : Utiliser les vraies données du serveur
+            const isMyMessage = actualData.sender_id === userData.user_id;
+            
+            console.log('🔍 DEBUG - actualData.sender_id:', actualData.sender_id);
             console.log('🔍 DEBUG - userData.user_id:', userData.user_id);
-            console.log('🔍 DEBUG - Égalité:', roomData?.last_translation?.sender_id === userData.user_id);
-            
-            const isMyMessage = roomData?.last_translation?.sender_id === userData.user_id;
-            
-            console.log('🔍 DEBUG - isMyMessage final:', isMyMessage);
+            console.log('🔍 DEBUG - isMyMessage:', isMyMessage);
             
             if (!isMyMessage) {
                 // Ce n'est PAS mon message → C'est un participant qui répond
@@ -1543,6 +1534,20 @@ function processRoomUpdates(data) {
                     const translationId = `${actualData.timestamp}_${actualData.translated.substring(0, 20)}`;
                     console.log('🎵 Lecture traduction:', actualData.translated.substring(0, 30) + '...');
                     speakText(actualData.translated, userData.language, translationId);
+                }
+            }
+        }
+        
+        // Affichage des propres messages du participant
+        if (actualData.show_own_message) {
+            const participantOwnText = document.getElementById('participant-own-text');
+            const participantMessageArea = document.getElementById('participant-message-area');
+            
+            if (participantOwnText && actualData.original) {
+                participantOwnText.textContent = actualData.original;
+                if (participantMessageArea) {
+                    participantMessageArea.style.display = 'block';
+                    animateElement(participantMessageArea, 'slideInUp');
                 }
             }
         }
@@ -2246,6 +2251,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
