@@ -46,7 +46,6 @@ let hostOriginalText, hostResponsesText;
 let participantOriginalText, participantTranslatedText, participantMessageArea;
 let participantOwnText, participantFrenchText, participantTargetLanguage;
 let participantsListEl, participantCountEl;
-let participantFrenchText = null;
 
 
 
@@ -2235,6 +2234,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
