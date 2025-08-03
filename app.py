@@ -358,7 +358,8 @@ def room_updates(room_id):
                     'translated': '',
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': True,
-                    'show_translation': False
+                    'show_translation': False,
+                    'sender_id': last_translation.get('sender_id')
                 })
             else:  # Propre message de l'hôte
                 return jsonify({
@@ -367,7 +368,8 @@ def room_updates(room_id):
                     'translated': '',
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': True,
-                    'show_translation': False
+                    'show_translation': False,
+                    'sender_id': last_translation.get('sender_id')
                 })
         
         else:
@@ -382,7 +384,8 @@ def room_updates(room_id):
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': False,
                     'show_translation': True,
-                    'enable_speech': last_translation.get('enable_speech', False)
+                    'enable_speech': last_translation.get('enable_speech', False),
+                    'sender_id': last_translation.get('sender_id')
                 })
                 
             elif last_translation.get('source_language') == user_language:  # Son propre message
@@ -401,7 +404,8 @@ def room_updates(room_id):
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': False,
                     'show_own_message': True,
-                    'show_translation': False
+                    'show_translation': False,
+                    'sender_id': last_translation.get('sender_id')
                 })
             else:  # Message d'un autre utilisateur
                 return jsonify({
@@ -410,7 +414,8 @@ def room_updates(room_id):
                     'translated': '',
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': False,
-                    'show_translation': False
+                    'show_translation': False,
+                    'sender_id': last_translation.get('sender_id')
                 })
         
     except Exception as e:
@@ -506,6 +511,7 @@ if __name__ == "__main__":
     print(f"🌐 URL d'accès: {BASE_URL}")
     
     app.run(debug=False, host='0.0.0.0', port=port)
+
 
 
 
