@@ -693,6 +693,17 @@ function setupRoleInterface() {
     // Afficher les contrôles communs
     showElement('controls');
     animateElement('controls', 'slideInUp');
+
+   // Masquer la section "Traduction vers..." côté participant
+    if (!isHost) {
+        const translationSection = document.getElementById('participant-translation-section');
+        if (translationSection) {
+            translationSection.style.display = 'none';
+            console.log('✅ Section "Traduction vers..." masquée via JavaScript');
+        } else {
+            console.log('❌ Section participant-translation-section non trouvée');
+        }
+    }
     
     console.log('✅ Configuration interface terminée');
 }
@@ -2251,6 +2262,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
