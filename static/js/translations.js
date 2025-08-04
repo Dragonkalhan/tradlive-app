@@ -1228,7 +1228,7 @@ const TRADLIVE_TRANSLATIONS = {
         waiting_responses: "返事を待機中...",
         waiting_host_message: "ホストのメッセージを待機中...",
         waiting_translation: "翻訳を待機中...",
-        response_from": "からの返信,
+        response_from": "からの返信",
 
         mic_incompatible: "マイクが非対応",
         mic_incompatible_message: "あなたのブラウザはTradLiveで音声認識を使用できません。",
@@ -2364,5 +2364,6 @@ if (typeof window !== 'undefined') {
 }
 
 console.log('🌍 TradLive Translations.js chargé - 16 langues complètes !');
+
 
 
