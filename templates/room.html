@@ -785,8 +785,8 @@
                 <!-- Zone de saisie de texte en mode fallback -->
                 <div id="text-input-fallback" class="text-input-fallback">
                     <h4 data-translate="write_french_messages">✍️ Saisie de texte en français</h4>
-                    <textarea id="text-input" data-translate-placeholder="write_french_placeholder" placeholder="Écrivez votre message en français ici..."></textarea>
-                    <button onclick="sendHostText()" data-translate="send_translation">📤 Envoyer la traduction</button>
+                    <textarea id="text-input" data-translate-placeholder="write_message_here" placeholder="Écrivez votre message ici..."></textarea>
+                    <button onclick="sendHostText()" data-translate="send_message">📤 Envoyer le message</button>
                     <button onclick="hideTextInput()" data-translate="close_button">❌ Fermer</button>
                 </div>
             </div>
@@ -807,8 +807,8 @@
                 <!-- Zone de saisie pour les participants -->
                 <div id="participant-text-input" class="text-input-fallback">
                     <h4 data-translate="write_your_language_messages">✍️ Écrire dans votre langue</h4>
-                    <textarea id="participant-text" data-translate-placeholder="write_your_language_placeholder" placeholder="Écrivez votre message dans votre langue..."></textarea>
-                    <button onclick="sendParticipantText()" data-translate="send_to_french">📤 Envoyer au français</button>
+                    <textarea id="participant-text" data-translate-placeholder="write_message_here" placeholder="Écrivez votre message ici..."></textarea>
+                    <button onclick="sendParticipantText()" data-translate="send_message">📤 Envoyer le message</button>
                     <button onclick="hideParticipantTextInput()" data-translate="close_button">❌ Fermer</button>
                 </div>
             </div>
@@ -890,5 +890,6 @@
     <script src="/static/js/room.js"></script>
 </body>
 </html>
+
 
 
