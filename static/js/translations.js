@@ -1804,7 +1804,7 @@ const TRADLIVE_TRANSLATIONS = {
         waiting_responses: "जवाबों का इंतज़ार...",
         waiting_host_message: "होस्ट के संदेश का इंतज़ार...",
         waiting_translation: "अनुवाद का इंतज़ार...",
-        response_from: "से उत्तर"
+        response_from: "से उत्तर",
 
         mic_incompatible: "माइक्रोफोन असंगत",
         mic_incompatible_message: "आपका ब्राउज़र TradLive के साथ आवाज़ पहचान का उपयोग नहीं कर सकता।",
@@ -1947,7 +1947,7 @@ const TRADLIVE_TRANSLATIONS = {
         waiting_your_message: "আপনার বার্তার জন্য অপেক্ষা...",
         waiting_responses: "উত্তরের জন্য অপেক্ষা...",
         waiting_host_message: "হোস্টের বার্তার জন্য অপেক্ষা...",
-        waiting_translation: "অনুবাদের জন্য অপেক্ষা...",*
+        waiting_translation: "অনুবাদের জন্য অপেক্ষা...",
         response_from: "থেকে উত্তর",
 
         mic_incompatible: "মাইক্রোফোন সামঞ্জস্যপূর্ণ নয়",
@@ -2364,6 +2364,7 @@ if (typeof window !== 'undefined') {
 }
 
 console.log('🌍 TradLive Translations.js chargé - 16 langues complètes !');
+
 
 
 
