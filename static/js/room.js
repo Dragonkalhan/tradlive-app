@@ -675,7 +675,8 @@ function setupRoleInterface() {
         // Initialiser le QR code
         qrCodeImage = document.getElementById('qr-code-image');
         updateQRCode();
-        
+
+       /*
         // 🆕 NOUVEAU : Initialiser le label par défaut
         setTimeout(() => {
             const labelElement = document.querySelector('#host-interface .translation-section:nth-child(2) .translation-label');
@@ -684,6 +685,7 @@ function setupRoleInterface() {
                 labelElement.innerHTML = `💬 ${defaultText}`;
             }
         }, 100);
+        */
         
         console.log('👑 Interface hôte configurée');
     } else {
@@ -2326,6 +2328,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
