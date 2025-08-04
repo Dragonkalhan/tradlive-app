@@ -1588,6 +1588,7 @@ function processRoomUpdates(data) {
              // C'est MON message → Ignorer (déjà affiché dans "What you say")
              console.log('👑 Mon propre message, ignoré (déjà dans What you say)');
          }
+         }  
     } else {
         // Interface participant : afficher les messages de l'hôte traduits
         if (actualData.original && actualData.show_translation) {
@@ -2325,6 +2326,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
