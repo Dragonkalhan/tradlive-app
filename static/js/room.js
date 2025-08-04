@@ -53,10 +53,15 @@ let participantsListEl, participantCountEl;
    NOMS DES LANGUES (MAPPING) - INTÉGRÉ AVEC TRANSLATIONS.JS
 ======================================== */
 function getLanguageName(code) {
-    // Système unifié avec translations.js
+    // Système unifié avec translations.js pour traduire selon l'interface
     if (window.getTranslation && window.interfaceLanguage) {
         const langKey = `lang_${getLangKey(code)}`;
-        return window.getTranslation(langKey, window.interfaceLanguage);
+        const translatedName = window.getTranslation(langKey, window.interfaceLanguage);
+        
+        // Si la traduction existe, l'utiliser
+        if (translatedName && translatedName !== langKey) {
+            return translatedName;
+        }
     }
     
     // Fallback robuste
@@ -65,7 +70,7 @@ function getLanguageName(code) {
         de: "Deutsch", it: "Italiano", pt: "Português",
         ru: "Русский", "zh-CN": "中文", ja: "日本語",
         ar: "العربية", uk: "Українська", fa: "فارسی",
-        hi: "हिन्दी", bn: "বাংলা", te: "తెలుగు", mr: "मराठी"
+        hi: "हिन्दी", bn: "বাংলা", te: "తেলুగు", mr: "मराठী"
     };
     return languageNames[code] || code;
 }
@@ -79,6 +84,15 @@ function getLangKey(code) {
         'hi': 'hindi', 'bn': 'bengali', 'te': 'telugu', 'mr': 'marathi'
     };
     return mapping[code] || 'french';
+}
+
+function getParticipantName(senderId) {
+    if (!roomData?.users || !senderId) {
+        return 'Participant';
+    }
+    
+    const sender = roomData.users.find(user => user.user_id === senderId);
+    return sender ? sender.nickname : 'Participant';
 }
 
 function getRecognitionLanguageCode(code) {
@@ -661,6 +675,15 @@ function setupRoleInterface() {
         // Initialiser le QR code
         qrCodeImage = document.getElementById('qr-code-image');
         updateQRCode();
+        
+        // 🆕 NOUVEAU : Initialiser le label par défaut
+        setTimeout(() => {
+            const labelElement = document.querySelector('#host-interface .translation-section:nth-child(2) .translation-label');
+            if (labelElement) {
+                const defaultText = getTranslation('participant_responses', 'Réponses des participants');
+                labelElement.innerHTML = `💬 ${defaultText}`;
+            }
+        }, 100);
         
         console.log('👑 Interface hôte configurée');
     } else {
@@ -1339,6 +1362,43 @@ function updateParticipantFrenchText() {
     }
 }
 
+function buildParticipantResponseLabel(senderId, senderLanguage) {
+    // Récupérer le nom du participant
+    const participantName = getParticipantName(senderId);
+    
+    // Récupérer la langue du participant traduite dans la langue de l'interface
+    const languageName = getLanguageName(senderLanguage);
+    
+    // Récupérer "Réponse de" / "Response from" / etc. selon la langue d'interface
+    const responseFromText = getTranslation('response_from', 'Réponse de');
+    
+    // Construire le label final
+    return `💬 ${responseFromText} ${participantName} (${languageName})`;
+}
+
+function updateParticipantResponseLabel(senderId) {
+    // Trouver l'élément du label
+    const labelElement = document.querySelector('#host-interface .translation-section:nth-child(2) .translation-label');
+    
+    if (!labelElement || !senderId) {
+        console.log('❌ Impossible de mettre à jour le label');
+        return;
+    }
+    
+    // Récupérer la langue du participant qui a envoyé le message
+    const sender = roomData.users.find(user => user.user_id === senderId);
+    const senderLanguage = sender ? sender.language : 'fr';
+    
+    console.log('🏷️ Mise à jour label pour:', sender?.nickname, `(${senderLanguage})`);
+    
+    // Construire et appliquer le nouveau label
+    const newLabel = buildParticipantResponseLabel(senderId, senderLanguage);
+    labelElement.innerHTML = newLabel;
+    
+    // Animation pour indiquer le changement
+    animateElement(labelElement, 'pulse');
+}
+
 /* ========================================
    MODE TEXTE - FINALISÉ
 ======================================== */
@@ -1512,19 +1572,22 @@ function processRoomUpdates(data) {
             console.log('🔍 DEBUG - isMyMessage:', isMyMessage);
             
             if (!isMyMessage) {
-                // Ce n'est PAS mon message → C'est un participant qui répond
-                console.log('👤 Message d\'un participant, affichage dans Participant responses');
-                const hostResponsesText = document.getElementById('host-responses-text');
-                if (hostResponsesText) {
-                    hostResponsesText.textContent = actualData.original;
-                    hostResponsesText.classList.remove('empty-translation');
-                    animateElement(hostResponsesText, 'pulse');
-                }
-            } else {
-                // C'est MON message → Ignorer (déjà affiché dans "What you say")
-                console.log('👑 Mon propre message, ignoré (déjà dans What you say)');
-            }
-        }
+             // Ce n'est PAS mon message → C'est un participant qui répond
+             console.log('👤 Message d\'un participant, affichage dans Participant responses');
+             const hostResponsesText = document.getElementById('host-responses-text');
+             if (hostResponsesText) {
+                 hostResponsesText.textContent = actualData.original;
+                 hostResponsesText.classList.remove('empty-translation');
+                 animateElement(hostResponsesText, 'pulse');
+             }
+             
+             // 🆕 NOUVEAU : Mettre à jour le label dynamiquement
+             updateParticipantResponseLabel(actualData.sender_id);
+             
+         } else {
+             // C'est MON message → Ignorer (déjà affiché dans "What you say")
+             console.log('👑 Mon propre message, ignoré (déjà dans What you say)');
+         }
     } else {
         // Interface participant : afficher les messages de l'hôte traduits
         if (actualData.original && actualData.show_translation) {
@@ -2262,6 +2325,7 @@ function testRealWaves() {
 
 // Ajouter la fonction de test au window
 window.testRealWaves = testRealWaves;
+
 
 
 
