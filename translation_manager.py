@@ -1,7 +1,10 @@
 import os
 import json
+import threading
+import time
 from datetime import datetime
 from deep_translator import GoogleTranslator, MyMemoryTranslator
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class TranslationManager:
     def __init__(self):
@@ -17,6 +20,9 @@ class TranslationManager:
         
         # Langue préférée à utiliser quand 'auto' est spécifié avec MyMemory
         self.preferred_lang = 'en'  # Anglais par défaut
+        
+        # 🆕 NOUVEAU : Timeout pour les traductions parallèles
+        self.translation_timeout = 8  # 8 secondes max par service
         
         # Dictionnaire de mappage pour MyMemory (codes spécifiques pour toutes les langues de l'application)
         self.mymemory_lang_map = {
@@ -100,9 +106,8 @@ class TranslationManager:
         usage_percent = (self.counters[service] / self.limits.get(service, 1000000)) * 100
         print(f"Service {service}: {self.counters[service]}/{self.limits[service]} caractères ({usage_percent:.2f}%)")
     
-    def get_best_service(self):
-        """Détermine le meilleur service à utiliser"""
-        # Vérifier quels services sont disponibles (n'ont pas atteint leur limite)
+    def get_available_services(self):
+        """Récupère la liste des services disponibles (non limités)"""
         available_services = []
         for service, limit in self.limits.items():
             if self.counters.get(service, 0) < limit:
@@ -110,15 +115,9 @@ class TranslationManager:
         
         if not available_services:
             print("ATTENTION: Tous les services ont atteint leur limite!")
-            return 'google'  # Par défaut
+            return ['google']  # Par défaut, au cas où
         
-        # Choisir celui qui a le taux d'utilisation le plus bas
-        best_service = min(
-            available_services, 
-            key=lambda s: self.counters.get(s, 0) / self.limits.get(s)
-        )
-        
-        return best_service
+        return available_services
     
     def check_cache(self, text, source_lang, target_lang):
         """Vérifie si une traduction est déjà en cache"""
@@ -196,8 +195,31 @@ class TranslationManager:
         
         return translation
     
+    # 🚀 NOUVELLE FONCTION : Traduction avec un seul service
+    def translate_with_service(self, text, source_lang, target_lang, service):
+        """Traduit avec un service spécifique"""
+        try:
+            if service == 'google':
+                translator = GoogleTranslator(source=source_lang, target=target_lang)
+                translation = translator.translate(text)
+                self.update_counter('google', len(text))
+                return translation, 'google'
+            else:  # MyMemory
+                source = self.map_lang_code(source_lang, True)
+                target = self.map_lang_code(target_lang, True)
+                
+                translator = MyMemoryTranslator(source=source, target=target)
+                translation = translator.translate(text)
+                self.update_counter('mymemory', len(text))
+                return translation, 'mymemory'
+                
+        except Exception as e:
+            print(f"Erreur service {service}: {str(e)}")
+            raise e
+    
+    # 🚀 FONCTION PRINCIPALE OPTIMISÉE
     def translate(self, text, source_lang, target_lang='fr'):
-        """Traduit un texte en utilisant le meilleur service"""
+        """Traduit un texte en utilisant TOUS les services disponibles EN PARALLÈLE"""
         if not text or text.strip() == "":
             return ""
         
@@ -208,60 +230,45 @@ class TranslationManager:
         # 1. Vérifier d'abord dans le cache (très rapide)
         cached_translation = self.check_cache(text, source_lang, target_lang)
         if cached_translation:
-            print("Traduction trouvée dans le cache!")
+            print("⚡ Traduction trouvée dans le cache!")
             return cached_translation
         
-        # 2. Obtenir le meilleur service
-        service = self.get_best_service()
-        print(f"Traduction avec le service: {service}")
+        # 2. Obtenir la liste des services disponibles
+        available_services = self.get_available_services()
+        print(f"🚀 Traduction PARALLÈLE avec {len(available_services)} services: {available_services}")
         
-        try:
-            if service == 'google':
-                # Utiliser Google Translate (supporte 'auto')
-                translator = GoogleTranslator(source=source_lang, target=target_lang)
-                translation = translator.translate(text)
-                self.update_counter('google', len(text))
-            else:
-                # Utiliser MyMemory avec les codes de langue appropriés
-                source = self.map_lang_code(source_lang, True)
-                target = self.map_lang_code(target_lang, True) 
-                
-                print(f"MyMemory utilise: source={source}, target={target}")
-                translator = MyMemoryTranslator(source=source, target=target)
-                translation = translator.translate(text)
-                self.update_counter('mymemory', len(text))
+        # 3. 🆕 MAGIE : Lancer TOUS les services en parallèle
+        translations = {}
+        start_time = time.time()
+        
+        with ThreadPoolExecutor(max_workers=len(available_services)) as executor:
+            # Lancer toutes les traductions simultanément
+            future_to_service = {
+                executor.submit(self.translate_with_service, text, source_lang, target_lang, service): service
+                for service in available_services
+            }
             
-            # 3. Appliquer les corrections post-traduction
-            translation = self.post_process_translation(translation, target_lang)
-            
-            # 4. Ajouter au cache pour les futures utilisations
-            self.add_to_cache(text, source_lang, target_lang, translation)
-            
-            return translation
-                
-        except Exception as e:
-            print(f"Erreur avec {service}: {str(e)}")
-            
-            # Solution de secours: essayer l'autre service
-            try:
-                if service == 'google':
-                    # En cas d'erreur avec Google, utiliser MyMemory
-                    source = self.map_lang_code(source_lang, True)
-                    target = self.map_lang_code(target_lang, True)
+            # Récupérer le PREMIER résultat qui arrive
+            for future in as_completed(future_to_service, timeout=self.translation_timeout):
+                service = future_to_service[future]
+                try:
+                    translation, used_service = future.result()
+                    elapsed = time.time() - start_time
                     
-                    print(f"MyMemory (secours) utilise: source={source}, target={target}")
-                    translator = MyMemoryTranslator(source=source, target=target)
-                else:
-                    # En cas d'erreur avec MyMemory, utiliser Google
-                    translator = GoogleTranslator(source=source_lang, target=target_lang)
+                    print(f"✅ PREMIER résultat reçu de {used_service} en {elapsed:.2f}s")
                     
-                translation = translator.translate(text)
-                translation = self.post_process_translation(translation, target_lang)
-                self.add_to_cache(text, source_lang, target_lang, translation)
-                return translation
-            except Exception as fallback_error:
-                print(f"Erreur de secours: {str(fallback_error)}")
-                return f"Erreur de traduction: {str(e)}"
+                    # Post-traitement et cache
+                    translation = self.post_process_translation(translation, target_lang)
+                    self.add_to_cache(text, source_lang, target_lang, translation)
+                    
+                    return translation
+                    
+                except Exception as e:
+                    print(f"❌ Échec {service}: {str(e)}")
+                    continue
+        
+        # 4. Si tous les services ont échoué (très rare maintenant)
+        return f"Erreur de traduction: tous les services ont échoué"
 
 # Créer une instance globale
 translation_manager = TranslationManager()
