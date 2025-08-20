@@ -3,7 +3,7 @@ import json
 import threading
 import time
 from datetime import datetime
-from deep_translator import GoogleTranslator, MyMemoryTranslator, DeepL
+from deep_translator import GoogleTranslator, MyMemoryTranslator, DeeplTranslator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class TranslationManager:
@@ -248,7 +248,7 @@ class TranslationManager:
                 source_deepl = self.deepl_lang_map.get(source_lang, source_lang.upper()) if source_lang != 'auto' else 'auto'
                 target_deepl = self.deepl_lang_map.get(target_lang, target_lang.upper())
                 
-                translator = DeepL(api_key=None, source=source_deepl, target=target_deepl, use_free_api=True)
+                translator = DeeplTranslator(api_key=None, source=source_deepl, target=target_deepl, use_free_api=True)
                 translation = translator.translate(text)
                 self.update_counter('deepl', len(text))
                 return translation, 'deepl'
