@@ -3,15 +3,16 @@ import json
 import threading
 import time
 from datetime import datetime
-from deep_translator import GoogleTranslator, MyMemoryTranslator
+from deep_translator import GoogleTranslator, MyMemoryTranslator, DeepL
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class TranslationManager:
     def __init__(self):
-        # Limites mensuelles des caractères (approximatives)
+        # 🆕 NOUVEAU : Limites mensuelles avec DeepL inclus
         self.limits = {
             'google': 500000,    # 500K caractères/mois
-            'mymemory': 500000   # 500K caractères/mois
+            'mymemory': 500000,  # 500K caractères/mois
+            'deepl': 500000      # 500K caractères/mois - NOUVEAU
         }
         
         # Cache des traductions récentes (pour accélérer)
@@ -21,7 +22,7 @@ class TranslationManager:
         # Langue préférée à utiliser quand 'auto' est spécifié avec MyMemory
         self.preferred_lang = 'en'  # Anglais par défaut
         
-        # 🆕 NOUVEAU : Timeout pour les traductions parallèles
+        # Timeout pour les traductions parallèles
         self.translation_timeout = 8  # 8 secondes max par service
         
         # Dictionnaire de mappage pour MyMemory (codes spécifiques pour toutes les langues de l'application)
@@ -45,6 +46,20 @@ class TranslationManager:
             'fr': 'fr-FR'      # Français - France
         }
         
+        # 🆕 NOUVEAU : Mapping pour DeepL (codes plus simples)
+        self.deepl_lang_map = {
+            'zh-CN': 'ZH',     # Chinois
+            'en': 'EN-US',     # Anglais américain
+            'es': 'ES',        # Espagnol
+            'de': 'DE',        # Allemand
+            'it': 'IT',        # Italien
+            'pt': 'PT-PT',     # Portugais
+            'ru': 'RU',        # Russe
+            'ja': 'JA',        # Japonais
+            'fr': 'FR'         # Français
+            # Note: DeepL ne supporte pas toutes les langues
+        }
+        
         # Initialiser les compteurs
         self.init_counters()
     
@@ -62,8 +77,8 @@ class TranslationManager:
         # Chemin vers le fichier de compteurs
         counter_file = "translation_counters.json"
         
-        # Valeurs par défaut
-        self.counters = {'google': 0, 'mymemory': 0}
+        # 🆕 NOUVEAU : Valeurs par défaut avec DeepL
+        self.counters = {'google': 0, 'mymemory': 0, 'deepl': 0}
         self.month = current_month
         
         # Charger les compteurs existants si disponibles
@@ -78,7 +93,11 @@ class TranslationManager:
                     print(f"Nouveau mois détecté: réinitialisation des compteurs")
                 else:
                     # Même mois: utiliser les compteurs existants
-                    self.counters = data.get('counters', self.counters)
+                    saved_counters = data.get('counters', {})
+                    # 🆕 S'assurer que DeepL est dans les compteurs
+                    self.counters.update(saved_counters)
+                    if 'deepl' not in self.counters:
+                        self.counters['deepl'] = 0
                     self.month = data.get('month')
             except Exception as e:
                 print(f"Erreur lors du chargement des compteurs: {e}")
@@ -195,7 +214,13 @@ class TranslationManager:
         
         return translation
     
-    # 🚀 NOUVELLE FONCTION : Traduction avec un seul service
+    def can_use_deepl(self, source_lang, target_lang):
+        """Vérifie si DeepL peut traiter cette paire de langues"""
+        # DeepL ne supporte que certaines langues
+        supported_langs = ['fr', 'en', 'de', 'es', 'it', 'pt', 'ru', 'ja', 'zh-CN']
+        return (source_lang in supported_langs or source_lang == 'auto') and target_lang in supported_langs
+    
+    # 🆕 FONCTION MODIFIÉE : Traduction avec DeepL inclus
     def translate_with_service(self, text, source_lang, target_lang, service):
         """Traduit avec un service spécifique"""
         try:
@@ -204,7 +229,8 @@ class TranslationManager:
                 translation = translator.translate(text)
                 self.update_counter('google', len(text))
                 return translation, 'google'
-            else:  # MyMemory
+                
+            elif service == 'mymemory':  # MyMemory
                 source = self.map_lang_code(source_lang, True)
                 target = self.map_lang_code(target_lang, True)
                 
@@ -213,11 +239,25 @@ class TranslationManager:
                 self.update_counter('mymemory', len(text))
                 return translation, 'mymemory'
                 
+            elif service == 'deepl':  # 🆕 NOUVEAU : DeepL
+                # Vérifier si DeepL supporte ces langues
+                if not self.can_use_deepl(source_lang, target_lang):
+                    raise Exception("Langues non supportées par DeepL")
+                
+                # Mapper les codes de langue pour DeepL
+                source_deepl = self.deepl_lang_map.get(source_lang, source_lang.upper()) if source_lang != 'auto' else 'auto'
+                target_deepl = self.deepl_lang_map.get(target_lang, target_lang.upper())
+                
+                translator = DeepL(api_key=None, source=source_deepl, target=target_deepl, use_free_api=True)
+                translation = translator.translate(text)
+                self.update_counter('deepl', len(text))
+                return translation, 'deepl'
+                
         except Exception as e:
             print(f"Erreur service {service}: {str(e)}")
             raise e
     
-    # 🚀 FONCTION PRINCIPALE OPTIMISÉE
+    # FONCTION PRINCIPALE (inchangée, sauf le filtrage DeepL)
     def translate(self, text, source_lang, target_lang='fr'):
         """Traduit un texte en utilisant TOUS les services disponibles EN PARALLÈLE"""
         if not text or text.strip() == "":
@@ -235,9 +275,15 @@ class TranslationManager:
         
         # 2. Obtenir la liste des services disponibles
         available_services = self.get_available_services()
+        
+        # 🆕 NOUVEAU : Filtrer DeepL si langues non supportées
+        if 'deepl' in available_services and not self.can_use_deepl(source_lang, target_lang):
+            available_services.remove('deepl')
+            print(f"ℹ️ DeepL retiré (langues {source_lang}->{target_lang} non supportées)")
+        
         print(f"🚀 Traduction PARALLÈLE avec {len(available_services)} services: {available_services}")
         
-        # 3. 🆕 MAGIE : Lancer TOUS les services en parallèle
+        # 3. Lancer TOUS les services en parallèle
         translations = {}
         start_time = time.time()
         
