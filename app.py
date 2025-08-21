@@ -272,10 +272,9 @@ def leave_room(room_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# 🆕 NOUVELLES ROUTES AVEC FILE D'ATTENTE
 @app.route('/api/room/<room_id>/translate', methods=['POST'])
 def room_translate(room_id):
-    """Route de traduction avec file d'attente - compatible avec l'ancien système"""
+    """Traduit un message pour toute la salle"""
     update_heartbeat()
     
     try:
@@ -294,31 +293,18 @@ def room_translate(room_id):
         if not room or not room.get_user(user_id):
             return jsonify({'success': False, 'error': 'Utilisateur non autorisé'}), 403
         
-        # 🆕 NOUVEAU : Utiliser la file d'attente au lieu de la traduction directe
+        # 🆕 UNE SEULE FOIS : obtenir la langue de l'utilisateur
         user = room.get_user(user_id)
         actual_source_language = user.language if user else source_language
         
-        # Ajouter à la file d'attente
-        translation_id = translation_manager.translate_async(
-            text=text,
-            source_lang=actual_source_language,
-            target_lang='fr'
-        )
-        
         room_manager.update_user_activity(room_id, user_id)
         
-        # 🔄 TEMPORAIRE : Pour compatibilité, on fait quand même la diffusion
-        # (À terme, il faudra utiliser des callbacks)
+        # Diffuser la traduction avec synthèse vocale côté client
         sender_id = data.get('sender_id', user_id)
-        
-        # Traduction directe temporaire pour diffusion immédiate
-        temp_translation = translation_manager.translate(text, actual_source_language, 'fr')
-        
-        # Simuler l'ancienne logique de diffusion
         success = room_manager.broadcast_translation(
             room_id, 
             text, 
-            actual_source_language,
+            actual_source_language,  # ← UTILISEZ ICI actual_source_language
             sender_id, 
             enable_speech=True
         )
@@ -326,67 +312,13 @@ def room_translate(room_id):
         if success:
             return jsonify({
                 'success': True,
-                'message': 'Traduction diffusée à toute la salle',
-                'translation_id': translation_id,
-                'queue_status': translation_manager.get_queue_status()
+                'message': 'Traduction diffusée à toute la salle'
             })
         else:
             return jsonify({'success': False, 'error': 'Erreur de diffusion'}), 500
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/room/<room_id>/translate_queue', methods=['POST'])
-def room_translate_queue(room_id):
-    """🆕 NOUVELLE route avec file d'attente pure"""
-    update_heartbeat()
-    
-    try:
-        data = request.json
-        user_id = data.get('user_id')
-        text = data.get('text', '').strip()
-        source_language = data.get('source_language', 'fr')
-        
-        if not user_id:
-            return jsonify({'success': False, 'error': 'User ID requis'}), 400
-        
-        if not text:
-            return jsonify({'success': False, 'error': 'Texte requis'}), 400
-        
-        room = room_manager.get_room(room_id)
-        if not room or not room.get_user(user_id):
-            return jsonify({'success': False, 'error': 'Utilisateur non autorisé'}), 403
-        
-        user = room.get_user(user_id)
-        actual_source_language = user.language if user else source_language
-        
-        # 🆕 NOUVEAU : Ajouter à la file d'attente seulement
-        translation_id = translation_manager.translate_async(
-            text=text,
-            source_lang=actual_source_language,
-            target_lang='fr'
-        )
-        
-        room_manager.update_user_activity(room_id, user_id)
-        
-        return jsonify({
-            'success': True,
-            'message': 'Traduction ajoutée à la file',
-            'translation_id': translation_id,
-            'queue_status': translation_manager.get_queue_status()
-        })
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-@app.route('/api/room/<room_id>/queue_status', methods=['GET'])
-def get_queue_status(room_id):
-    """Voir l'état de la file d'attente"""
-    update_heartbeat()
-    return jsonify({
-        'success': True,
-        'status': translation_manager.get_queue_status()
-    })
 
 @app.route('/api/room/<room_id>/updates')
 def room_updates(room_id):
@@ -576,6 +508,6 @@ if __name__ == "__main__":
     heartbeat_thread.start()
     
     print(f"🚀 Démarrage du serveur sur le port {port}")
-    print(f"🌍 URL d'accès: {BASE_URL}")
+    print(f"🌐 URL d'accès: {BASE_URL}")
     
     app.run(debug=False, host='0.0.0.0', port=port)
