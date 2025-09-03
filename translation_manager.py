@@ -28,7 +28,7 @@ class DomainDetector:
                     'fa': ['بیمار', 'تشخیص', 'علامت', 'بیماری', 'دارو', 'درمان', 'درد', 'تب', 'مشاوره', 'نسخه', 'حساسیت', 'عفونت', 'جراحی', 'اورژانس', 'بیمارستان', 'درد دارد', 'درد می‌کند'],
                     'hi': ['मरीज', 'निदान', 'लक्षण', 'बीमारी', 'दवा', 'इलाज', 'दर्द', 'बुखार', 'सलाह', 'नुस्खा', 'एलर्जी', 'संक्रमण', 'सर्जरी', 'आपातकाल', 'अस्पताल', 'दर्द', 'दुख'],
                     'bn': ['রোগী', 'নির্ণয়', 'লক্ষণ', 'রোগ', 'ওষুধ', 'চিকিৎসা', 'ব্যথা', 'জ্বর', 'পরামর্শ', 'প্রেসক্রিপশন', 'অ্যালার্জি', 'সংক্রমণ', 'অস্ত্রোপচার', 'জরুরি', 'হাসপাতাল', 'ব্যথা', 'কষ্ট'],
-                    'te': ['రోగి', 'నిర్ధారణ', 'లక్షణం', 'వ్యాధి', 'మందు', 'చికిత్స', 'నొప్పి', 'జ్వరం', 'సలహా', 'ప్రిస్క్రిప్షన్', 'అలెర్జీ', 'ఇన్ఫెక్షన్', 'శస్త్రచికిత్స', 'అత్యవసర', 'ఆసుపత్రి', 'నొప్పి', 'బాధ'],
+                    'te': ['రోగి', 'నిర్ధారణ', 'లక్షణం', 'వ్యాధి', 'మందు', 'చికిత్స', 'నొప্పি', 'జ్వరం', 'సలహా', 'ప్రిస్క్రిప్షన్', 'అలెర్జీ', 'ఇన్ఫెక్షన్', 'శస్త్రచికిత్స', 'అత్యవసర', 'ఆసుపత్రి', 'నొప్పి', 'బాధ'],
                     'mr': ['रुग्ण', 'निदान', 'लक्षण', 'आजार', 'औषध', 'उपचार', 'वेदना', 'ताप', 'सल्ला', 'प्रिस्क्रिप्शन', 'ऍलर्जी', 'संसर्ग', 'शस्त्रक्रिया', 'आपत्कालीन', 'रुग्णालय', 'दुखते', 'वेदना']
                 },
                 'mode': 'precision',
@@ -283,7 +283,7 @@ class TranslationManager:
                 'fa': ['حالت چطوره', 'من خوبم', 'خیلی خوب', 'بد نیست', 'تو چطور', 'خواهش می‌کنم', 'با کمال میل', 'البته', 'شاید', 'نمی‌دانم', 'صبر کن', 'اینجاست', 'دقیقا', 'عالی', 'فوق‌العاده'],
                 'hi': ['कैसे हो', 'मैं ठीक हूं', 'बहुत अच्छा', 'बुरा नहीं', 'और आप', 'कृपया', 'खुशी से', 'जरूर', 'शायद', 'मुझे नहीं पता', 'रुको', 'यहां है', 'बिल्कुल', 'बेहतरीन', 'शानदार'],
                 'bn': ['কেমন আছেন', 'আমি ভাল আছি', 'খুব ভাল', 'খারাপ নয়', 'আর আপনি', 'অনুগ্রহ করে', 'আনন্দের সাথে', 'অবশ্যই', 'হয়তো', 'আমি জানি না', 'অপেক্ষা করুন', 'এখানে', 'ঠিক', 'নিখুঁত', 'দুর্দান্ত'],
-                'te': ['ఎలా ఉన్నారు', 'నేను బాగున্నాను', 'చాలా బాగుంది', 'చెడ్డది కాదు', 'మీరు ఎలా', 'దయచేసి', 'ఆనందంగా', 'అవును', 'బహుశా', 'నాకు తెలియదు', 'వేచి ఉండండి', 'ఇక్కడ ఉంది', 'సరిగ్గా', 'అద్భుతం', 'గొప్పది'],
+                'te': ['ఎలా ఉన్నారు', 'నేను బాగున్నాను', 'చాలా బాగుంది', 'చెడ్డది కాదు', 'మీరు ఎలా', 'దయచేసి', 'ఆనందంగా', 'అవును', 'బహుశా', 'నాకు తెలియదు', 'వేచి ఉండండి', 'ఇక్కడ ఉంది', 'సరిగ్గా', 'అద్భుతం', 'గొప్పది'],
                 'mr': ['कसे आहात', 'मी ठीक आहे', 'खूप चांगले', 'वाईट नाही', 'आणि तुम्ही', 'कृपया', 'आनंदाने', 'नक्कीच', 'कदाचित', 'मला माहित नाही', 'थांबा', 'इथे आहे', 'नक्की', 'परिपूर्ण', 'उत्तम']
             },
             'emotions_reactions': {
@@ -301,7 +301,7 @@ class TranslationManager:
                 'fa': ['عالی', 'شگفت‌انگیز', 'کامل', 'عالی', 'آفرین', 'تبریک', 'حیف', 'مهم نیست', 'مشکلی نیست', 'اتفاق می‌افتد', 'خدای من', 'باورنکردنی', 'فوق‌العاده', 'زیبا', 'چشمگیر'],
                 'hi': ['शानदार', 'अद्भुत', 'परफेक्ट', 'बेहतरीन', 'शाबाश', 'बधाई', 'अफसोस', 'कोई बात नहीं', 'कोई समस्या नहीं', 'होता है', 'हे भगवान', 'अविश्वसनीय', 'अद्भुत', 'सुंदर', 'प्रभावशाली'],
                 'bn': ['দুর্দান্ত', 'আশ্চর্যজনক', 'নিখুঁত', 'চমৎকার', 'বাহবা', 'অভিনন্দন', 'দুঃখজনক', 'কিছু না', 'কোন সমস্যা নেই', 'হয়', 'হে ভগবান', 'অবিশ্বাস্য', 'চমৎকার', 'সুন্দর', 'চিত্তাকর্ষক'],
-                'te': ['అద్భుతం', 'ఆశ్చర్యకరమైన', 'పరిపూర্ణమైన', 'అద్భుతమైన', 'బాగా చేసారు', 'అభినందనలు', 'దురదృష్టం', 'పర్వాలేదు', 'సమస్య లేదు', 'జరుగుతుంది', 'దేవుడా', 'నమ్మశక్యం కాని', 'అద్భుతమైన', 'అందమైన', 'ఆకట్టుకునే'],
+                'te': ['అద్భుతం', 'ఆశ్చర్యకరమైన', 'పరిపూర్ణమైన', 'అద్భుతమైన', 'బాగా చేసారు', 'అభినందనలు', 'దురదృష్టం', 'పర్వాలేదు', 'సమస్య లేదు', 'జరుగుతుంది', 'దేవుడా', 'నమ్మశక్యం కాని', 'అద్భుతమైన', 'అందమైన', 'ఆకట్టుకునే'],
                 'mr': ['उत्तम', 'आश्चर्यकारक', 'परिपूर्ण', 'उत्कृष्ट', 'शाब्बास', 'अभिनंदन', 'खेद', 'काही हरकत नाही', 'समस्या नाही', 'होते', 'देवा', 'अविश्वसनीय', 'अप्रतिम', 'सुंदर', 'प्रभावी']
             }
         }
@@ -407,146 +407,143 @@ class TranslationManager:
         
         return f"Erreur de traduction: tous les services ont échoué"
     
-    # CORRECTION dans translation_manager.py
-# Remplacez les fonctions check_cache et add_to_cache par ces versions :
-
-def check_cache(self, text, source_lang, target_lang, room_id=None):
-    """Vérifie le cache intelligent avec normalisation pour recherche mais préservation ponctuation"""
-    # Normaliser SEULEMENT pour la recherche
-    text_normalized = self.normalize_text_for_cache(text)
-    
-    print(f"🔍 CACHE DEBUG: '{text}' → normalisé pour recherche: '{text_normalized}'")
-    
-    # 1. Cache professionnel global (priorité max)
-    prof_cache = self.get_professional_cache()
-    prof_key = f"{text_normalized}|{source_lang}|{target_lang}"
-    
-    if prof_key in prof_cache:
-        # NOUVEAU : Reconstruire la ponctuation sur la traduction
-        base_translation = prof_cache[prof_key]['translation']
-        final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
-        print(f"✅ CACHE HIT professionnel: {prof_key} → '{final_translation}'")
-        return final_translation
-    
-    # 2. Cache spécifique à la room
-    if room_id:
-        room_cache = self.get_room_cache(room_id)
+    def check_cache(self, text, source_lang, target_lang, room_id=None):
+        """Vérifie le cache intelligent avec normalisation pour recherche mais préservation ponctuation"""
+        # Normaliser SEULEMENT pour la recherche
+        text_normalized = self.normalize_text_for_cache(text)
         
-        exact_key = f"{text_normalized}|{source_lang}|{target_lang}"
-        if exact_key in room_cache:
-            stored_data = room_cache[exact_key]
-            
-            # NOUVEAU : Si on a stocké la version originale, l'utiliser
-            if 'original_text' in stored_data and 'original_translation' in stored_data:
-                final_translation = self.restore_punctuation(text, stored_data['original_translation'], source_lang, target_lang)
-            else:
-                # Ancienne version : reconstruire la ponctuation
-                base_translation = stored_data['translation']
-                final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
-            
-            print(f"✅ CACHE HIT room: {exact_key} → '{final_translation}'")
+        print(f"🔍 CACHE DEBUG: '{text}' → normalisé pour recherche: '{text_normalized}'")
+        
+        # 1. Cache professionnel global (priorité max)
+        prof_cache = self.get_professional_cache()
+        prof_key = f"{text_normalized}|{source_lang}|{target_lang}"
+        
+        if prof_key in prof_cache:
+            # NOUVEAU : Reconstruire la ponctuation sur la traduction
+            base_translation = prof_cache[prof_key]['translation']
+            final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
+            print(f"✅ CACHE HIT professionnel: {prof_key} → '{final_translation}'")
             return final_translation
         
-        # Vérifier fragments avec reconstruction ponctuation
-        fragments = self.extract_fragments(text_normalized)
-        for fragment in fragments:
-            fragment_key = f"{fragment}|{source_lang}|{target_lang}"
-            if fragment_key in room_cache:
-                confidence = room_cache[fragment_key].get('confidence', 'fragment')
-                if confidence in ['professional', 'frequent']:
-                    base_translation = room_cache[fragment_key]['translation']
+        # 2. Cache spécifique à la room
+        if room_id:
+            room_cache = self.get_room_cache(room_id)
+            
+            exact_key = f"{text_normalized}|{source_lang}|{target_lang}"
+            if exact_key in room_cache:
+                stored_data = room_cache[exact_key]
+                
+                # NOUVEAU : Si on a stocké la version originale, l'utiliser
+                if 'original_text' in stored_data and 'original_translation' in stored_data:
+                    final_translation = self.restore_punctuation(text, stored_data['original_translation'], source_lang, target_lang)
+                else:
+                    # Ancienne version : reconstruire la ponctuation
+                    base_translation = stored_data['translation']
                     final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
-                    print(f"✅ CACHE HIT fragment room: {fragment_key} → '{final_translation}'")
-                    return final_translation
-    
-    # 3. Cache ancien pour compatibilité
-    old_key = f"{text_normalized}|{source_lang}|{target_lang}"
-    if old_key in self.translation_cache:
-        base_translation = self.translation_cache[old_key]
-        final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
-        print(f"✅ CACHE HIT ancien: {old_key} → '{final_translation}'")
-        return final_translation
-    
-    print(f"❌ CACHE MISS pour: {text_normalized}")
-    return None
-
-def restore_punctuation(self, original_text, base_translation, source_lang, target_lang):
-    """Restaure la ponctuation du texte original sur la traduction"""
-    
-    # Si le texte original n'a pas de ponctuation, retourner tel quel
-    original_normalized = self.normalize_text_for_cache(original_text)
-    if original_text.lower().strip() == original_normalized:
-        return base_translation
-    
-    # Extraire la ponctuation du texte original
-    import re
-    
-    # Trouver la ponctuation en fin de phrase
-    end_punctuation = re.findall(r'[.!?]+\s*$', original_text)
-    end_punct = end_punctuation[0] if end_punctuation else ''
-    
-    # Trouver les virgules et autres ponctuations intérieures
-    # Pour simplifier, on garde la logique de base et on ajoute la ponctuation de fin
-    
-    # Si le texte original se termine par une ponctuation, l'ajouter à la traduction
-    if end_punct:
-        # Enlever la ponctuation existante de la traduction de base si elle existe
-        base_clean = re.sub(r'[.!?]+\s*$', '', base_translation).strip()
-        final_translation = base_clean + end_punct
-    else:
-        final_translation = base_translation
-    
-    # Capitaliser le premier mot si l'original était capitalisé
-    if original_text and original_text[0].isupper() and final_translation:
-        final_translation = final_translation[0].upper() + final_translation[1:] if len(final_translation) > 1 else final_translation.upper()
-    
-    return final_translation
-
-def add_to_cache(self, text, source_lang, target_lang, translation, room_id=None):
-    """Ajoute une traduction au cache EN STOCKANT AUSSI LES VERSIONS ORIGINALES"""
-    text_normalized = self.normalize_text_for_cache(text)
-    
-    # Ajouter au cache de la room si room_id fourni
-    if room_id:
-        room_cache = self.get_room_cache(room_id)
-        room_freq = self.get_room_phrase_frequency(room_id)
+                
+                print(f"✅ CACHE HIT room: {exact_key} → '{final_translation}'")
+                return final_translation
+            
+            # Vérifier fragments avec reconstruction ponctuation
+            fragments = self.extract_fragments(text_normalized)
+            for fragment in fragments:
+                fragment_key = f"{fragment}|{source_lang}|{target_lang}"
+                if fragment_key in room_cache:
+                    confidence = room_cache[fragment_key].get('confidence', 'fragment')
+                    if confidence in ['professional', 'frequent']:
+                        base_translation = room_cache[fragment_key]['translation']
+                        final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
+                        print(f"✅ CACHE HIT fragment room: {fragment_key} → '{final_translation}'")
+                        return final_translation
         
-        # Mettre à jour fréquence
-        room_freq[text_normalized] = room_freq.get(text_normalized, 0) + 1
-        frequency = room_freq[text_normalized]
+        # 3. Cache ancien pour compatibilité
+        old_key = f"{text_normalized}|{source_lang}|{target_lang}"
+        if old_key in self.translation_cache:
+            base_translation = self.translation_cache[old_key]
+            final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
+            print(f"✅ CACHE HIT ancien: {old_key} → '{final_translation}'")
+            return final_translation
         
-        # Déterminer niveau de confiance
-        if frequency >= 5:
-            confidence = 'frequent'
-        elif frequency >= 2:
-            confidence = 'common'
+        print(f"❌ CACHE MISS pour: {text_normalized}")
+        return None
+
+    def restore_punctuation(self, original_text, base_translation, source_lang, target_lang):
+        """Restaure la ponctuation du texte original sur la traduction"""
+        
+        # Si le texte original n'a pas de ponctuation, retourner tel quel
+        original_normalized = self.normalize_text_for_cache(original_text)
+        if original_text.lower().strip() == original_normalized:
+            return base_translation
+        
+        # Extraire la ponctuation du texte original
+        import re
+        
+        # Trouver la ponctuation en fin de phrase
+        end_punctuation = re.findall(r'[.!?]+\s*$', original_text)
+        end_punct = end_punctuation[0] if end_punctuation else ''
+        
+        # Trouver les virgules et autres ponctuations intérieures
+        # Pour simplifier, on garde la logique de base et on ajoute la ponctuation de fin
+        
+        # Si le texte original se termine par une ponctuation, l'ajouter à la traduction
+        if end_punct:
+            # Enlever la ponctuation existante de la traduction de base si elle existe
+            base_clean = re.sub(r'[.!?]+\s*$', '', base_translation).strip()
+            final_translation = base_clean + end_punct
         else:
-            confidence = 'single'
+            final_translation = base_translation
         
-        cache_key = f"{text_normalized}|{source_lang}|{target_lang}"
+        # Capitaliser le premier mot si l'original était capitalisé
+        if original_text and original_text[0].isupper() and final_translation:
+            final_translation = final_translation[0].upper() + final_translation[1:] if len(final_translation) > 1 else final_translation.upper()
         
-        # NOUVEAU : Stocker à la fois la version normalisée ET les versions originales
-        room_cache[cache_key] = {
-            'translation': translation,  # Traduction complète avec ponctuation
-            'original_text': text,       # Texte original avec ponctuation
-            'original_translation': translation,  # Traduction originale avec ponctuation
-            'normalized_text': text_normalized,   # Version normalisée pour recherche
-            'confidence': confidence,
-            'frequency': frequency,
-            'timestamp': time.time()
-        }
+        return final_translation
+
+    def add_to_cache(self, text, source_lang, target_lang, translation, room_id=None):
+        """Ajoute une traduction au cache EN STOCKANT AUSSI LES VERSIONS ORIGINALES"""
+        text_normalized = self.normalize_text_for_cache(text)
         
-        print(f"💾 Ajouté au cache room {room_id}: '{text}' → '{translation}' (freq: {frequency})")
+        # Ajouter au cache de la room si room_id fourni
+        if room_id:
+            room_cache = self.get_room_cache(room_id)
+            room_freq = self.get_room_phrase_frequency(room_id)
+            
+            # Mettre à jour fréquence
+            room_freq[text_normalized] = room_freq.get(text_normalized, 0) + 1
+            frequency = room_freq[text_normalized]
+            
+            # Déterminer niveau de confiance
+            if frequency >= 5:
+                confidence = 'frequent'
+            elif frequency >= 2:
+                confidence = 'common'
+            else:
+                confidence = 'single'
+            
+            cache_key = f"{text_normalized}|{source_lang}|{target_lang}"
+            
+            # NOUVEAU : Stocker à la fois la version normalisée ET les versions originales
+            room_cache[cache_key] = {
+                'translation': translation,  # Traduction complète avec ponctuation
+                'original_text': text,       # Texte original avec ponctuation
+                'original_translation': translation,  # Traduction originale avec ponctuation
+                'normalized_text': text_normalized,   # Version normalisée pour recherche
+                'confidence': confidence,
+                'frequency': frequency,
+                'timestamp': time.time()
+            }
+            
+            print(f"💾 Ajouté au cache room {room_id}: '{text}' → '{translation}' (freq: {frequency})")
+            
+            # Nettoyer si trop grand
+            if len(room_cache) > self.max_smart_cache_size:
+                self.cleanup_room_cache(room_id)
         
-        # Nettoyer si trop grand
-        if len(room_cache) > self.max_smart_cache_size:
-            self.cleanup_room_cache(room_id)
-    
-    # Ajouter aussi au cache ancien pour compatibilité (avec traduction complète)
-    old_key = f"{text_normalized}|{source_lang}|{target_lang}"
-    if len(self.translation_cache) < self.max_cache_size:
-        self.translation_cache[old_key] = translation  # Traduction complète avec ponctuation
-    
+        # Ajouter aussi au cache ancien pour compatibilité (avec traduction complète)
+        old_key = f"{text_normalized}|{source_lang}|{target_lang}"
+        if len(self.translation_cache) < self.max_cache_size:
+            self.translation_cache[old_key] = translation  # Traduction complète avec ponctuation
+
     def cleanup_room_cache(self, room_id):
         """Nettoie le cache d'une room en gardant les plus utiles"""
         room_cache = self.get_room_cache(room_id)
