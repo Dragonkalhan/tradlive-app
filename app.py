@@ -274,7 +274,7 @@ def leave_room(room_id):
 
 @app.route('/api/room/<room_id>/translate', methods=['POST'])
 def room_translate(room_id):
-    """Traduction avec cache isolé par room"""
+    """Traduction avec cache isolé par room - Version simplifiée"""
     update_heartbeat()
     
     try:
@@ -298,49 +298,7 @@ def room_translate(room_id):
         
         room_manager.update_user_activity(room_id, user_id)
         
-        # 🆕 UTILISER LE NOUVEAU SYSTÈME AVEC ROOM_ID
-        # Déterminer la langue cible selon le type d'utilisateur
-        if user.is_host:
-            # L'hôte diffuse vers toutes les langues des participants
-            target_languages = []
-            for participant in room.users.values():
-                if not participant.is_host and participant.language not in target_languages:
-                    target_languages.append(participant.language)
-            
-            if not target_languages:
-                target_languages = ['en']  # Default si pas de participants
-                
-            # Traduire vers chaque langue de participant
-            translations = {}
-            for target_lang in target_languages:
-                # 🆕 PASSER ROOM_ID AU TRANSLATION_MANAGER
-                translation = translation_manager.translate(
-                    text, 
-                    actual_source_language, 
-                    target_lang,
-                    room_id=room_id  # ← NOUVEAU PARAMÈTRE
-                )
-                translations[target_lang] = translation
-        else:
-            # Participant vers langue de l'hôte
-            host_user = None
-            for u in room.users.values():
-                if u.is_host:
-                    host_user = u
-                    break
-            
-            host_language = host_user.language if host_user else 'fr'
-            
-            # 🆕 PASSER ROOM_ID AU TRANSLATION_MANAGER
-            translation = translation_manager.translate(
-                text, 
-                actual_source_language, 
-                host_language,
-                room_id=room_id  # ← NOUVEAU PARAMÈTRE
-            )
-            translations = {host_language: translation}
-        
-        # Diffuser la traduction (logique existante conservée)
+        # 🆕 SIMPLE : Laisser broadcast_translation faire tout le travail avec room_id
         sender_id = data.get('sender_id', user_id)
         success = room_manager.broadcast_translation(
             room_id, 
@@ -348,21 +306,19 @@ def room_translate(room_id):
             actual_source_language,
             sender_id, 
             enable_speech=True
+            # room_id est passé automatiquement via le premier paramètre
         )
         
         if success:
             return jsonify({
                 'success': True,
-                'message': 'Traduction diffusée à toute la salle',
-                'translations': translations  # Optionnel : retourner les traductions
+                'message': 'Traduction diffusée à toute la salle'
             })
         else:
             return jsonify({'success': False, 'error': 'Erreur de diffusion'}), 500
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
-
-# 🆕 NOUVELLE ROUTE : Statistiques cache par room
 @app.route('/api/room/<room_id>/cache-stats')
 def room_cache_stats(room_id):
     """Statistiques du cache pour une room spécifique"""
@@ -386,7 +342,6 @@ def room_cache_stats(room_id):
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
-
 # 🆕 FONCTION DE NETTOYAGE ÉTENDUE dans cleanup()
 def cleanup():
     """Fonction de nettoyage étendue"""
@@ -597,4 +552,5 @@ if __name__ == "__main__":
     print(f"🌐 URL d'accès: {BASE_URL}")
     
     app.run(debug=False, host='0.0.0.0', port=port)
+
 
