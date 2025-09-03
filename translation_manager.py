@@ -72,7 +72,7 @@ class DomainDetector:
                     'fa': ['سرمایه گذاری', 'اعتبار', 'وام', 'بیمه', 'رهن', 'سرمایه گذاری', 'پس انداز', 'مالیات', 'بانک', 'حساب'],
                     'hi': ['निवेश', 'क्रेडिट', 'ऋण', 'बीमा', 'गिरवी', 'निवेश', 'बचत', 'कर', 'बैंक', 'खाता'],
                     'bn': ['বিনিয়োগ', 'ঋণ', 'ঋণ', 'বীমা', 'বন্ধক', 'বিনিয়োগ', 'সঞ্চয়', 'কর', 'ব্যাংক', 'অ্যাকাউন্ট'],
-                    'te': ['పెట్టుబడి', 'క্রెডિট্', 'రుణం', 'భీమా', 'తనఖా', 'పెట్టుబడి', 'పొదుపు', 'పన్ను', 'బ్యాంక్', 'ఖాతా'],
+                    'te': ['పెట్టుబడి', 'క্রেডিট্', 'రుణం', 'భీమా', 'తనఖా', 'పెట్టుబడి', 'పొదుపు', 'పన్ను', 'బ్యాంక్', 'ఖాతా'],
                     'mr': ['गुंतवणूक', 'कर्ज', 'कर्ज', 'विमा', 'गहाण', 'गुंतवणूक', 'बचत', 'कर', 'बँक', 'खाते']
                 },
                 'mode': 'precision',
@@ -230,79 +230,61 @@ class TranslationManager:
             'it': 'IT', 'pt': 'PT-PT', 'ru': 'RU', 'ja': 'JA', 'fr': 'FR'
         }
         
-        # BIBLIOTHÈQUES PROFESSIONNELLES ÉTENDUES (16 LANGUES)
+        # BIBLIOTHÈQUES PROFESSIONNELLES ÉTENDUES - MOTS/PHRASES SIMPLES UNIQUEMENT
         self.professional_phrases = {
             'accueil': {
-                'fr': ['bonjour', 'bonsoir', 'puis-je vous aider', 'merci', 'au revoir', 'de rien', 'excusez-moi', 'pardon', 'comment allez-vous', 'très bien merci'],
-                'en': ['hello', 'good evening', 'can I help you', 'thank you', 'goodbye', 'you\'re welcome', 'excuse me', 'sorry', 'how are you', 'very well thank you'],
-                'es': ['hola', 'buenas tardes', 'puedo ayudarle', 'gracias', 'adiós', 'de nada', 'disculpe', 'perdón', 'cómo está usted', 'muy bien gracias'],
-                'de': ['hallo', 'guten abend', 'kann ich ihnen helfen', 'danke', 'auf wiedersehen', 'gern geschehen', 'entschuldigung', 'verzeihung', 'wie geht es ihnen', 'sehr gut danke'],
-                'it': ['ciao', 'buonasera', 'posso aiutarla', 'grazie', 'arrivederci', 'prego', 'mi scusi', 'scusi', 'come sta', 'molto bene grazie'],
-                'pt': ['olá', 'boa tarde', 'posso ajudá-lo', 'obrigado', 'tchau', 'de nada', 'com licença', 'desculpe', 'como está', 'muito bem obrigado'],
-                'ru': ['привет', 'добрый вечер', 'могу ли я помочь', 'спасибо', 'до свидания', 'пожалуйста', 'извините', 'простите', 'как дела', 'очень хорошо спасибо'],
-                'zh-CN': ['你好', '晚上好', '我可以帮助您吗', '谢谢', '再见', '不客气', '对不起', '抱歉', '您好吗', '很好谢谢'],
-                'ja': ['こんにちは', 'こんばんは', 'お手伝いできますか', 'ありがとう', 'さようなら', 'どういたしまして', 'すみません', 'ごめんなさい', 'お元気ですか', 'とても元気です'],
-                'ar': ['مرحبا', 'مساء الخير', 'هل يمكنني مساعدتك', 'شكرا', 'وداعا', 'عفوا', 'معذرة', 'آسف', 'كيف حالك', 'بخير شكرا'],
-                'uk': ['привіт', 'добрий вечір', 'чи можу допомогти', 'дякую', 'до побачення', 'будь ласка', 'вибачте', 'пробачте', 'як справи', 'дуже добре дякую'],
-                'fa': ['سلام', 'عصر بخیر', 'می‌توانم کمک کنم', 'متشکرم', 'خداحافظ', 'خواهش می‌کنم', 'ببخشید', 'شرمنده', 'حالتان چطور است', 'خیلی خوب متشکرم'],
-                'hi': ['नमस्ते', 'शुभ संध्या', 'क्या मैं मदद कर सकता हूं', 'धन्यवाद', 'अलविदा', 'कृपया', 'माफ करें', 'क्षमा करें', 'आप कैसे हैं', 'बहुत अच्छा धन्यवाद'],
-                'bn': ['নমস্কার', 'শুভ সন্ধ্যা', 'আমি কি সাহায্য করতে পারি', 'ধন্যবাদ', 'বিদায়', 'অনুগ্রহ করে', 'ক্ষমা করুন', 'দুঃখিত', 'আপনি কেমন আছেন', 'খুব ভাল ধন্যবাদ'],
-                'te': ['నమస్కారం', 'శుభ సాయంత్రం', 'నేను సహాయం చేయగలనా', 'ధన్యవాదాలు', 'వీడ్కోలు', 'దయచేసి', 'క్షమించండి', 'కేవలం', 'మీరు ఎలా ఉన్నారు', 'చాలా బాగా ధన్యవాదాలు'],
-                'mr': ['नमस्कार', 'शुभ संध्याकाळ', 'मी मदत करू शकतो का', 'धन्यवाद', 'निरोप', 'कृपया', 'माफ करा', 'क्षमा करा', 'तुम्ही कसे आहात', 'खूप चांगले धन्यवाद']
+                'fr': ['bonjour', 'bonsoir', 'merci', 'au revoir', 'de rien', 'excusez-moi', 'pardon', 'très bien merci'],
+                'en': ['hello', 'good evening', 'thank you', 'goodbye', 'you\'re welcome', 'excuse me', 'sorry', 'very well thank you'],
+                'es': ['hola', 'buenas tardes', 'gracias', 'adiós', 'de nada', 'disculpe', 'perdón', 'muy bien gracias'],
+                'de': ['hallo', 'guten abend', 'danke', 'auf wiedersehen', 'gern geschehen', 'entschuldigung', 'verzeihung', 'sehr gut danke'],
+                'it': ['ciao', 'buonasera', 'grazie', 'arrivederci', 'prego', 'mi scusi', 'scusi', 'molto bene grazie'],
+                'pt': ['olá', 'boa tarde', 'obrigado', 'tchau', 'de nada', 'com licença', 'desculpe', 'muito bem obrigado'],
+                'ru': ['привет', 'добрый вечер', 'спасибо', 'до свидания', 'пожалуйста', 'извините', 'простите', 'очень хорошо спасибо'],
+                'zh-CN': ['你好', '晚上好', '谢谢', '再见', '不客气', '对不起', '抱歉', '很好谢谢'],
+                'ja': ['こんにちは', 'こんばんは', 'ありがとう', 'さようなら', 'どういたしまして', 'すみません', 'ごめんなさい', 'とても元気です'],
+                'ar': ['مرحبا', 'مساء الخير', 'شكرا', 'وداعا', 'عفوا', 'معذرة', 'آسف', 'بخير شكرا'],
+                'uk': ['привіт', 'добрий вечір', 'дякую', 'до побачення', 'будь ласка', 'вибачте', 'пробачте', 'дуже добре дякую'],
+                'fa': ['سلام', 'عصر بخیر', 'متشکرم', 'خداحافظ', 'خواهش می‌کنم', 'ببخشید', 'شرمنده', 'خیلی خوب متشکرم'],
+                'hi': ['नमस्ते', 'शुभ संध्या', 'धन्यवाद', 'अलविदा', 'कृपया', 'माफ करें', 'क्षमा करें', 'बहुत अच्छा धन्यवाद'],
+                'bn': ['নমস্কার', 'শুভ সন্ধ্যা', 'ধন্যবাদ', 'বিদায়', 'অনুগ্রহ করে', 'ক্ষমা করুন', 'দুঃখিত', 'খুব ভাল ধন্যবাদ'],
+                'te': ['నమస్కారం', 'శుభ సాయంత్రం', 'ధన్యవాదాలు', 'వీడ్కోలు', 'దయచేసి', 'క్షమించండి', 'కేవలం', 'చాలా బాగా ধন্যবাদাలు'],
+                'mr': ['नमस्कार', 'शुभ संध्याकाळ', 'धन्यवाद', 'निरोप', 'कृपया', 'माफ करा', 'क्षमा करा', 'खूप चांगले धन्यवाद']
             },
             'numerique': {
-                'fr': ['cliquez', 'ouvrez', 'tapez', 'avez-vous compris', 'essayez', 'parfait', 'recommencez', 'sauvegardez'],
-                'en': ['click', 'open', 'type', 'do you understand', 'try', 'perfect', 'try again', 'save'],
-                'es': ['hagan clic', 'abran', 'escriban', 'han entendido', 'prueben', 'perfecto', 'inténtenlo', 'guarden'],
-                'de': ['klicken', 'öffnen', 'geben sie ein', 'haben sie verstanden', 'versuchen', 'perfekt', 'nochmal', 'speichern'],
-                'it': ['cliccate', 'aprite', 'digitate', 'avete capito', 'provate', 'perfetto', 'riprovate', 'salvate'],
-                'pt': ['cliquem', 'abram', 'digitem', 'entenderam', 'tentem', 'perfeito', 'novamente', 'salvem'],
-                'ru': ['нажмите', 'откройте', 'наберите', 'поняли ли вы', 'попробуйте', 'отлично', 'попробуйте снова', 'сохраните'],
-                'zh-CN': ['点击', '打开', '输入', '您明白了吗', '试试', '完美', '再试', '保存'],
-                'ja': ['クリック', '開く', '入力', '理解しましたか', '試す', '完璧', 'もう一度', '保存'],
-                'ar': ['انقروا', 'افتحوا', 'اكتبوا', 'هل فهمتم', 'جربوا', 'مثالي', 'مرة أخرى', 'احفظوا'],
-                'uk': ['натисніть', 'відкрийте', 'введіть', 'ви зрозуміли', 'спробуйте', 'ідеально', 'спробуйте знову', 'збережіть'],
-                'fa': ['کلیک کنید', 'باز کنید', 'تایپ کنید', 'متوجه شدید', 'امتحان کنید', 'عالی', 'دوباره امتحان کنید', 'ذخیره کنید'],
-                'hi': ['क्लिक करें', 'खोलें', 'टाइप करें', 'क्या आप समझे', 'कोशिश करें', 'बेहतरीन', 'फिर कोशिश करें', 'सेव करें'],
-                'bn': ['ক্লিক করুন', 'খুলুন', 'টাইপ করুন', 'আপনি বুঝেছেন', 'চেষ্টা করুন', 'নিখুঁত', 'আবার চেষ্টা করুন', 'সেভ করুন'],
-                'te': ['క్లిక్ చేయండి', 'తెరవండి', 'టైప్ చేయండి', 'మీరు అర్థం చేసుకున్నారా', 'ప్రయత్నించండి', 'అద్భుతం', 'మళ్లీ ప్రయత్నించండి', 'సేవ్ చేయండి'],
-                'mr': ['क्लिक करा', 'उघडा', 'टाइप करा', 'तुम्हाला समजले का', 'प्रयत्न करा', 'उत्तम', 'पुन्हा प्रयत्न करा', 'सेव्ह करा']
+                'fr': ['cliquez', 'ouvrez', 'tapez', 'essayez', 'parfait', 'sauvegardez'],
+                'en': ['click', 'open', 'type', 'try', 'perfect', 'save'],
+                'es': ['hagan clic', 'abran', 'escriban', 'prueben', 'perfecto', 'guarden'],
+                'de': ['klicken', 'öffnen', 'geben sie ein', 'versuchen', 'perfekt', 'speichern'],
+                'it': ['cliccate', 'aprite', 'digitate', 'provate', 'perfetto', 'salvate'],
+                'pt': ['cliquem', 'abram', 'digitem', 'tentem', 'perfeito', 'salvem'],
+                'ru': ['нажмите', 'откройте', 'наберите', 'попробуйте', 'отлично', 'сохраните'],
+                'zh-CN': ['点击', '打开', '输入', '试试', '完美', '保存'],
+                'ja': ['クリック', '開く', '入力', '試す', '完璧', '保存'],
+                'ar': ['انقروا', 'افتحوا', 'اكتبوا', 'جربوا', 'مثالي', 'احفظوا'],
+                'uk': ['натисніть', 'відкрийте', 'введіть', 'спробуйте', 'ідеально', 'збережіть'],
+                'fa': ['کلیک کنید', 'باز کنید', 'تایپ کنید', 'امتحان کنید', 'عالی', 'ذخیره کنید'],
+                'hi': ['क्लिक करें', 'खोलें', 'टाइप करें', 'कोशिश करें', 'बेहतरीन', 'सेव करें'],
+                'bn': ['ক্লিক করুন', 'খুলুন', 'টাইপ করুন', 'চেষ্টা করুন', 'নিখুঁত', 'সেভ করুন'],
+                'te': ['క్లిక్ చేయండి', 'తెరవండి', 'టైప్ చేయండి', 'ప্রयত్নించండి', 'అద్భুতం', 'సేవ్ చেయండి'],
+                'mr': ['क्लिक करा', 'उघडा', 'टाइप करा', 'प्रयत्न करा', 'उत्तम', 'सेव्ह करा']
             },
-            'vie_quotidienne': {
-                'fr': ['comment ça va', 'ça va bien', 'très bien', 'pas mal', 'et vous', 'de rien', 'avec plaisir', 'bien sûr', 'peut-être', 'je ne sais pas', 'attendez', 'voilà', 'exactement', 'parfait', 'super'],
-                'en': ['how are you', 'I am fine', 'very good', 'not bad', 'and you', 'you are welcome', 'with pleasure', 'of course', 'maybe', 'I do not know', 'wait', 'here it is', 'exactly', 'perfect', 'great'],
-                'es': ['cómo estás', 'estoy bien', 'muy bien', 'no está mal', 'y tú', 'de nada', 'con mucho gusto', 'por supuesto', 'tal vez', 'no lo sé', 'espera', 'aquí está', 'exactamente', 'perfecto', 'genial'],
-                'de': ['wie geht es dir', 'mir geht es gut', 'sehr gut', 'nicht schlecht', 'und dir', 'gern geschehen', 'gerne', 'natürlich', 'vielleicht', 'ich weiß nicht', 'warte', 'hier ist es', 'genau', 'perfekt', 'toll'],
-                'it': ['come stai', 'sto bene', 'molto bene', 'non male', 'e tu', 'prego', 'con piacere', 'certo', 'forse', 'non lo so', 'aspetta', 'ecco', 'esatto', 'perfetto', 'fantastico'],
-                'pt': ['como está', 'estou bem', 'muito bem', 'não está mal', 'e você', 'de nada', 'com prazer', 'claro', 'talvez', 'não sei', 'espere', 'aqui está', 'exatamente', 'perfeito', 'ótimo'],
-                'ru': ['как дела', 'у меня всё хорошо', 'очень хорошо', 'неплохо', 'а у тебя', 'пожалуйста', 'с удовольствием', 'конечно', 'может быть', 'я не знаю', 'подожди', 'вот', 'точно', 'отлично', 'супер'],
-                'zh-CN': ['你好吗', '我很好', '非常好', '还不错', '你呢', '不客气', '乐意效劳', '当然', '也许', '我不知道', '等等', '这里', '正确', '完美', '太好了'],
-                'ja': ['元気ですか', '元気です', 'とても良い', '悪くない', 'あなたは', 'どういたしまして', '喜んで', 'もちろん', 'たぶん', 'わかりません', '待って', 'ここです', 'その通り', '完璧', 'すばらしい'],
-                'ar': ['كيف حالك', 'أنا بخير', 'جيد جدا', 'ليس سيئا', 'وأنت', 'عفوا', 'بكل سرور', 'بالطبع', 'ربما', 'لا أعرف', 'انتظر', 'هنا', 'بالضبط', 'مثالي', 'رائع'],
-                'uk': ['як справи', 'у мене все добре', 'дуже добре', 'непогано', 'а в тебе', 'будь ласка', 'з задоволенням', 'звичайно', 'можливо', 'я не знаю', 'зачекай', 'ось', 'точно', 'відмінно', 'супер'],
-                'fa': ['حالت چطوره', 'من خوبم', 'خیلی خوب', 'بد نیست', 'تو چطور', 'خواهش می‌کنم', 'با کمال میل', 'البته', 'شاید', 'نمی‌دانم', 'صبر کن', 'اینجاست', 'دقیقا', 'عالی', 'فوق‌العاده'],
-                'hi': ['कैसे हो', 'मैं ठीक हूं', 'बहुत अच्छा', 'बुरा नहीं', 'और आप', 'कृपया', 'खुशी से', 'जरूर', 'शायद', 'मुझे नहीं पता', 'रुको', 'यहां है', 'बिल्कुल', 'बेहतरीन', 'शानदार'],
-                'bn': ['কেমন আছেন', 'আমি ভাল আছি', 'খুব ভাল', 'খারাপ নয়', 'আর আপনি', 'অনুগ্রহ করে', 'আনন্দের সাথে', 'অবশ্যই', 'হয়তো', 'আমি জানি না', 'অপেক্ষা করুন', 'এখানে', 'ঠিক', 'নিখুঁত', 'দুর্দান্ত'],
-                'te': ['ఎలా ఉన్నారు', 'నేను బాగున్నాను', 'చాలా బాగుంది', 'చెడ్డది కాదు', 'మీరు ఎలా', 'దయచేసి', 'ఆనందంగా', 'అవును', 'బహుశా', 'నాకు తెలియదు', 'వేచి ఉండండి', 'ఇక్కడ ఉంది', 'సరిగ్గా', 'అద్భుతం', 'గొప్పది'],
-                'mr': ['कसे आहात', 'मी ठीक आहे', 'खूप चांगले', 'वाईट नाही', 'आणि तुम्ही', 'कृपया', 'आनंदाने', 'नक्कीच', 'कदाचित', 'मला माहित नाही', 'थांबा', 'इथे आहे', 'नक्की', 'परिपूर्ण', 'उत्तम']
-            },
-            'emotions_reactions': {
-                'fr': ['super', 'génial', 'parfait', 'excellent', 'bravo', 'félicitations', 'dommage', 'tant pis', 'pas grave', 'ça arrive', 'oh là là', 'incroyable', 'formidable', 'magnifique', 'impressionnant'],
-                'en': ['great', 'awesome', 'perfect', 'excellent', 'well done', 'congratulations', 'too bad', 'never mind', 'no problem', 'it happens', 'oh my', 'incredible', 'wonderful', 'beautiful', 'impressive'],
-                'es': ['genial', 'increíble', 'perfecto', 'excelente', 'muy bien', 'felicitaciones', 'qué pena', 'no importa', 'no hay problema', 'pasa', 'dios mío', 'increíble', 'maravilloso', 'hermoso', 'impresionante'],
-                'de': ['toll', 'fantastisch', 'perfekt', 'ausgezeichnet', 'gut gemacht', 'herzlichen glückwunsch', 'schade', 'macht nichts', 'kein problem', 'passiert', 'ach so', 'unglaublich', 'wunderbar', 'schön', 'beeindruckend'],
-                'it': ['fantastico', 'incredibile', 'perfetto', 'eccellente', 'bravo', 'congratulazioni', 'peccato', 'non importa', 'non c\'è problema', 'capita', 'mamma mia', 'incredibile', 'meraviglioso', 'bellissimo', 'impressionante'],
-                'pt': ['ótimo', 'incrível', 'perfeito', 'excelente', 'muito bem', 'parabéns', 'que pena', 'não importa', 'sem problema', 'acontece', 'nossa', 'incrível', 'maravilhoso', 'lindo', 'impressionante'],
-                'ru': ['отлично', 'потрясающе', 'идеально', 'превосходно', 'молодец', 'поздравляю', 'жаль', 'неважно', 'не проблема', 'бывает', 'боже мой', 'невероятно', 'замечательно', 'красиво', 'впечатляюще'],
-                'zh-CN': ['太好了', '令人惊叹', '完美', '优秀', '做得好', '恭喜', '可惜', '没关系', '没问题', '会发生', '天哪', '难以置信', '精彩', '美丽', '令人印象深刻'],
-                'ja': ['素晴らしい', '驚くべき', '完璧', '優秀', 'よくできました', 'おめでとう', '残念', '大丈夫', '問題ない', 'よくある', 'すごい', '信じられない', '素晴らしい', '美しい', '印象的'],
-                'ar': ['رائع', 'مذهل', 'مثالي', 'ممتاز', 'أحسنت', 'تهانينا', 'يا للأسف', 'لا يهم', 'لا مشكلة', 'يحدث', 'يا إلهي', 'لا يصدق', 'رائع', 'جميل', 'مثير للإعجاب'],
-                'uk': ['чудово', 'дивовижно', 'ідеально', 'відмінно', 'молодець', 'вітаю', 'шкода', 'неважливо', 'без проблем', 'буває', 'боже мій', 'неймовірно', 'чудово', 'гарно', 'вражає'],
-                'fa': ['عالی', 'شگفت‌انگیز', 'کامل', 'عالی', 'آفرین', 'تبریک', 'حیف', 'مهم نیست', 'مشکلی نیست', 'اتفاق می‌افتد', 'خدای من', 'باورنکردنی', 'فوق‌العاده', 'زیبا', 'چشمگیر'],
-                'hi': ['शानदार', 'अद्भुत', 'परफेक्ट', 'बेहतरीन', 'शाबाश', 'बधाई', 'अफसोस', 'कोई बात नहीं', 'कोई समस्या नहीं', 'होता है', 'हे भगवान', 'अविश्वसनीय', 'अद्भुत', 'सुंदर', 'प्रभावशाली'],
-                'bn': ['দুর্দান্ত', 'আশ্চর্যজনক', 'নিখুঁত', 'চমৎকার', 'বাহবা', 'অভিনন্দন', 'দুঃখজনক', 'কিছু না', 'কোন সমস্যা নেই', 'হয়', 'হে ভগবান', 'অবিশ্বাস্য', 'চমৎকার', 'সুন্দর', 'চিত্তাকর্ষক'],
-                'te': ['అద్భుతం', 'ఆశ్చర్యకరమైన', 'పరిపూర్ణమైన', 'అద్భుతమైన', 'బాగా చేసారు', 'అభినందనలు', 'దురదృష్టం', 'పర్వాలేదు', 'సమస్య లేదు', 'జరుగుతుంది', 'దేవుడా', 'నమ్మశక్యం కాని', 'అద్భుతమైన', 'అందమైన', 'ఆకట్టుకునే'],
-                'mr': ['उत्तम', 'आश्चर्यकारक', 'परिपूर्ण', 'उत्कृष्ट', 'शाब्बास', 'अभिनंदन', 'खेद', 'काही हरकत नाही', 'समस्या नाही', 'होते', 'देवा', 'अविश्वसनीय', 'अप्रतिम', 'सुंदर', 'प्रभावी']
+            'emotions': {
+                'fr': ['super', 'génial', 'parfait', 'excellent', 'bravo', 'dommage', 'pas grave'],
+                'en': ['great', 'awesome', 'perfect', 'excellent', 'well done', 'too bad', 'no problem'],
+                'es': ['genial', 'increíble', 'perfecto', 'excelente', 'muy bien', 'qué pena', 'no hay problema'],
+                'de': ['toll', 'fantastisch', 'perfekt', 'ausgezeichnet', 'gut gemacht', 'schade', 'kein problem'],
+                'it': ['fantastico', 'incredibile', 'perfetto', 'eccellente', 'bravo', 'peccato', 'non c\'è problema'],
+                'pt': ['ótimo', 'incrível', 'perfeito', 'excelente', 'muito bem', 'que pena', 'sem problema'],
+                'ru': ['отлично', 'потрясающе', 'идеально', 'превосходно', 'молодец', 'жаль', 'не проблема'],
+                'zh-CN': ['太好了', '令人惊叹', '完美', '优秀', '做得好', '可惜', '没问题'],
+                'ja': ['素晴らしい', '驚くべき', '完璧', '優秀', 'よくできました', '残念', '問題ない'],
+                'ar': ['رائع', 'مذهل', 'مثالي', 'ممتاز', 'أحسنت', 'يا للأسف', 'لا مشكلة'],
+                'uk': ['чудово', 'дивовижно', 'ідеально', 'відмінно', 'молодець', 'шкода', 'без проблем'],
+                'fa': ['عالی', 'شگفت‌انگیز', 'کامل', 'عالی', 'آفرین', 'حیف', 'مشکلی نیست'],
+                'hi': ['शानदार', 'अद्भुत', 'परफेक्ट', 'बेहतरीन', 'शाबाش', 'अफसोस', 'कोई समस्या नहीं'],
+                'bn': ['দুর্দান্ত', 'আশ্চর্যজনক', 'নিখুঁত', 'চমৎকার', 'বাহবা', 'দুঃখজনক', 'কোন সমস্যা নেই'],
+                'te': ['అద্भুতं', 'ఆశ্চর্যকরমైன', 'పরিপূর্ణমైన', 'అద్ভুతমైన', 'బాగా చేసারు', 'దুরదృষ্টম', 'সমস্যা লেদু'],
+                'mr': ['उत्तम', 'आश्चर्यकारक', 'परिपूर्ण', 'उत्कृष्ट', 'शाब्बास', 'खेद', 'समस्या नाही']
             }
         }
         
@@ -333,56 +315,92 @@ class TranslationManager:
             self.room_phrase_frequency[room_id] = {}
         return self.room_phrase_frequency[room_id]
     
-    def decompose_text_for_hybrid_translation(self, text):
-        """DÉCOMPOSITION INTELLIGENTE du texte en fragments traduisibles"""
-        # Séparer les mots et la ponctuation
-        pattern = r'(\w+|[^\w\s]|\s+)'
-        tokens = re.findall(pattern, text)
+    def translate(self, text, source_lang, target_lang='fr', forced_mode=None, room_id=None):
+        """TRADUCTION SIMPLE ET FIABLE - Cache pour phrases complètes uniquement"""
+        if not text or text.strip() == "":
+            return ""
         
-        fragments = []
-        current_word_group = []
+        if source_lang != 'auto':
+            self.set_preferred_language(source_lang)
         
-        for token in tokens:
-            if re.match(r'\w+', token):  # C'est un mot
-                current_word_group.append(token)
-            else:  # C'est de la ponctuation ou espace
-                if current_word_group:
-                    # Créer des groupes de mots de tailles différentes
-                    word_text = ' '.join(current_word_group)
-                    fragments.append({
-                        'type': 'words',
-                        'text': word_text,
-                        'original_tokens': current_word_group.copy(),
-                        'position': len(fragments)
-                    })
-                    current_word_group = []
-                
-                # Ajouter la ponctuation/espaces
-                fragments.append({
-                    'type': 'punct',
-                    'text': token,
-                    'original_tokens': [token],
-                    'position': len(fragments)
-                })
+        print(f"TRADUCTION: '{text}' ({source_lang} → {target_lang})")
         
-        # Traiter les derniers mots s'il y en a
-        if current_word_group:
-            word_text = ' '.join(current_word_group)
-            fragments.append({
-                'type': 'words',
-                'text': word_text,
-                'original_tokens': current_word_group.copy(),
-                'position': len(fragments)
-            })
+        # 1. Vérifier cache room pour phrase complète
+        if room_id:
+            room_cached = self.check_room_cache_only(text, source_lang, target_lang, room_id)
+            if room_cached:
+                print(f"CACHE ROOM: '{text}' → '{room_cached}'")
+                return room_cached
         
-        return fragments
+        # 2. Vérifier cache professionnel pour phrase complète
+        prof_cached = self.check_professional_cache(text, source_lang, target_lang)
+        if prof_cached:
+            print(f"CACHE PROFESSIONNEL: '{text}' → '{prof_cached}'")
+            # Sauvegarder dans cache room
+            if room_id:
+                self.add_to_cache(text, source_lang, target_lang, prof_cached, room_id)
+            return prof_cached
+        
+        # 3. Sinon : traduction par services (cohérence garantie)
+        print(f"Traduction par services (phrase complète)")
+        
+        # Détection du domaine
+        domain_analysis = self.domain_detector.detect_domain(text, source_lang, forced_mode)
+        translation_mode = domain_analysis['mode']
+        
+        if 'warning' in domain_analysis:
+            print(domain_analysis['warning'])
+        elif 'info' in domain_analysis:
+            print(domain_analysis['info'])
+        
+        # Services de traduction
+        available_services = self.get_available_services()
+        
+        if 'deepl' in available_services and not self.can_use_deepl(source_lang, target_lang):
+            available_services.remove('deepl')
+            print(f"DeepL retiré (langues {source_lang}->{target_lang} non supportées)")
+        
+        print(f"Traduction avec {len(available_services)} services: {available_services}")
+        print(f"Mode: {translation_mode.upper()} (domaine: {domain_analysis['domain']})")
+        
+        # Traduction parallèle
+        start_time = time.time()
+        
+        with ThreadPoolExecutor(max_workers=len(available_services)) as executor:
+            future_to_service = {
+                executor.submit(self.translate_with_service, text, source_lang, target_lang, service): service
+                for service in available_services
+            }
+            
+            for future in as_completed(future_to_service, timeout=self.translation_timeout):
+                service = future_to_service[future]
+                try:
+                    translation, used_service = future.result()
+                    elapsed = time.time() - start_time
+                    
+                    print(f"RÉSULTAT de {used_service} en {elapsed:.2f}s: '{translation}'")
+                    
+                    # Post-traitement et cache
+                    translation = self.post_process_translation(translation, target_lang)
+                    
+                    # Sauvegarder dans cache room
+                    if room_id:
+                        self.add_to_cache(text, source_lang, target_lang, translation, room_id)
+                    
+                    return translation
+                    
+                except Exception as e:
+                    print(f"Échec {service}: {str(e)}")
+                    continue
+        
+        return f"Erreur de traduction: tous les services ont échoué"
     
-    def translate_fragment_from_cache(self, fragment_text, source_lang, target_lang):
-        """Cherche la traduction d'un fragment dans le cache bidirectionnel"""
+    def check_professional_cache(self, text, source_lang, target_lang):
+        """Vérifier cache professionnel pour phrase complète"""
         prof_cache = self.get_professional_cache()
-        text_normalized = self.normalize_text_for_cache(fragment_text)
+        text_normalized = self.normalize_text_for_cache(text)
         
-        # Stratégies de recherche
+        # Stratégies de recherche (phrases complètes uniquement)
         search_strategies = [
             f"{text_normalized}|{source_lang}|{target_lang}",
             f"{text_normalized}|auto|{target_lang}",
@@ -398,187 +416,13 @@ class TranslationManager:
         for strategy_key in search_strategies:
             if strategy_key in prof_cache:
                 base_translation = prof_cache[strategy_key]['translation']
-                final_translation = self.restore_punctuation(fragment_text, base_translation, source_lang, target_lang)
-                return final_translation, prof_cache[strategy_key]['sector']
-        
-        return None, None
-    
-    def translate_hybrid(self, text, source_lang, target_lang='fr', room_id=None):
-        """TRADUCTION HYBRIDE - Mélange cache + services intelligemment"""
-        print(f"TRADUCTION HYBRIDE: '{text}' ({source_lang} → {target_lang})")
-        
-        # 1. Décomposer le texte en fragments
-        fragments = self.decompose_text_for_hybrid_translation(text)
-        print(f"Décomposition: {len(fragments)} fragments")
-        
-        # 2. Analyser chaque fragment
-        translated_fragments = []
-        cache_hits = 0
-        need_service_translation = []
-        
-        for fragment in fragments:
-            if fragment['type'] == 'punct':
-                # Ponctuation : garder tel quel
-                translated_fragments.append({
-                    'text': fragment['text'],
-                    'source': 'kept',
-                    'original': fragment['text']
-                })
-            else:
-                # Mots : chercher dans le cache
-                cache_result, sector = self.translate_fragment_from_cache(
-                    fragment['text'], source_lang, target_lang
-                )
-                
-                if cache_result:
-                    translated_fragments.append({
-                        'text': cache_result,
-                        'source': f'cache_{sector}',
-                        'original': fragment['text']
-                    })
-                    cache_hits += 1
-                    print(f"CACHE HIT: '{fragment['text']}' → '{cache_result}' ({sector})")
-                else:
-                    # Marquer pour traduction par service
-                    translated_fragments.append({
-                        'text': None,  # À traduire
-                        'source': 'service_needed',
-                        'original': fragment['text'],
-                        'fragment_index': len(need_service_translation)
-                    })
-                    need_service_translation.append(fragment['text'])
-        
-        print(f"Résultat décomposition: {cache_hits} cache hits, {len(need_service_translation)} fragments à traduire")
-        
-        # 3. Traduire les fragments manquants par service SI NÉCESSAIRE
-        service_translations = {}
-        if need_service_translation:
-            print(f"Traduction service pour: {need_service_translation}")
-            
-            # Regrouper les fragments pour traduction efficace
-            text_to_translate = " | ".join(need_service_translation)
-            
-            # Utiliser les services normalement
-            service_result = self.translate_with_services(text_to_translate, source_lang, target_lang)
-            
-            if " | " in service_result:
-                service_parts = service_result.split(" | ")
-                for i, part in enumerate(service_parts):
-                    if i < len(need_service_translation):
-                        service_translations[i] = part.strip()
-            else:
-                # Si un seul fragment ou séparateur pas respecté
-                if len(need_service_translation) == 1:
-                    service_translations[0] = service_result
-                else:
-                    # Fallback : distribution équitable
-                    words = service_result.split()
-                    words_per_fragment = len(words) // len(need_service_translation)
-                    for i in range(len(need_service_translation)):
-                        start_idx = i * words_per_fragment
-                        end_idx = (i + 1) * words_per_fragment if i < len(need_service_translation) - 1 else len(words)
-                        service_translations[i] = " ".join(words[start_idx:end_idx])
-        
-        # 4. Assembler le résultat final
-        final_parts = []
-        for fragment in translated_fragments:
-            if fragment['source'] == 'service_needed':
-                # Utiliser la traduction du service
-                fragment_idx = fragment['fragment_index']
-                if fragment_idx in service_translations:
-                    final_parts.append(service_translations[fragment_idx])
-                    print(f"SERVICE: '{fragment['original']}' → '{service_translations[fragment_idx]}'")
-                else:
-                    final_parts.append(fragment['original'])  # Fallback
-            else:
-                final_parts.append(fragment['text'])
-        
-        final_result = ''.join(final_parts)
-        
-        # 5. Apprentissage : sauvegarder la traduction complète dans cache room
-        if room_id:
-            self.add_to_cache(text, source_lang, target_lang, final_result, room_id)
-        
-        print(f"HYBRIDE FINAL: '{text}' → '{final_result}' ({cache_hits}/{len([f for f in fragments if f['type'] == 'words'])} cache hits)")
-        
-        return final_result
-    
-    def translate_with_services(self, text, source_lang, target_lang):
-        """Traduction par services (méthode classique)"""
-        available_services = self.get_available_services()
-        
-        if 'deepl' in available_services and not self.can_use_deepl(source_lang, target_lang):
-            available_services.remove('deepl')
-        
-        start_time = time.time()
-        
-        with ThreadPoolExecutor(max_workers=len(available_services)) as executor:
-            future_to_service = {
-                executor.submit(self.translate_with_service, text, source_lang, target_lang, service): service
-                for service in available_services
-            }
-            
-            for future in as_completed(future_to_service, timeout=self.translation_timeout):
-                service = future_to_service[future]
-                try:
-                    translation, used_service = future.result()
-                    elapsed = time.time() - start_time
-                    
-                    print(f"Service {used_service} en {elapsed:.2f}s")
-                    return self.post_process_translation(translation, target_lang)
-                    
-                except Exception as e:
-                    print(f"Échec {service}: {str(e)}")
-                    continue
-        
-        return f"Erreur de traduction: tous les services ont échoué"
-    
-    def translate(self, text, source_lang, target_lang='fr', forced_mode=None, room_id=None):
-        """FONCTION PRINCIPALE - Traduction hybride intelligente"""
-        if not text or text.strip() == "":
-            return ""
-        
-        if source_lang != 'auto':
-            self.set_preferred_language(source_lang)
-        
-        # 1. Vérifier d'abord cache room pour phrase complète
-        if room_id:
-            room_cached = self.check_room_cache_only(text, source_lang, target_lang, room_id)
-            if room_cached:
-                print(f"CACHE ROOM COMPLET: '{text}' → '{room_cached}'")
-                return room_cached
-        
-        # 2. Vérifier cache professionnel pour phrase complète
-        prof_cache = self.get_professional_cache()
-        text_normalized = self.normalize_text_for_cache(text)
-        
-        search_strategies = [
-            f"{text_normalized}|{source_lang}|{target_lang}",
-            f"{text_normalized}|auto|{target_lang}",
-        ]
-        
-        if source_lang == 'auto':
-            common_langs = ['fr', 'en', 'es', 'de', 'it', 'pt', 'ru', 'zh-CN', 'ja', 'ar']
-            for lang in common_langs:
-                search_strategies.append(f"{text_normalized}|{lang}|{target_lang}")
-        
-        for strategy_key in search_strategies:
-            if strategy_key in prof_cache:
-                base_translation = prof_cache[strategy_key]['translation']
                 final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
-                print(f"CACHE PROFESSIONNEL COMPLET: '{text}' → '{final_translation}'")
-                
-                # Sauvegarder dans cache room
-                if room_id:
-                    self.add_to_cache(text, source_lang, target_lang, final_translation, room_id)
-                
                 return final_translation
         
-        # 3. Sinon : traduction hybride (cache + services)
-        return self.translate_hybrid(text, source_lang, target_lang, room_id)
+        return None
     
     def check_room_cache_only(self, text, source_lang, target_lang, room_id):
-        """Vérifie seulement le cache de la room"""
+        """Vérifie seulement le cache de la room (phrases complètes)"""
         text_normalized = self.normalize_text_for_cache(text)
         room_cache = self.get_room_cache(room_id)
         
@@ -619,7 +463,7 @@ class TranslationManager:
         return final_translation
 
     def add_to_cache(self, text, source_lang, target_lang, translation, room_id=None):
-        """Ajoute une traduction au cache"""
+        """Ajoute une traduction au cache (phrases complètes uniquement)"""
         text_normalized = self.normalize_text_for_cache(text)
         
         # Ajouter au cache de la room si room_id fourni
@@ -723,11 +567,11 @@ class TranslationManager:
         self.preload_professional_cache()
     
     def preload_professional_cache(self):
-        """CACHE BIDIRECTIONNEL - Pré-remplit le cache DANS TOUTES LES DIRECTIONS"""
+        """Cache bidirectionnel SIMPLIFIÉ - Mots/phrases simples uniquement"""
         if not hasattr(self, '_professional_cache'):
             self._professional_cache = {}
         
-        print("Création du cache bidirectionnel...")
+        print("Création du cache bidirectionnel SIMPLIFIÉ...")
         
         for sector, languages in self.professional_phrases.items():
             # Pour chaque phrase dans chaque secteur
@@ -756,20 +600,20 @@ class TranslationManager:
                                 }
         
         total_entries = len(self._professional_cache)
-        print(f"Cache professionnel BIDIRECTIONNEL créé: {total_entries} correspondances")
+        print(f"Cache bidirectionnel SIMPLIFIÉ créé: {total_entries} correspondances")
         
         # Tests de vérification
         test_words = [
             ("bonjour", "fr", "en"),
             ("hello", "en", "fr"), 
             ("hola", "es", "fr"),
-            ("ciao", "it", "en"),
             ("merci", "fr", "en"),
             ("thank you", "en", "fr"),
-            ("gracias", "es", "en")
+            ("super", "fr", "en"),
+            ("perfect", "en", "fr")
         ]
         
-        print("Tests du cache bidirectionnel:")
+        print("Tests du cache bidirectionnel SIMPLIFIÉ:")
         for word, src, tgt in test_words:
             word_norm = self.normalize_text_for_cache(word)
             test_key = f"{word_norm}|{src}|{tgt}"
@@ -792,22 +636,6 @@ class TranslationManager:
                 json.dump(cache_data, f, ensure_ascii=False, indent=2)
         except Exception as e:
             print(f"Erreur sauvegarde caches rooms: {e}")
-    
-    def extract_fragments(self, text):
-        """Extrait des fragments significatifs d'un texte"""
-        words = text.split()
-        fragments = []
-        
-        important_words = [word for word in words if len(word) > 2]
-        fragments.extend(important_words)
-        
-        for i in range(len(words) - 1):
-            fragments.append(' '.join(words[i:i+2]))
-            if i < len(words) - 2:
-                fragments.append(' '.join(words[i:i+3]))
-        
-        fragments.append(text)
-        return fragments
     
     # FONCTIONS EXISTANTES CONSERVÉES
     def set_preferred_language(self, lang):
