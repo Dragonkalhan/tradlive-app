@@ -50,7 +50,7 @@ class DomainDetector:
                     'fa': ['قرارداد', 'شرط', 'حقوقی', 'دادگاه', 'وکیل', 'روند', 'حق', 'قانون', 'مسئولیت', 'دعوا'],
                     'hi': ['अनुबंध', 'खंड', 'कानूनी', 'अदालत', 'वकील', 'प्रक्रिया', 'अधिकार', 'कानून', 'जिम्मेदारी', 'मुकदमा'],
                     'bn': ['চুক্তি', 'ধারা', 'আইনি', 'আদালত', 'আইনজীবী', 'প্রক্রিয়া', 'অধিকার', 'আইন', 'দায়বদ্ধতা', 'মামলা'],
-                    'te': ['ఒప్పందం', 'నిబంధన', 'చట్టপరమైన', 'కోర్టు', 'లాయర్', 'విధానం', 'హక్కు', 'చట్టం', 'బాధ్యత', 'వ్యాజ্యం'],
+                    'te': ['ఒప్పందం', 'నిబంధన', 'చట్టపరమైన', 'కోర్టు', 'లాయర్', 'విధానం', 'హక్కు', 'చట్టం', 'బాధ్యత', 'వ్యాజ్యం'],
                     'mr': ['करार', 'कलम', 'कायदेशीर', 'न्यायालय', 'वकील', 'प्रक्रिया', 'हक्क', 'कायदा', 'जबाबदारी', 'खटला']
                 },
                 'mode': 'precision',
@@ -108,13 +108,12 @@ class DomainDetector:
         
         # État actuel
         self.current_domain = None
-        self.current_mode = 'precision'  # Par défaut : sécurité max
-        self.forced_mode = None  # Mode forcé par l'utilisateur
+        self.current_mode = 'precision'
+        self.forced_mode = None
         
     def detect_domain(self, text, source_lang='auto', forced_mode=None):
         """🧠 Détecte le domaine et recommande un mode de traduction"""
         
-        # 1. Mode forcé par l'utilisateur (priorité absolue)
         if forced_mode:
             self.forced_mode = forced_mode
             self.current_mode = forced_mode
@@ -126,14 +125,13 @@ class DomainDetector:
                 'safe_for_pipeline': forced_mode == 'pipeline'
             }
         
-        # 2. Analyser le texte pour détecter un domaine critique
         text_lower = text.lower()
         
-        # Vérifier d'abord les domaines CRITIQUES (priorité absolue)
+        # Vérifier domaines CRITIQUES
         for domain_name, domain_info in self.critical_domains.items():
             score = self._calculate_domain_score(text_lower, domain_info, source_lang)
             
-            if score > 0:  # Même 1 seul mot critique = mode précision
+            if score > 0:
                 self.current_domain = domain_name
                 self.current_mode = 'precision'
                 
@@ -143,14 +141,14 @@ class DomainDetector:
                     'confidence': score,
                     'source': 'critical_detection',
                     'safe_for_pipeline': False,
-                    'warning': f"⚠️ Domaine {domain_name} détecté - Mode précision activé pour votre sécurité"
+                    'warning': f"⚠️ Domaine {domain_name} détecté - Mode précision activé"
                 }
         
-        # 3. Vérifier les domaines SÛRS (formation numérique)
+        # Vérifier domaines SÛRS
         for domain_name, domain_info in self.safe_domains.items():
             score = self._calculate_domain_score(text_lower, domain_info, source_lang)
             
-            if score >= 2:  # Au moins 2 mots = domaine sûr détecté
+            if score >= 2:
                 self.current_domain = domain_name
                 self.current_mode = 'pipeline'
                 
@@ -160,10 +158,10 @@ class DomainDetector:
                     'confidence': score,
                     'source': 'safe_detection',
                     'safe_for_pipeline': True,
-                    'info': f"🚀 {domain_name} détecté - Mode rapide activé pour plus de fluidité"
+                    'info': f"🚀 {domain_name} détecté - Mode rapide activé"
                 }
         
-        # 4. Aucun domaine spécifique détecté = mode sécurisé par défaut
+        # Aucun domaine spécifique détecté
         self.current_domain = 'general'
         self.current_mode = 'precision'
         
@@ -172,15 +170,13 @@ class DomainDetector:
             'mode': 'precision',
             'confidence': 0.0,
             'source': 'default_safe',
-            'safe_for_pipeline': False,
-            'info': "ℹ️ Mode précision activé par sécurité"
+            'safe_for_pipeline': False
         }
     
     def _calculate_domain_score(self, text_lower, domain_info, source_lang):
         """Calcule le score d'un domaine pour un texte donné"""
         score = 0
         
-        # Langues à vérifier
         languages_to_check = []
         if source_lang != 'auto' and source_lang in domain_info['keywords']:
             languages_to_check = [source_lang]
@@ -197,34 +193,31 @@ class DomainDetector:
 
 class TranslationManager:
     def __init__(self):
-        # 🆕 NOUVEAU : Détecteur de domaine intégré
+        # Détecteur de domaine intégré
         self.domain_detector = DomainDetector()
         
-        # Limites mensuelles avec DeepL inclus (CONSERVÉ)
+        # Limites mensuelles
         self.limits = {
-            'google': 500000,    # 500K caractères/mois
-            'mymemory': 500000,  # 500K caractères/mois
-            'deepl': 500000      # 500K caractères/mois
+            'google': 500000,
+            'mymemory': 500000,
+            'deepl': 500000
         }
         
-        # 🆕 NOUVEAU : Cache intelligent étendu
-        self.translation_cache = {}  # Cache existant conservé
-        self.smart_cache = {}        # Cache intelligent pour fragments
-        self.phrase_frequency = {}   # Compteur de fréquence des phrases
-        self.sector_cache = {}       # Cache spécialisé par secteur
+        # 🆕 CACHE ISOLÉ PAR ROOM (au lieu de global)
+        self.room_caches = {}           # {room_id: {cache_data}}
+        self.room_phrase_frequency = {} # {room_id: {phrase: count}}
+        self.translation_cache = {}     # Cache ancien conservé pour compatibilité
         
+        # Paramètres cache
         self.max_cache_size = 100
-        # 🆕 NOUVEAU : Tailles étendues pour le cache intelligent
-        self.max_smart_cache_size = 500  # Plus de place pour les fragments
-        self.max_phrase_frequency = 200  # Phrases les plus utilisées
+        self.max_smart_cache_size = 500
+        self.max_phrase_frequency = 200
         
-        # Langue préférée (CONSERVÉ)
+        # Configuration générale
         self.preferred_lang = 'en'
-        
-        # Timeout pour les traductions parallèles (CONSERVÉ)
         self.translation_timeout = 8
         
-        # Dictionnaire de mappage pour MyMemory (CONSERVÉ)
+        # Mappings langues
         self.mymemory_lang_map = {
             'zh-CN': 'zh-CN', 'en': 'en-GB', 'es': 'es-ES', 'de': 'de-DE',
             'it': 'it-IT', 'pt': 'pt-PT', 'ru': 'ru-RU', 'ja': 'ja-JP',
@@ -232,13 +225,12 @@ class TranslationManager:
             'bn': 'bn-IN', 'te': 'te-IN', 'mr': 'mr-IN', 'fr': 'fr-FR'
         }
         
-        # Mapping pour DeepL (CONSERVÉ)
         self.deepl_lang_map = {
             'zh-CN': 'ZH', 'en': 'EN-US', 'es': 'ES', 'de': 'DE',
             'it': 'IT', 'pt': 'PT-PT', 'ru': 'RU', 'ja': 'JA', 'fr': 'FR'
         }
         
-        # 🆕 NOUVEAU : Dictionnaires pré-remplis par secteur professionnel (16 LANGUES - Cohérent avec la détection)
+        # 🆕 BIBLIOTHÈQUES PROFESSIONNELLES ÉTENDUES (16 LANGUES)
         self.professional_phrases = {
             'accueil': {
                 'fr': ['bonjour', 'bonsoir', 'puis-je vous aider', 'merci', 'au revoir', 'de rien', 'excusez-moi', 'pardon', 'comment allez-vous', 'très bien merci'],
@@ -275,47 +267,89 @@ class TranslationManager:
                 'bn': ['ক্লিক করুন', 'খুলুন', 'টাইপ করুন', 'আপনি বুঝেছেন', 'চেষ্টা করুন', 'নিখুঁত', 'আবার চেষ্টা করুন', 'সেভ করুন'],
                 'te': ['క్లిక్ చేయండి', 'తెరవండి', 'టైప్ చేయండి', 'మీరు అర్థం చేసుకున్నారా', 'ప్రయత్నించండి', 'అద్భుతం', 'మళ్లీ ప్రయత్నించండి', 'సేవ్ చేయండి'],
                 'mr': ['क्लिक करा', 'उघडा', 'टाइप करा', 'तुम्हाला समजले का', 'प्रयत्न करा', 'उत्तम', 'पुन्हा प्रयत्न करा', 'सेव्ह करा']
+            },
+            'vie_quotidienne': {
+                'fr': ['comment ça va', 'ça va bien', 'très bien', 'pas mal', 'et vous', 'de rien', 'avec plaisir', 'bien sûr', 'peut-être', 'je ne sais pas', 'attendez', 'voilà', 'exactement', 'parfait', 'super'],
+                'en': ['how are you', 'I am fine', 'very good', 'not bad', 'and you', 'you are welcome', 'with pleasure', 'of course', 'maybe', 'I do not know', 'wait', 'here it is', 'exactly', 'perfect', 'great'],
+                'es': ['cómo estás', 'estoy bien', 'muy bien', 'no está mal', 'y tú', 'de nada', 'con mucho gusto', 'por supuesto', 'tal vez', 'no lo sé', 'espera', 'aquí está', 'exactamente', 'perfecto', 'genial'],
+                'de': ['wie geht es dir', 'mir geht es gut', 'sehr gut', 'nicht schlecht', 'und dir', 'gern geschehen', 'gerne', 'natürlich', 'vielleicht', 'ich weiß nicht', 'warte', 'hier ist es', 'genau', 'perfekt', 'toll'],
+                'it': ['come stai', 'sto bene', 'molto bene', 'non male', 'e tu', 'prego', 'con piacere', 'certo', 'forse', 'non lo so', 'aspetta', 'ecco', 'esatto', 'perfetto', 'fantastico'],
+                'pt': ['como está', 'estou bem', 'muito bem', 'não está mal', 'e você', 'de nada', 'com prazer', 'claro', 'talvez', 'não sei', 'espere', 'aqui está', 'exatamente', 'perfeito', 'ótimo'],
+                'ru': ['как дела', 'у меня всё хорошо', 'очень хорошо', 'неплохо', 'а у тебя', 'пожалуйста', 'с удовольствием', 'конечно', 'может быть', 'я не знаю', 'подожди', 'вот', 'точно', 'отлично', 'супер'],
+                'zh-CN': ['你好吗', '我很好', '非常好', '还不错', '你呢', '不客气', '乐意效劳', '当然', '也许', '我不知道', '等等', '这里', '正确', '完美', '太好了'],
+                'ja': ['元気ですか', '元気です', 'とても良い', '悪くない', 'あなたは', 'どういたしまして', '喜んで', 'もちろん', 'たぶん', 'わかりません', '待って', 'ここです', 'その通り', '完璧', 'すばらしい'],
+                'ar': ['كيف حالك', 'أنا بخير', 'جيد جدا', 'ليس سيئا', 'وأنت', 'عفوا', 'بكل سرور', 'بالطبع', 'ربما', 'لا أعرف', 'انتظر', 'هنا', 'بالضبط', 'مثالي', 'رائع'],
+                'uk': ['як справи', 'у мене все добре', 'дуже добре', 'непогано', 'а в тебе', 'будь ласка', 'з задоволенням', 'звичайно', 'можливо', 'я не знаю', 'зачекай', 'ось', 'точно', 'відмінно', 'супер'],
+                'fa': ['حالت چطوره', 'من خوبم', 'خیلی خوب', 'بد نیست', 'تو چطور', 'خواهش می‌کنم', 'با کمال میل', 'البته', 'شاید', 'نمی‌دانم', 'صبر کن', 'اینجاست', 'دقیقا', 'عالی', 'فوق‌العاده'],
+                'hi': ['कैसे हो', 'मैं ठीक हूं', 'बहुत अच्छा', 'बुरा नहीं', 'और आप', 'कृपया', 'खुशी से', 'जरूर', 'शायद', 'मुझे नहीं पता', 'रुको', 'यहां है', 'बिल्कुल', 'बेहतरीन', 'शानदार'],
+                'bn': ['কেমন আছেন', 'আমি ভাল আছি', 'খুব ভাল', 'খারাপ নয়', 'আর আপনি', 'অনুগ্রহ করে', 'আনন্দের সাথে', 'অবশ্যই', 'হয়তো', 'আমি জানি না', 'অপেক্ষা করুন', 'এখানে', 'ঠিক', 'নিখুঁত', 'দুর্দান্ত'],
+                'te': ['ఎలా ఉన్నారు', 'నేను బాగున্నాను', 'చాలా బాగుంది', 'చెడ్డది కాదు', 'మీరు ఎలా', 'దయచేసి', 'ఆనందంగా', 'అవును', 'బహుశా', 'నాకు తెలియదు', 'వేచి ఉండండి', 'ఇక్కడ ఉంది', 'సరిగ్గా', 'అద్భుతం', 'గొప్పది'],
+                'mr': ['कसे आहात', 'मी ठीक आहे', 'खूप चांगले', 'वाईट नाही', 'आणि तुम्ही', 'कृपया', 'आनंदाने', 'नक्कीच', 'कदाचित', 'मला माहित नाही', 'थांबा', 'इथे आहे', 'नक्की', 'परिपूर्ण', 'उत्तम']
+            },
+            'emotions_reactions': {
+                'fr': ['super', 'génial', 'parfait', 'excellent', 'bravo', 'félicitations', 'dommage', 'tant pis', 'pas grave', 'ça arrive', 'oh là là', 'incroyable', 'formidable', 'magnifique', 'impressionnant'],
+                'en': ['great', 'awesome', 'perfect', 'excellent', 'well done', 'congratulations', 'too bad', 'never mind', 'no problem', 'it happens', 'oh my', 'incredible', 'wonderful', 'beautiful', 'impressive'],
+                'es': ['genial', 'increíble', 'perfecto', 'excelente', 'muy bien', 'felicitaciones', 'qué pena', 'no importa', 'no hay problema', 'pasa', 'dios mío', 'increíble', 'maravilloso', 'hermoso', 'impresionante'],
+                'de': ['toll', 'fantastisch', 'perfekt', 'ausgezeichnet', 'gut gemacht', 'herzlichen glückwunsch', 'schade', 'macht nichts', 'kein problem', 'passiert', 'ach so', 'unglaublich', 'wunderbar', 'schön', 'beeindruckend'],
+                'it': ['fantastico', 'incredibile', 'perfetto', 'eccellente', 'bravo', 'congratulazioni', 'peccato', 'non importa', 'non c\'è problema', 'capita', 'mamma mia', 'incredibile', 'meraviglioso', 'bellissimo', 'impressionante'],
+                'pt': ['ótimo', 'incrível', 'perfeito', 'excelente', 'muito bem', 'parabéns', 'que pena', 'não importa', 'sem problema', 'acontece', 'nossa', 'incrível', 'maravilhoso', 'lindo', 'impressionante'],
+                'ru': ['отлично', 'потрясающе', 'идеально', 'превосходно', 'молодец', 'поздравляю', 'жаль', 'неважно', 'не проблема', 'бывает', 'боже мой', 'невероятно', 'замечательно', 'красиво', 'впечатляюще'],
+                'zh-CN': ['太好了', '令人惊叹', '完美', '优秀', '做得好', '恭喜', '可惜', '没关系', '没问题', '会发生', '天哪', '难以置信', '精彩', '美丽', '令人印象深刻'],
+                'ja': ['素晴らしい', '驚くべき', '完璧', '優秀', 'よくできました', 'おめでとう', '残念', '大丈夫', '問題ない', 'よくある', 'すごい', '信じられない', '素晴らしい', '美しい', '印象的'],
+                'ar': ['رائع', 'مذهل', 'مثالي', 'ممتاز', 'أحسنت', 'تهانينا', 'يا للأسف', 'لا يهم', 'لا مشكلة', 'يحدث', 'يا إلهي', 'لا يصدق', 'رائع', 'جميل', 'مثير للإعجاب'],
+                'uk': ['чудово', 'дивовижно', 'ідеально', 'відмінно', 'молодець', 'вітаю', 'шкода', 'неважливо', 'без проблем', 'буває', 'боже мій', 'неймовірно', 'чудово', 'гарно', 'вражає'],
+                'fa': ['عالی', 'شگفت‌انگیز', 'کامل', 'عالی', 'آفرین', 'تبریک', 'حیف', 'مهم نیست', 'مشکلی نیست', 'اتفاق می‌افتد', 'خدای من', 'باورنکردنی', 'فوق‌العاده', 'زیبا', 'چشمگیر'],
+                'hi': ['शानदार', 'अद्भुत', 'परफेक्ट', 'बेहतरीन', 'शाबाश', 'बधाई', 'अफसोस', 'कोई बात नहीं', 'कोई समस्या नहीं', 'होता है', 'हे भगवान', 'अविश्वसनीय', 'अद्भुत', 'सुंदर', 'प्रभावशाली'],
+                'bn': ['দুর্দান্ত', 'আশ্চর্যজনক', 'নিখুঁত', 'চমৎকার', 'বাহবা', 'অভিনন্দন', 'দুঃখজনক', 'কিছু না', 'কোন সমস্যা নেই', 'হয়', 'হে ভগবান', 'অবিশ্বাস্য', 'চমৎকার', 'সুন্দর', 'চিত্তাকর্ষক'],
+                'te': ['అద్భుతం', 'ఆశ్చర్యకరమైన', 'పరిపూర্ణమైన', 'అద్భుతమైన', 'బాగా చేసారు', 'అభినందనలు', 'దురదృష్టం', 'పర్వాలేదు', 'సమస్య లేదు', 'జరుగుతుంది', 'దేవుడా', 'నమ్మశక్యం కాని', 'అద్భుతమైన', 'అందమైన', 'ఆకట్టుకునే'],
+                'mr': ['उत्तम', 'आश्चर्यकारक', 'परिपूर्ण', 'उत्कृष्ट', 'शाब्बास', 'अभिनंदन', 'खेद', 'काही हरकत नाही', 'समस्या नाही', 'होते', 'देवा', 'अविश्वसनीय', 'अप्रतिम', 'सुंदर', 'प्रभावी']
             }
         }
         
-        # Initialiser tous les systèmes
+        # Initialiser systèmes
         self.init_counters()
         self.init_smart_cache()
     
-    # 🆕 FONCTION PRINCIPALE AMÉLIORÉE : Traduction avec détection de domaine
-    def translate(self, text, source_lang, target_lang='fr', forced_mode=None):
-        """Version DEBUG pour diagnostiquer le cache"""
-        if not text or text.strip() == "":
+    # 🆕 NORMALISATION AUTOMATIQUE DU TEXTE
+    def normalize_text_for_cache(self, text):
+        """Normalise le texte pour la recherche en cache (gère ponctuation, majuscules, etc.)"""
+        if not text:
             return ""
         
-        # DEBUG : Afficher les paramètres reçus
-        print(f"🔍 DEBUG - Traduction demandée:")
-        print(f"   Texte: '{text}'")
-        print(f"   Source: '{source_lang}'")
-        print(f"   Target: '{target_lang}'")
+        # Minuscules
+        text = text.lower()
+        
+        # Supprimer ponctuation et caractères spéciaux
+        text = re.sub(r'[^\w\s]', '', text)
+        
+        # Supprimer espaces multiples et trim
+        text = re.sub(r'\s+', ' ', text).strip()
+        
+        return text
+    
+    # 🆕 CACHE PAR ROOM (ISOLATION CLIENT)
+    def get_room_cache(self, room_id):
+        """Récupère ou crée le cache pour une room spécifique"""
+        if room_id not in self.room_caches:
+            self.room_caches[room_id] = {}
+        return self.room_caches[room_id]
+    
+    def get_room_phrase_frequency(self, room_id):
+        """Récupère ou crée le compteur de fréquence pour une room"""
+        if room_id not in self.room_phrase_frequency:
+            self.room_phrase_frequency[room_id] = {}
+        return self.room_phrase_frequency[room_id]
+    
+    # FONCTION PRINCIPALE DE TRADUCTION
+    def translate(self, text, source_lang, target_lang='fr', forced_mode=None, room_id=None):
+        """Traduit avec détection intelligente de domaine + cache isolé par room"""
+        if not text or text.strip() == "":
+            return ""
         
         if source_lang != 'auto':
             self.set_preferred_language(source_lang)
         
-        # DEBUG : Vérifier l'état du cache avant recherche
-        print(f"📊 DEBUG - État du cache:")
-        print(f"   Smart cache size: {len(self.smart_cache)}")
-        print(f"   Old cache size: {len(self.translation_cache)}")
-        
-        # DEBUG : Créer manuellement la clé pour voir si elle existe
-        cache_key_old = f"{text.lower()}|{source_lang}|{target_lang}"
-        cache_key_smart = f"{text.lower()}|{source_lang}|{target_lang}"
-        
-        print(f"   Clé recherchée: '{cache_key_smart}'")
-        print(f"   Existe dans smart_cache? {cache_key_smart in self.smart_cache}")
-        print(f"   Existe dans old_cache? {cache_key_old in self.translation_cache}")
-        
-        # DEBUG : Afficher quelques clés du cache pour voir le format
-        if self.smart_cache:
-            sample_keys = list(self.smart_cache.keys())[:3]
-            print(f"   Exemples de clés dans smart_cache: {sample_keys}")
-        
-        # 🧠 Détection du domaine
+        # Détection du domaine
         domain_analysis = self.domain_detector.detect_domain(text, source_lang, forced_mode)
         translation_mode = domain_analysis['mode']
         
@@ -324,19 +358,13 @@ class TranslationManager:
         elif 'info' in domain_analysis:
             print(domain_analysis['info'])
         
-        # 1. Vérifier le cache intelligent
-        print(f"🔍 DEBUG - Vérification cache...")
-        cached_translation = self.check_cache(text, source_lang, target_lang)
+        # Vérifier le cache (avec room_id pour isolation)
+        cached_translation = self.check_cache(text, source_lang, target_lang, room_id)
         if cached_translation:
-            print(f"⚡ CACHE HIT! Traduction: '{cached_translation}' (Mode: {translation_mode})")
+            print(f"⚡ Traduction trouvée dans le cache ! (Mode: {translation_mode})")
             return cached_translation
-        else:
-            print(f"❌ CACHE MISS - Pas de traduction en cache")
         
-        # Continue avec la traduction normale si pas en cache
-        print(f"🚀 Traduction via services externes...")
-        
-        # 2. Obtenir les services disponibles
+        # Obtenir services disponibles
         available_services = self.get_available_services()
         
         if 'deepl' in available_services and not self.can_use_deepl(source_lang, target_lang):
@@ -346,7 +374,11 @@ class TranslationManager:
         print(f"🚀 Traduction PARALLÈLE avec {len(available_services)} services: {available_services}")
         print(f"🧠 Mode détecté: {translation_mode.upper()} (domaine: {domain_analysis['domain']})")
         
-        # 3. Lancer tous les services en parallèle
+        # Stats cache
+        cache_stats = self.get_cache_stats(room_id)
+        print(f"📊 Cache room {room_id}: {cache_stats['total']} entrées")
+        
+        # Traduction parallèle
         start_time = time.time()
         
         with ThreadPoolExecutor(max_workers=len(available_services)) as executor:
@@ -363,13 +395,9 @@ class TranslationManager:
                     
                     print(f"✅ PREMIER résultat reçu de {used_service} en {elapsed:.2f}s (Mode: {translation_mode})")
                     
-                    # 5. Post-traitement et cache
+                    # Post-traitement et cache
                     translation = self.post_process_translation(translation, target_lang)
-                    
-                    # DEBUG : Vérifier l'ajout au cache
-                    print(f"💾 DEBUG - Ajout au cache: '{text}' -> '{translation}'")
-                    self.add_to_cache(text, source_lang, target_lang, translation)
-                    print(f"📊 Nouveau cache size: {len(self.smart_cache)}")
+                    self.add_to_cache(text, source_lang, target_lang, translation, room_id)
                     
                     return translation
                     
@@ -379,165 +407,115 @@ class TranslationManager:
         
         return f"Erreur de traduction: tous les services ont échoué"
     
-    # 🆕 NOUVELLES FONCTIONS DE CONTRÔLE DU MODE
-    def set_forced_mode(self, mode):
-        """Force un mode de traduction spécifique"""
-        valid_modes = ['precision', 'balanced', 'pipeline']
-        if mode in valid_modes:
-            self.domain_detector.forced_mode = mode
-            print(f"🎯 Mode forcé: {mode.upper()}")
-            return True
-        return False
+    # CORRECTION dans translation_manager.py
+# Remplacez les fonctions check_cache et add_to_cache par ces versions :
+
+def check_cache(self, text, source_lang, target_lang, room_id=None):
+    """Vérifie le cache intelligent avec normalisation pour recherche mais préservation ponctuation"""
+    # Normaliser SEULEMENT pour la recherche
+    text_normalized = self.normalize_text_for_cache(text)
     
-    def get_current_mode(self):
-        """Retourne le mode de traduction actuel"""
-        return {
-            'current_mode': self.domain_detector.current_mode,
-            'current_domain': self.domain_detector.current_domain,
-            'forced_mode': self.domain_detector.forced_mode
-        }
+    print(f"🔍 CACHE DEBUG: '{text}' → normalisé pour recherche: '{text_normalized}'")
     
-    def reset_forced_mode(self):
-        """Remet la détection automatique"""
-        self.domain_detector.forced_mode = None
-        print("🤖 Détection automatique réactivée")
+    # 1. Cache professionnel global (priorité max)
+    prof_cache = self.get_professional_cache()
+    prof_key = f"{text_normalized}|{source_lang}|{target_lang}"
     
-    # 🆕 NOUVELLES FONCTIONS DE CACHE INTELLIGENT
-    def init_smart_cache(self):
-        """Initialise le cache intelligent et charge les données existantes"""
-        smart_cache_file = "smart_cache.json"
+    if prof_key in prof_cache:
+        # NOUVEAU : Reconstruire la ponctuation sur la traduction
+        base_translation = prof_cache[prof_key]['translation']
+        final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
+        print(f"✅ CACHE HIT professionnel: {prof_key} → '{final_translation}'")
+        return final_translation
+    
+    # 2. Cache spécifique à la room
+    if room_id:
+        room_cache = self.get_room_cache(room_id)
         
-        if os.path.exists(smart_cache_file):
-            try:
-                with open(smart_cache_file, 'r', encoding='utf-8') as f:
-                    cache_data = json.load(f)
-                    self.smart_cache = cache_data.get('smart_cache', {})
-                    self.phrase_frequency = cache_data.get('phrase_frequency', {})
-                    self.sector_cache = cache_data.get('sector_cache', {})
-                    print(f"✅ Cache intelligent chargé: {len(self.smart_cache)} fragments")
-            except Exception as e:
-                print(f"⚠️ Erreur chargement cache intelligent: {e}")
-        
-        # Pré-remplir avec les phrases professionnelles
-        self.preload_professional_cache()
-    
-    def preload_professional_cache(self):
-        """Pré-remplit le cache avec les phrases professionnelles courantes"""
-        for sector, languages in self.professional_phrases.items():
-            for lang, phrases in languages.items():
-                for phrase in phrases:
-                    # Créer des traductions bidirectionnelles fr <-> autres langues
-                    if lang == 'fr':
-                        for target_lang, target_phrases in languages.items():
-                            if target_lang != 'fr' and len(target_phrases) > phrases.index(phrase):
-                                cache_key = f"{phrase.lower()}|auto|{target_lang}"
-                                translation = target_phrases[phrases.index(phrase)]
-                                self.smart_cache[cache_key] = {
-                                    'translation': translation,
-                                    'confidence': 'professional',
-                                    'sector': sector,
-                                    'timestamp': time.time()
-                                }
-        
-        print(f"🌍 Cache professionnel multilingue initialisé: {len(self.smart_cache)} phrases (8 langues x secteurs)")
-            # ===== NOUVELLES LIGNES DE DEBUG =====
-        print(f"🔍 DEBUG - Test cache pour 'bonjour':")
-        test_key = "bonjour|auto|en"
-        if test_key in self.smart_cache:
-            print(f"   ✅ TROUVÉ: '{test_key}' -> '{self.smart_cache[test_key]['translation']}'")
-        else:
-            print(f"   ❌ PAS TROUVÉ: '{test_key}'")
-            print(f"   📝 Première clé du cache: {list(self.smart_cache.keys())[0] if self.smart_cache else 'CACHE VIDE'}")
-        # ===== FIN DEBUG =====
-    
-    def save_smart_cache(self):
-        """Sauvegarde le cache intelligent"""
-        try:
-            cache_data = {
-                'smart_cache': self.smart_cache,
-                'phrase_frequency': self.phrase_frequency,
-                'sector_cache': self.sector_cache,
-                'last_update': time.time()
-            }
+        exact_key = f"{text_normalized}|{source_lang}|{target_lang}"
+        if exact_key in room_cache:
+            stored_data = room_cache[exact_key]
             
-            with open("smart_cache.json", 'w', encoding='utf-8') as f:
-                json.dump(cache_data, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"⚠️ Erreur sauvegarde cache intelligent: {e}")
-    
-    def extract_fragments(self, text):
-        """Extrait des fragments significatifs d'un texte"""
-        # Nettoyer et normaliser le texte
-        text_clean = re.sub(r'[^\w\s]', '', text.lower()).strip()
-        words = text_clean.split()
+            # NOUVEAU : Si on a stocké la version originale, l'utiliser
+            if 'original_text' in stored_data and 'original_translation' in stored_data:
+                final_translation = self.restore_punctuation(text, stored_data['original_translation'], source_lang, target_lang)
+            else:
+                # Ancienne version : reconstruire la ponctuation
+                base_translation = stored_data['translation']
+                final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
+            
+            print(f"✅ CACHE HIT room: {exact_key} → '{final_translation}'")
+            return final_translation
         
-        fragments = []
-        
-        # Fragments de 1 mot (mots importants uniquement)
-        important_words = [word for word in words if len(word) > 2]
-        fragments.extend(important_words)
-        
-        # Fragments de 2-3 mots (très utiles)
-        for i in range(len(words) - 1):
-            fragments.append(' '.join(words[i:i+2]))
-            if i < len(words) - 2:
-                fragments.append(' '.join(words[i:i+3]))
-        
-        # La phrase complète
-        fragments.append(text_clean)
-        
-        return fragments
-    
-    def update_phrase_frequency(self, text):
-        """Met à jour la fréquence d'utilisation des phrases"""
-        text_key = text.lower().strip()
-        self.phrase_frequency[text_key] = self.phrase_frequency.get(text_key, 0) + 1
-        
-        # Nettoyer si trop de phrases
-        if len(self.phrase_frequency) > self.max_phrase_frequency:
-            # Garder les plus fréquentes
-            sorted_phrases = sorted(self.phrase_frequency.items(), key=lambda x: x[1], reverse=True)
-            self.phrase_frequency = dict(sorted_phrases[:self.max_phrase_frequency])
-        
-        # Sauvegarder périodiquement
-        if self.phrase_frequency[text_key] % 5 == 0:  # Toutes les 5 utilisations
-            self.save_smart_cache()
-    
-    def check_smart_cache(self, text, source_lang, target_lang):
-        """Vérifie le cache intelligent pour des correspondances"""
-        # 1. Vérifier le cache exact (ancien système conservé)
-        exact_key = f"{text.lower()}|{source_lang}|{target_lang}"
-        if exact_key in self.translation_cache:
-            return self.translation_cache[exact_key], 'exact_cache'
-        
-        # 2. Vérifier le cache intelligent
-        smart_key = f"{text.lower()}|{source_lang}|{target_lang}"
-        if smart_key in self.smart_cache:
-            return self.smart_cache[smart_key]['translation'], 'smart_cache'
-        
-        # 3. Vérifier les fragments
-        fragments = self.extract_fragments(text)
+        # Vérifier fragments avec reconstruction ponctuation
+        fragments = self.extract_fragments(text_normalized)
         for fragment in fragments:
             fragment_key = f"{fragment}|{source_lang}|{target_lang}"
-            if fragment_key in self.smart_cache:
-                confidence = self.smart_cache[fragment_key].get('confidence', 'fragment')
+            if fragment_key in room_cache:
+                confidence = room_cache[fragment_key].get('confidence', 'fragment')
                 if confidence in ['professional', 'frequent']:
-                    return self.smart_cache[fragment_key]['translation'], f'fragment_cache:{fragment}'
-        
-        return None, None
+                    base_translation = room_cache[fragment_key]['translation']
+                    final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
+                    print(f"✅ CACHE HIT fragment room: {fragment_key} → '{final_translation}'")
+                    return final_translation
     
-    def add_to_smart_cache(self, text, source_lang, target_lang, translation):
-        """Ajoute une traduction au cache intelligent"""
-        # 1. Ajouter à l'ancien cache (conservé pour compatibilité)
-        cache_key = f"{text.lower()}|{source_lang}|{target_lang}"
-        if len(self.translation_cache) < self.max_cache_size:
-            self.translation_cache[cache_key] = translation
+    # 3. Cache ancien pour compatibilité
+    old_key = f"{text_normalized}|{source_lang}|{target_lang}"
+    if old_key in self.translation_cache:
+        base_translation = self.translation_cache[old_key]
+        final_translation = self.restore_punctuation(text, base_translation, source_lang, target_lang)
+        print(f"✅ CACHE HIT ancien: {old_key} → '{final_translation}'")
+        return final_translation
+    
+    print(f"❌ CACHE MISS pour: {text_normalized}")
+    return None
+
+def restore_punctuation(self, original_text, base_translation, source_lang, target_lang):
+    """Restaure la ponctuation du texte original sur la traduction"""
+    
+    # Si le texte original n'a pas de ponctuation, retourner tel quel
+    original_normalized = self.normalize_text_for_cache(original_text)
+    if original_text.lower().strip() == original_normalized:
+        return base_translation
+    
+    # Extraire la ponctuation du texte original
+    import re
+    
+    # Trouver la ponctuation en fin de phrase
+    end_punctuation = re.findall(r'[.!?]+\s*$', original_text)
+    end_punct = end_punctuation[0] if end_punctuation else ''
+    
+    # Trouver les virgules et autres ponctuations intérieures
+    # Pour simplifier, on garde la logique de base et on ajoute la ponctuation de fin
+    
+    # Si le texte original se termine par une ponctuation, l'ajouter à la traduction
+    if end_punct:
+        # Enlever la ponctuation existante de la traduction de base si elle existe
+        base_clean = re.sub(r'[.!?]+\s*$', '', base_translation).strip()
+        final_translation = base_clean + end_punct
+    else:
+        final_translation = base_translation
+    
+    # Capitaliser le premier mot si l'original était capitalisé
+    if original_text and original_text[0].isupper() and final_translation:
+        final_translation = final_translation[0].upper() + final_translation[1:] if len(final_translation) > 1 else final_translation.upper()
+    
+    return final_translation
+
+def add_to_cache(self, text, source_lang, target_lang, translation, room_id=None):
+    """Ajoute une traduction au cache EN STOCKANT AUSSI LES VERSIONS ORIGINALES"""
+    text_normalized = self.normalize_text_for_cache(text)
+    
+    # Ajouter au cache de la room si room_id fourni
+    if room_id:
+        room_cache = self.get_room_cache(room_id)
+        room_freq = self.get_room_phrase_frequency(room_id)
         
-        # 2. Ajouter au cache intelligent
-        smart_key = f"{text.lower()}|{source_lang}|{target_lang}"
+        # Mettre à jour fréquence
+        room_freq[text_normalized] = room_freq.get(text_normalized, 0) + 1
+        frequency = room_freq[text_normalized]
         
-        # Déterminer la confiance basée sur la fréquence
-        frequency = self.phrase_frequency.get(text.lower(), 0)
+        # Déterminer niveau de confiance
         if frequency >= 5:
             confidence = 'frequent'
         elif frequency >= 2:
@@ -545,109 +523,163 @@ class TranslationManager:
         else:
             confidence = 'single'
         
-        self.smart_cache[smart_key] = {
-            'translation': translation,
+        cache_key = f"{text_normalized}|{source_lang}|{target_lang}"
+        
+        # NOUVEAU : Stocker à la fois la version normalisée ET les versions originales
+        room_cache[cache_key] = {
+            'translation': translation,  # Traduction complète avec ponctuation
+            'original_text': text,       # Texte original avec ponctuation
+            'original_translation': translation,  # Traduction originale avec ponctuation
+            'normalized_text': text_normalized,   # Version normalisée pour recherche
             'confidence': confidence,
             'frequency': frequency,
             'timestamp': time.time()
         }
         
-        # 3. Ajouter les fragments utiles
-        if confidence in ['frequent', 'common']:
-            fragments = self.extract_fragments(text)
-            for fragment in fragments:
-                if len(fragment.split()) <= 3:  # Fragments courts seulement
-                    fragment_key = f"{fragment}|{source_lang}|{target_lang}"
-                    if fragment_key not in self.smart_cache:
-                        # Essayer de deviner la traduction du fragment
-                        fragment_translation = self.extract_fragment_translation(fragment, text, translation)
-                        if fragment_translation:
-                            self.smart_cache[fragment_key] = {
-                                'translation': fragment_translation,
-                                'confidence': 'fragment',
-                                'parent': text,
-                                'timestamp': time.time()
-                            }
+        print(f"💾 Ajouté au cache room {room_id}: '{text}' → '{translation}' (freq: {frequency})")
         
-        # 4. Nettoyer si nécessaire
-        if len(self.smart_cache) > self.max_smart_cache_size:
-            self.cleanup_smart_cache()
-        
-        # 5. Mettre à jour la fréquence
-        self.update_phrase_frequency(text)
+        # Nettoyer si trop grand
+        if len(room_cache) > self.max_smart_cache_size:
+            self.cleanup_room_cache(room_id)
     
-    def extract_fragment_translation(self, fragment, original_text, original_translation):
-        """Essaie d'extraire la traduction d'un fragment à partir de la traduction complète"""
-        # Technique simple : chercher le fragment dans la traduction
-        fragment_words = fragment.lower().split()
-        
-        # Si le fragment fait 1 mot, chercher une correspondance approximative
-        if len(fragment_words) == 1:
-            fragment_word = fragment_words[0]
-            # Chercher dans les dictionnaires pré-remplis
-            for sector, languages in self.professional_phrases.items():
-                for lang, phrases in languages.items():
-                    for i, phrase in enumerate(phrases):
-                        if fragment_word in phrase.lower():
-                            # Trouver la traduction correspondante
-                            for target_lang, target_phrases in languages.items():
-                                if target_lang != lang and i < len(target_phrases):
-                                    if fragment_word in phrase.lower():
-                                        return target_phrases[i]
-        
-        return None
+    # Ajouter aussi au cache ancien pour compatibilité (avec traduction complète)
+    old_key = f"{text_normalized}|{source_lang}|{target_lang}"
+    if len(self.translation_cache) < self.max_cache_size:
+        self.translation_cache[old_key] = translation  # Traduction complète avec ponctuation
     
-    def cleanup_smart_cache(self):
-        """Nettoie le cache intelligent en gardant les plus utiles"""
-        # Garder par priorité : professional > frequent > common > fragment > single
+    def cleanup_room_cache(self, room_id):
+        """Nettoie le cache d'une room en gardant les plus utiles"""
+        room_cache = self.get_room_cache(room_id)
+        
         priority_order = ['professional', 'frequent', 'common', 'fragment', 'single']
         
         sorted_cache = []
-        for key, value in self.smart_cache.items():
+        for key, value in room_cache.items():
             confidence = value.get('confidence', 'single')
             priority = priority_order.index(confidence) if confidence in priority_order else 999
             sorted_cache.append((priority, key, value))
         
-        # Trier par priorité et garder les meilleurs
         sorted_cache.sort(key=lambda x: x[0])
         
-        # Garder les plus utiles
-        self.smart_cache = {}
+        # Garder les meilleurs
+        room_cache.clear()
         for priority, key, value in sorted_cache[:self.max_smart_cache_size]:
-            self.smart_cache[key] = value
-    
-    def get_cache_stats(self):
-        """Retourne des statistiques sur le cache intelligent"""
-        total_smart = len(self.smart_cache)
+            room_cache[key] = value
         
-        stats = {'total': total_smart}
-        for confidence in ['professional', 'frequent', 'common', 'fragment', 'single']:
-            count = sum(1 for v in self.smart_cache.values() if v.get('confidence') == confidence)
-            stats[confidence] = count
+        print(f"🧹 Cache room {room_id} nettoyé: {len(room_cache)} entrées conservées")
+    
+    def get_cache_stats(self, room_id=None):
+        """Retourne statistiques cache pour une room"""
+        if room_id and room_id in self.room_caches:
+            room_cache = self.room_caches[room_id]
+            total = len(room_cache)
+            
+            stats = {'total': total}
+            for confidence in ['professional', 'frequent', 'common', 'fragment', 'single']:
+                count = sum(1 for v in room_cache.values() if v.get('confidence') == confidence)
+                stats[confidence] = count
+            
+            return stats
         
-        return stats
+        return {'total': 0}
     
-    def check_cache(self, text, source_lang, target_lang):
-        """🆕 MODIFIÉ : Vérifie d'abord le cache intelligent, puis l'ancien"""
-        result, cache_type = self.check_smart_cache(text, source_lang, target_lang)
-        if result:
-            print(f"⚡ Traduction trouvée dans {cache_type}!")
-            return result
-        return None
+    # CACHE PROFESSIONNEL GLOBAL
+    def get_professional_cache(self):
+        """Retourne le cache professionnel (global, pas par room)"""
+        if not hasattr(self, '_professional_cache'):
+            self._professional_cache = {}
+            self.preload_professional_cache()
+        return self._professional_cache
     
-    def add_to_cache(self, text, source_lang, target_lang, translation):
-        """🆕 MODIFIÉ : Ajoute au cache intelligent au lieu de l'ancien seulement"""
-        self.add_to_smart_cache(text, source_lang, target_lang, translation)
-
-    # TOUTES LES FONCTIONS EXISTANTES CONSERVÉES IDENTIQUES
+    def init_smart_cache(self):
+        """Initialise le cache intelligent"""
+        # Charger caches de rooms existants
+        smart_cache_file = "room_caches.json"
+        
+        if os.path.exists(smart_cache_file):
+            try:
+                with open(smart_cache_file, 'r', encoding='utf-8') as f:
+                    cache_data = json.load(f)
+                    self.room_caches = cache_data.get('room_caches', {})
+                    self.room_phrase_frequency = cache_data.get('room_phrase_frequency', {})
+                    print(f"✅ Caches rooms chargés: {len(self.room_caches)} rooms")
+            except Exception as e:
+                print(f"⚠️ Erreur chargement caches rooms: {e}")
+        
+        # Initialiser cache professionnel
+        self.preload_professional_cache()
+    
+    def preload_professional_cache(self):
+        """Pré-remplit le cache professionnel global"""
+        if not hasattr(self, '_professional_cache'):
+            self._professional_cache = {}
+        
+        for sector, languages in self.professional_phrases.items():
+            for lang, phrases in languages.items():
+                for phrase in phrases:
+                    if lang == 'fr':
+                        for target_lang, target_phrases in languages.items():
+                            if target_lang != 'fr' and len(target_phrases) > phrases.index(phrase):
+                                # Normaliser la phrase
+                                phrase_normalized = self.normalize_text_for_cache(phrase)
+                                cache_key = f"{phrase_normalized}|auto|{target_lang}"
+                                translation = target_phrases[phrases.index(phrase)]
+                                self._professional_cache[cache_key] = {
+                                    'translation': translation,
+                                    'confidence': 'professional',
+                                    'sector': sector,
+                                    'timestamp': time.time()
+                                }
+        
+        print(f"🌍 Cache professionnel multilingue initialisé: {len(self._professional_cache)} phrases (16 langues x 4 secteurs)")
+        
+        # Test debug
+        test_key = self.normalize_text_for_cache("bonjour") + "|auto|en"
+        if test_key in self._professional_cache:
+            print(f"   ✅ TROUVÉ: '{test_key}' -> '{self._professional_cache[test_key]['translation']}'")
+        else:
+            print(f"   ❌ PAS TROUVÉ: '{test_key}'")
+    
+    def save_smart_cache(self):
+        """Sauvegarde les caches des rooms"""
+        try:
+            cache_data = {
+                'room_caches': self.room_caches,
+                'room_phrase_frequency': self.room_phrase_frequency,
+                'last_update': time.time()
+            }
+            
+            with open("room_caches.json", 'w', encoding='utf-8') as f:
+                json.dump(cache_data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"⚠️ Erreur sauvegarde caches rooms: {e}")
+    
+    # FONCTIONS UTILITAIRES
+    def extract_fragments(self, text):
+        """Extrait des fragments significatifs d'un texte"""
+        words = text.split()
+        fragments = []
+        
+        # Mots importants
+        important_words = [word for word in words if len(word) > 2]
+        fragments.extend(important_words)
+        
+        # Fragments 2-3 mots
+        for i in range(len(words) - 1):
+            fragments.append(' '.join(words[i:i+2]))
+            if i < len(words) - 2:
+                fragments.append(' '.join(words[i:i+3]))
+        
+        fragments.append(text)
+        return fragments
+    
+    # FONCTIONS EXISTANTES CONSERVÉES
     def set_preferred_language(self, lang):
-        """Définit la langue préférée à utiliser lorsque 'auto' est spécifié avec MyMemory"""
         if lang != 'auto':
             self.preferred_lang = lang
         print(f"Langue préférée définie sur: {self.preferred_lang}")
     
     def init_counters(self):
-        """Initialise ou récupère les compteurs d'utilisation"""
         now = datetime.now()
         current_month = f"{now.year}-{now.month}"
         
@@ -674,7 +706,6 @@ class TranslationManager:
         self.save_counters()
     
     def save_counters(self):
-        """Sauvegarde les compteurs dans un fichier"""
         try:
             with open("translation_counters.json", 'w') as f:
                 json.dump({
@@ -685,7 +716,6 @@ class TranslationManager:
             print(f"Erreur lors de la sauvegarde des compteurs: {e}")
     
     def update_counter(self, service, char_count):
-        """Met à jour le compteur pour un service donné"""
         self.counters[service] += char_count
         self.save_counters()
         
@@ -693,7 +723,6 @@ class TranslationManager:
         print(f"Service {service}: {self.counters[service]}/{self.limits[service]} caractères ({usage_percent:.2f}%)")
     
     def get_available_services(self):
-        """Récupère la liste des services disponibles (non limités)"""
         available_services = []
         for service, limit in self.limits.items():
             if self.counters.get(service, 0) < limit:
@@ -706,7 +735,6 @@ class TranslationManager:
         return available_services
     
     def map_lang_code(self, lang_code, for_mymemory=False):
-        """Convertit les codes de langue au format approprié pour MyMemory si nécessaire"""
         if not for_mymemory:
             return lang_code
             
@@ -729,7 +757,6 @@ class TranslationManager:
         return lang_code
     
     def post_process_translation(self, translation, target_lang):
-        """Applique des corrections post-traduction"""
         corrections = {
             'en': {
                 'comment ça va tu': 'how are you',
@@ -756,12 +783,10 @@ class TranslationManager:
         return translation
     
     def can_use_deepl(self, source_lang, target_lang):
-        """Vérifie si DeepL peut traiter cette paire de langues"""
         supported_langs = ['fr', 'en', 'de', 'es', 'it', 'pt', 'ru', 'ja', 'zh-CN']
         return (source_lang in supported_langs or source_lang == 'auto') and target_lang in supported_langs
     
     def translate_with_service(self, text, source_lang, target_lang, service):
-        """Traduit avec un service spécifique"""
         try:
             if service == 'google':
                 translator = GoogleTranslator(source=source_lang, target=target_lang)
@@ -796,4 +821,3 @@ class TranslationManager:
 
 # Créer une instance globale
 translation_manager = TranslationManager()
-
