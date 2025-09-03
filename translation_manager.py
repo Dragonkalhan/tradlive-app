@@ -440,6 +440,15 @@ class TranslationManager:
                                 }
         
         print(f"🌍 Cache professionnel multilingue initialisé: {len(self.smart_cache)} phrases (8 langues x secteurs)")
+            # ===== NOUVELLES LIGNES DE DEBUG =====
+        print(f"🔍 DEBUG - Test cache pour 'bonjour':")
+        test_key = "bonjour|auto|en"
+        if test_key in self.smart_cache:
+            print(f"   ✅ TROUVÉ: '{test_key}' -> '{self.smart_cache[test_key]['translation']}'")
+        else:
+            print(f"   ❌ PAS TROUVÉ: '{test_key}'")
+            print(f"   📝 Première clé du cache: {list(self.smart_cache.keys())[0] if self.smart_cache else 'CACHE VIDE'}")
+        # ===== FIN DEBUG =====
     
     def save_smart_cache(self):
         """Sauvegarde le cache intelligent"""
@@ -787,3 +796,4 @@ class TranslationManager:
 
 # Créer une instance globale
 translation_manager = TranslationManager()
+
