@@ -274,7 +274,7 @@ def leave_room(room_id):
 
 @app.route('/api/room/<room_id>/translate', methods=['POST'])
 def room_translate(room_id):
-    """Traduit un message pour toute la salle"""
+    """Traduction avec cache isolé par room - Version simplifiée"""
     update_heartbeat()
     
     try:
@@ -293,10 +293,21 @@ def room_translate(room_id):
         if not room or not room.get_user(user_id):
             return jsonify({'success': False, 'error': 'Utilisateur non autorisé'}), 403
         
+        user = room.get_user(user_id)
+        actual_source_language = user.language if user else source_language
+        
         room_manager.update_user_activity(room_id, user_id)
         
-        # Diffuser la traduction avec synthèse vocale côté client
-        success = room_manager.broadcast_translation(room_id, text, source_language, enable_speech=True)
+        # 🆕 SIMPLE : Laisser broadcast_translation faire tout le travail avec room_id
+        sender_id = data.get('sender_id', user_id)
+        success = room_manager.broadcast_translation(
+            room_id, 
+            text, 
+            actual_source_language,
+            sender_id, 
+            enable_speech=True
+            # room_id est passé automatiquement via le premier paramètre
+        )
         
         if success:
             return jsonify({
@@ -308,6 +319,47 @@ def room_translate(room_id):
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+@app.route('/api/room/<room_id>/cache-stats')
+def room_cache_stats(room_id):
+    """Statistiques du cache pour une room spécifique"""
+    update_heartbeat()
+    
+    try:
+        user_id = request.args.get('user_id')
+        
+        room = room_manager.get_room(room_id)
+        if not room or not room.get_user(user_id):
+            return jsonify({'success': False, 'error': 'Non autorisé'}), 403
+        
+        # Obtenir stats cache de cette room
+        stats = translation_manager.get_cache_stats(room_id)
+        
+        return jsonify({
+            'success': True,
+            'room_id': room_id,
+            'cache_stats': stats
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+# 🆕 FONCTION DE NETTOYAGE ÉTENDUE dans cleanup()
+def cleanup():
+    """Fonction de nettoyage étendue"""
+    global server_running
+    
+    server_running = False
+    
+    # Sauvegarder les caches des rooms avant fermeture
+    try:
+        translation_manager.save_smart_cache()
+        print("💾 Caches des rooms sauvegardés")
+    except Exception as e:
+        print(f"⚠️ Erreur sauvegarde caches: {e}")
+    
+    if heartbeat_thread and heartbeat_thread.is_alive():
+        heartbeat_thread.join(timeout=0.5)
+    
+    print("Nettoyage effectué, fermeture du programme.")
 
 @app.route('/api/room/<room_id>/updates')
 def room_updates(room_id):
@@ -327,35 +379,43 @@ def room_updates(room_id):
         room_manager.update_user_activity(room_id, user_id)
         
         user = room.get_user(user_id)
-        user_language = user.language
-        
         last_translation = room.last_translation
         
-        # Interface différente selon le rôle (hôte vs participant)
+        # Récupérer l'utilisateur actuel pour connaître sa langue
+        current_user = room.get_user(user_id)
+        user_language = current_user.language if current_user else 'fr'
+        
+        # Identifier qui a envoyé le dernier message
+        sender = room.get_user(last_translation.get('sender_id')) if last_translation.get('sender_id') else None
+        is_host_message = sender and sender.is_host
+        
         if user.is_host:
-            # Pour l'hôte : voir les réponses des participants traduites en français
-            if last_translation.get('source_language') != 'fr':  # C'est une réponse d'un utilisateur
+            # Pour l'hôte : voir les réponses des participants dans sa langue
+            if not is_host_message:  # Message d'un participant
+                participant_response = last_translation['translated'].get(user_language, '')
                 return jsonify({
                     'success': True,
-                    'original': last_translation['translated'].get('fr', ''),
+                    'original': participant_response,
                     'translated': '',
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': True,
-                    'show_translation': False
+                    'show_translation': False,
+                    'sender_id': last_translation.get('sender_id')
                 })
-            else:  # C'est le message de l'hôte
+            else:  # Propre message de l'hôte
                 return jsonify({
                     'success': True,
                     'original': last_translation['original'],
                     'translated': '',
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': True,
-                    'show_translation': False
+                    'show_translation': False,
+                    'sender_id': last_translation.get('sender_id')
                 })
         
         else:
-            # Pour les participants : voir le français original + traduction dans leur langue
-            if last_translation.get('source_language') == 'fr':  # Message de l'hôte
+            # Pour les participants : voir les messages de l'hôte traduits
+            if is_host_message:  # Message de l'hôte
                 translated_text = last_translation['translated'].get(user_language, '')
                 
                 return jsonify({
@@ -365,19 +425,28 @@ def room_updates(room_id):
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': False,
                     'show_translation': True,
-                    'enable_speech': last_translation.get('enable_speech', False)
+                    'enable_speech': last_translation.get('enable_speech', False),
+                    'sender_id': last_translation.get('sender_id')
                 })
+                
             elif last_translation.get('source_language') == user_language:  # Son propre message
-                # Le participant voit sa propre traduction française
-                french_translation = last_translation['translated'].get('fr', '')
+                # Le participant voit sa propre traduction vers la langue de l'hôte
+                host_user = None
+                for u in room.users.values():
+                    if u.is_host:
+                        host_user = u
+                        break
+                host_language = host_user.language if host_user else 'fr'
+                host_translation = last_translation['translated'].get(host_language, '')
                 return jsonify({
                     'success': True,
                     'original': last_translation['original'],  # Son texte original
-                    'translated': french_translation,  # Traduction française
+                    'translated': host_translation,  # Traduction vers langue hôte
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': False,
                     'show_own_message': True,
-                    'show_translation': False
+                    'show_translation': False,
+                    'sender_id': last_translation.get('sender_id')
                 })
             else:  # Message d'un autre utilisateur
                 return jsonify({
@@ -386,7 +455,8 @@ def room_updates(room_id):
                     'translated': '',
                     'timestamp': last_translation['timestamp'].isoformat(),
                     'is_host': False,
-                    'show_translation': False
+                    'show_translation': False,
+                    'sender_id': last_translation.get('sender_id')
                 })
         
     except Exception as e:

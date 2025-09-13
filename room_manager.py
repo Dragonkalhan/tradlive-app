@@ -215,9 +215,7 @@ class RoomManager:
     def broadcast_translation(self, room_id: str, original_text: str, source_language: str, sender_id: str = None, enable_speech: bool = False):
         """
         Diffuse une traduction à tous les utilisateurs d'une salle
-        Flux adapté selon les spécifications :
-        - Hôte parle français -> traduit vers toutes les langues des participants + synthèse vocale
-        - Participant parle sa langue -> traduit vers français seulement
+        🆕 UTILISE LE NOUVEAU SYSTÈME AVEC CACHE ISOLÉ PAR ROOM
         """
         room = self.get_room(room_id)
         if not room:
@@ -228,15 +226,25 @@ class RoomManager:
         
         translations = {}
         
-        if source_language == 'fr':  # L'hôte parle français
+        # Déterminer si c'est l'hôte qui parle
+        user = room.get_user(sender_id) if sender_id else None
+        is_host_speaking = user and user.is_host
+        
+        if is_host_speaking:  # L'hôte parle dans sa langue
             # Traduire vers toutes les langues des participants
             participant_languages = room.get_participant_languages()
             
             for target_lang in participant_languages:
                 try:
-                    translated = translation_manager.translate(original_text, source_language, target_lang)
+                    # 🆕 PASSER ROOM_ID AU TRANSLATION_MANAGER
+                    translated = translation_manager.translate(
+                        original_text, 
+                        source_language, 
+                        target_lang,
+                        room_id=room_id  # ← NOUVEAU PARAMÈTRE
+                    )
                     translations[target_lang] = translated
-                    print(f"🌍 Hôte -> {target_lang}: {translated[:50]}...")
+                    print(f"🌍 Hôte ({source_language}) -> {target_lang}: {translated[:50]}...")
                 except Exception as e:
                     print(f"❌ Erreur traduction vers {target_lang}: {str(e)}")
                     translations[target_lang] = f"Erreur de traduction"
@@ -245,14 +253,29 @@ class RoomManager:
             enable_speech = True
             
         else:  # Un participant parle dans sa langue
-            # Traduire seulement vers le français pour l'hôte
+            # Trouver la langue de l'hôte
+            host_user = None
+            for user in room.users.values():
+                if user.is_host:
+                    host_user = user
+                    break
+            
+            host_language = host_user.language if host_user else 'fr'
+            
+            # Traduire vers la langue de l'hôte
             try:
-                translated = translation_manager.translate(original_text, source_language, 'fr')
-                translations['fr'] = translated
-                print(f"🌍 Participant ({source_language}) -> français: {translated[:50]}...")
+                # 🆕 PASSER ROOM_ID AU TRANSLATION_MANAGER
+                translated = translation_manager.translate(
+                    original_text, 
+                    source_language, 
+                    host_language,
+                    room_id=room_id  # ← NOUVEAU PARAMÈTRE
+                )
+                translations[host_language] = translated
+                print(f"🌍 Participant ({source_language}) -> hôte ({host_language}): {translated[:50]}...")
             except Exception as e:
-                print(f"❌ Erreur traduction vers français: {str(e)}")
-                translations['fr'] = f"Erreur de traduction"
+                print(f"❌ Erreur traduction vers {host_language}: {str(e)}")
+                translations[host_language] = f"Erreur de traduction"
             
             # Pas de synthèse vocale pour l'hôte
             enable_speech = False
@@ -298,4 +321,6 @@ class RoomManager:
         }
 
 # Instance globale du gestionnaire de salles
+
 room_manager = RoomManager()
+

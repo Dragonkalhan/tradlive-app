@@ -17,6 +17,7 @@ let isParticipantListening = false;
 let isHost = false;
 let updateInterval = null;
 let heartbeatInterval = null;
+let currentStream = null; // Pour stocker le stream audio
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 
@@ -26,10 +27,19 @@ let lastSpokenTimestamp = 0;
 let lastTranslationId = null;
 let networkErrorCount = 0;
 
+// VARIABLES POUR AUTO-STOP 15S
+let silenceTimer = null;
+let audioContext = null;
+let analyser = null;
+let microphone = null;
+let dataArray = null;
+let silenceThreshold = 30; // Seuil de silence (0-255)
+let silenceTimeout = 15000; // 15 secondes
+
 // Éléments DOM (seront initialisés au chargement)
 let statusEl, controlsEl, hostControlsEl, participantControlsEl;
 let micButton, participantMicButton, textModeButton, participantTextButton;
-let waveAnimation, participantWave, qrSection, qrCodeImage, connectionStatus;
+let waveAnimation, participantWave, qrSection, qrCodeImage;
 let textInputFallback, participantTextInput;
 let hostInterface, participantInterface;
 let hostOriginalText, hostResponsesText;
@@ -37,14 +47,21 @@ let participantOriginalText, participantTranslatedText, participantMessageArea;
 let participantOwnText, participantFrenchText, participantTargetLanguage;
 let participantsListEl, participantCountEl;
 
+
+
 /* ========================================
    NOMS DES LANGUES (MAPPING) - INTÉGRÉ AVEC TRANSLATIONS.JS
 ======================================== */
 function getLanguageName(code) {
-    // Système unifié avec translations.js
+    // Système unifié avec translations.js pour traduire selon l'interface
     if (window.getTranslation && window.interfaceLanguage) {
         const langKey = `lang_${getLangKey(code)}`;
-        return window.getTranslation(langKey, window.interfaceLanguage);
+        const translatedName = window.getTranslation(langKey, window.interfaceLanguage);
+        
+        // Si la traduction existe, l'utiliser
+        if (translatedName && translatedName !== langKey) {
+            return translatedName;
+        }
     }
     
     // Fallback robuste
@@ -53,7 +70,7 @@ function getLanguageName(code) {
         de: "Deutsch", it: "Italiano", pt: "Português",
         ru: "Русский", "zh-CN": "中文", ja: "日本語",
         ar: "العربية", uk: "Українська", fa: "فارسی",
-        hi: "हिन्दी", bn: "বাংলা", te: "తెలుగు", mr: "मराठी"
+        hi: "हिन्दी", bn: "বাংলা", te: "తেলুగు", mr: "मराठী"
     };
     return languageNames[code] || code;
 }
@@ -69,6 +86,15 @@ function getLangKey(code) {
     return mapping[code] || 'french';
 }
 
+function getParticipantName(senderId) {
+    if (!roomData?.users || !senderId) {
+        return 'Participant';
+    }
+    
+    const sender = roomData.users.find(user => user.user_id === senderId);
+    return sender ? sender.nickname : 'Participant';
+}
+
 function getRecognitionLanguageCode(code) {
     const mapping = {
         'en': 'en-US', 'es': 'es-ES', 'de': 'de-DE', 'it': 'it-IT',
@@ -77,6 +103,103 @@ function getRecognitionLanguageCode(code) {
         'bn': 'bn-IN', 'te': 'te-IN', 'mr': 'mr-IN', 'fr': 'fr-FR'
     };
     return mapping[code] || 'fr-FR';
+}
+
+/* ========================================
+   🆕 SYSTÈME AUTO-STOP 15S
+======================================== */
+function startVoiceDetection() {
+    if (!navigator.mediaDevices || !window.AudioContext) {
+        console.log('⚠️ Audio Context non disponible');
+        return;
+    }
+    
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            microphone = audioContext.createMediaStreamSource(stream);
+            
+            analyser.fftSize = 512;
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            
+            microphone.connect(analyser);
+            
+            console.log('🎤 Détection vocale auto-stop initialisée');
+            monitorVoiceActivity();
+        })
+        .catch(error => {
+            console.warn('⚠️ Erreur accès micro pour détection:', error);
+        });
+}
+
+function monitorVoiceActivity() {
+    if (!analyser || !dataArray) return;
+    
+    analyser.getByteFrequencyData(dataArray);
+    
+    // Calculer le niveau audio moyen
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+        sum += dataArray[i];
+    }
+    const average = sum / dataArray.length;
+    
+    // 🔧 LOGIQUE CORRIGÉE : Si du son est détecté
+    if (average > silenceThreshold) {
+        // Réinitialiser le timer de silence
+        if (silenceTimer) {
+            clearTimeout(silenceTimer);
+            silenceTimer = null;
+        }
+        
+        // Programmer l'arrêt automatique après 15s de silence
+        silenceTimer = setTimeout(() => {
+            console.log('🔇 15s de silence détectées - Arrêt automatique');
+            
+            if (isHost && isListening) {
+                stopHostListening();
+            } else if (!isHost && isParticipantListening) {
+                stopParticipantListening();
+            }
+        }, silenceTimeout);
+    }
+    // 🆕 NOUVEAU : Si pas de timer en cours, en lancer un
+    else if (!silenceTimer) {
+        silenceTimer = setTimeout(() => {
+            console.log('🔇 15s de silence détectées - Arrêt automatique');
+            
+            if (isHost && isListening) {
+                stopHostListening();
+            } else if (!isHost && isParticipantListening) {
+                stopParticipantListening();
+            }
+        }, silenceTimeout);
+    }
+    
+    // Continuer la surveillance si le micro est actif
+    if ((isHost && isListening) || (!isHost && isParticipantListening)) {
+        requestAnimationFrame(monitorVoiceActivity);
+    }
+}
+
+function stopVoiceDetection() {
+    if (silenceTimer) {
+        clearTimeout(silenceTimer);
+        silenceTimer = null;
+    }
+    
+    if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+    }
+    
+    analyser = null;
+    microphone = null;
+    dataArray = null;
+    
+    console.log('🔇 Détection vocale arrêtée');
 }
 
 /* ========================================
@@ -442,13 +565,14 @@ function showBrowserCompatibilityMessage(compatibilityInfo) {
 }
 
 /* ========================================
-   GESTION DES ÉLÉMENTS DOM - FINALISÉE
+   GESTION DES ÉLÉMENTS DOM - CORRIGÉE SANS CONNECTION-STATUS
 ======================================== */
 function initializeDOMElements() {
+    // CORRECTION : Suppression de 'connection-status' qui causait l'erreur
     const elementIds = [
         'status', 'controls', 'host-controls', 'participant-controls',
         'mic-button', 'participant-mic-button', 'text-mode-button', 'participant-text-button',
-        'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image', 'connection-status',
+        'wave-animation', 'participant-wave', 'qr-section', 'qr-code-image',
         'text-input-fallback', 'participant-text-input',
         'host-interface', 'participant-interface',
         'host-original-text', 'host-responses-text',
@@ -478,8 +602,6 @@ function initializeDOMElements() {
         waveAnimation: elements['wave-animation'],
         participantWave: elements['participant-wave'],
         qrSection: elements['qr-section'],
-        qrCodeImage: elements['qr-code-image'],
-        connectionStatus: elements['connection-status'],
         textInputFallback: elements['text-input-fallback'],
         participantTextInput: elements['participant-text-input'],
         hostInterface: elements['host-interface'],
@@ -506,7 +628,7 @@ function loadRoomInfo() {
     makeApiRequest(url)
         .then(data => {
             if (data.success) {
-                roomData = data.room;
+                roomData = data.data ? data.data.room : data.room;
                 reconnectAttempts = 0;
                 updateConnectionStatus(true);
                 
@@ -538,46 +660,66 @@ function loadRoomInfo() {
 }
 
 function setupRoleInterface() {
+    console.log('🔧 Configuration interface pour rôle:', isHost ? 'HÔTE' : 'PARTICIPANT');
+    
     if (isHost) {
         // Interface hôte
-        showElement(hostControlsEl);
-        showElement(hostInterface);
+        showElement('host-controls');
+        showElement('host-interface');
         
+        const qrSection = document.getElementById('qr-section');
         if (qrSection) {
             qrSection.classList.add('show');
         }
         
-        // Animation avec TradLive si disponible
-        animateElement(hostControlsEl, 'slideInUp');
-        animateElement(qrSection, 'slideInDown');
-        
-        const message = getTranslation('host_status') || 
-            'Vous êtes l\'hôte. Parlez en français, la traduction se fera automatiquement vers toutes les langues.';
-        showStatus(message, 'connected');
+        // Initialiser le QR code
+        qrCodeImage = document.getElementById('qr-code-image');
+        updateQRCode();
         
         console.log('👑 Interface hôte configurée');
     } else {
-        // Interface participant
-        showElement(participantControlsEl);
-        showElement(participantInterface);
+        // Interface participant - LOGIQUE SIMPLE ET DIRECTE
+        console.log('👤 Configuration interface participant...');
         
-        if (participantTargetLanguage) {
-            participantTargetLanguage.textContent = getLanguageName(userData.language);
+        // Force l'affichage direct avec JavaScript simple
+        const participantControls = document.getElementById('participant-controls');
+        const participantInterface = document.getElementById('participant-interface');
+        
+        if (participantControls) {
+            participantControls.style.display = 'block';
+            participantControls.style.visibility = 'visible';
+            console.log('✅ participant-controls affiché');
+        } else {
+            console.error('❌ participant-controls non trouvé !');
         }
         
-        // Animation pour les participants
-        animateElement(participantControlsEl, 'slideInUp');
-        
-        const message = getTranslation('participant_status') || 
-            `Connecté en tant que participant. Vous recevez les traductions en ${getLanguageName(userData.language)}.`;
-        showStatus(message, 'connected');
+        if (participantInterface) {
+            participantInterface.style.display = 'block';
+            participantInterface.style.visibility = 'visible';
+            console.log('✅ participant-interface affiché');
+        } else {
+            console.error('❌ participant-interface non trouvé !');
+        }
         
         console.log('👤 Interface participant configurée');
     }
     
     // Afficher les contrôles communs
-    showElement(controlsEl);
-    animateElement(controlsEl, 'slideInUp');
+    showElement('controls');
+    animateElement('controls', 'slideInUp');
+
+   // Masquer la section "Traduction vers..." côté participant
+    if (!isHost) {
+        const translationSection = document.getElementById('participant-translation-section');
+        if (translationSection) {
+            translationSection.style.display = 'none';
+            console.log('✅ Section "Traduction vers..." masquée via JavaScript');
+        } else {
+            console.log('❌ Section participant-translation-section non trouvée');
+        }
+    }
+    
+    console.log('✅ Configuration interface terminée');
 }
 
 function handleConnectionError() {
@@ -606,28 +748,43 @@ function handleConnectionError() {
 }
 
 function updateConnectionStatus(connected) {
-    if (!connectionStatus) return;
+    const mainStatus = document.getElementById('status');
     
     if (connected) {
         const message = getTranslation('connected') || 'Connecté ✅';
-        connectionStatus.textContent = message;
-        connectionStatus.style.color = '#4CAF50';
         
-        animateElement(connectionStatus, 'pulse');
+        // Gros statut principal
+        if (mainStatus) {
+            mainStatus.textContent = message;
+            mainStatus.className = 'status connected show';
+        }
+        
     } else {
         const message = getTranslation('reconnecting') || 
             `Reconnexion... (${reconnectAttempts}/${maxReconnectAttempts})`;
-        connectionStatus.textContent = message;
-        connectionStatus.style.color = '#f44336';
-        
-        animateElement(connectionStatus, 'shake');
+            
+        // Gros statut principal  
+        if (mainStatus) {
+            mainStatus.textContent = message;
+            mainStatus.className = 'status error show';
+        }
     }
 }
 
 function updateParticipantsList() {
+    const participantsListEl = document.getElementById('participants-list');
+    const participantCountEl = document.getElementById('participant-count');
+    
     if (!roomData?.users || !participantsListEl || !participantCountEl) return;
     
     const userCount = roomData.users.length;
+    
+    // CORRECTION : Éviter la recréation si rien n'a changé
+    const currentCount = participantCountEl.textContent;
+    if (currentCount === userCount.toString() && participantsListEl.children.length > 0) {
+        return; // Liste identique, pas de recréation
+    }
+    
     participantCountEl.textContent = userCount;
     
     if (userCount === 0) {
@@ -664,6 +821,7 @@ function setupSpeechRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
+       
         console.log('❌ API de reconnaissance vocale non disponible');
         const message = getTranslation('speech_not_supported') || 
             'Reconnaissance vocale non supportée. Utilisez le mode texte.';
@@ -687,7 +845,7 @@ function setupSpeechRecognition() {
 
 function setupHostRecognition(SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.lang = 'fr-FR';
+    recognition.lang = getRecognitionLanguageCode(userData.language);
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
@@ -722,7 +880,25 @@ function setupParticipantRecognition(SpeechRecognition) {
     participantRecognition.interimResults = true;
     participantRecognition.maxAlternatives = 1;
     
+    participantRecognition.onstart = function() {
+        console.log('🎤 Reconnaissance démarrée');
+    };
+    
+    participantRecognition.onaudiostart = function() {
+        console.log('🔊 Audio détecté !');
+    };
+    
+    participantRecognition.onsoundstart = function() {
+        console.log('🎵 Son détecté !');
+    };
+    
+    participantRecognition.onspeechstart = function() {
+        console.log('🗣️ Parole détectée !');
+    };
+    
     participantRecognition.onresult = function(event) {
+        console.log('📝 Résultat reçu:', event.results);
+        
         const lastResultIndex = event.results.length - 1;
         const transcript = event.results[lastResultIndex][0].transcript;
         
@@ -852,24 +1028,33 @@ function startHostListening() {
         }
     }
     
-    // Demander permission microphone
-    navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
-            try {
-                recognition.start();
-                isListening = true;
-                networkErrorCount = 0;
-                
-                updateMicButtonState(micButton, true, 'stop_button');
-                showElement(waveAnimation, true);
-                
-                const message = getTranslation('listening_french') || 
-                    'En écoute... Parlez en français.';
-                showStatus(message, 'info');
-                
-                notifySuccess('🎤 Microphone activé');
-                console.log('✅ Reconnaissance vocale hôte démarrée');
-            } catch (error) {
+   // Demander permission microphone
+   navigator.mediaDevices.getUserMedia({ audio: true })
+       .then((stream) => {  // ← AJOUT (stream) ici !
+           try {
+               currentStream = stream;  // ← NOUVEAU : sauvegarder le stream
+               recognition.start();
+               isListening = true;
+               networkErrorCount = 0;
+               
+              const micButton = document.getElementById('mic-button');
+              console.log('🔍 DEBUG micButton:', micButton); 
+              updateMicButtonState(micButton, true, 'stop_button');
+               showElement(waveAnimation, true);
+               
+               const message = getTranslation('listening_french') || 
+                   'En écoute... Parlez en français.';
+               showStatus(message, 'info');
+               
+               notifySuccess('🎤 Microphone activé');
+               console.log('✅ Reconnaissance vocale hôte démarrée');
+               startVoiceDetection();
+              // 🎵 NOUVEAU - Démarrer les vagues audio
+              if (initAudioAnalyser(stream)) {
+                  startWaveAnimation(true); // true = hôte
+                  console.log('🎵 Vagues hôte connectées au micro');
+              }
+           } catch (error) {
                 console.error('❌ Erreur démarrage reconnaissance:', error);
                 handleStartupError('host');
             }
@@ -884,14 +1069,29 @@ function stopHostListening() {
     if (recognition) recognition.stop();
     isListening = false;
     
-    updateMicButtonState(micButton, false, 'speak_french');
+   const micButton = document.getElementById('mic-button'); 
+   updateMicButtonState(micButton, false, 'speak_french');
     hideElement(waveAnimation);
     
     const message = getTranslation('click_mic') || 
         'Cliquez sur le micro pour parler.';
     showStatus(message, 'connected');
+
+   // 🆕 POP-UP ROUGE + ARRÊT DÉTECTION
+   if (window.TradLive?.notifications) {
+       window.TradLive.notifications.show(getTranslation('mic_closed', 'Microphone fermé'), 'error', { duration: 2000 });
+   }
+   stopVoiceDetection();
     
-    console.log('🎤 Microphone hôte arrêté');
+   console.log('🎤 Microphone hôte arrêté');
+   // 🎵 NOUVEAU - Arrêter les vagues audio
+stopWaveAnimation(true); // true = hôte
+
+// 🎵 NOUVEAU - Fermer le stream audio
+if (currentStream) {
+    currentStream.getTracks().forEach(track => track.stop());
+    currentStream = null;
+}
 }
 
 function toggleParticipantListening() {
@@ -913,12 +1113,14 @@ function startParticipantListening() {
     }
     
     navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
+        .then((stream) => {
             try {
+                currentStream = stream;
                 participantRecognition.start();
                 isParticipantListening = true;
                 
-                updateMicButtonState(participantMicButton, true, 'stop_button');
+               const participantMicButton = document.getElementById('participant-mic-button'); 
+               updateMicButtonState(participantMicButton, true, 'stop_button');
                 showElement(participantWave, true);
                 
                 const langName = getLanguageName(userData.language);
@@ -928,6 +1130,13 @@ function startParticipantListening() {
                 
                 notifySuccess('🎤 Microphone activé');
                 console.log('✅ Reconnaissance vocale participant démarrée');
+               // 🎵 NOUVEAU - Démarrer les vagues audio participant
+               if (initAudioAnalyser(stream)) {
+                   startWaveAnimation(false); // false = participant
+                   console.log('🎵 Vagues participant connectées au micro');
+               }
+
+                startVoiceDetection();
             } catch (error) {
                 console.error('❌ Erreur démarrage reconnaissance participant:', error);
                 handleStartupError('participant');
@@ -943,16 +1152,31 @@ function stopParticipantListening() {
     if (participantRecognition) participantRecognition.stop();
     isParticipantListening = false;
     
-    updateMicButtonState(participantMicButton, false, 'speak_your_language');
+   const participantMicButton = document.getElementById('participant-mic-button'); 
+   updateMicButtonState(participantMicButton, false, 'speak_your_language');
     hideElement(participantWave);
     
     const message = getTranslation('click_mic') || 
         'Cliquez sur le micro pour parler.';
     showStatus(message, 'connected');
-    
-    console.log('🎤 Microphone participant arrêté');
-}
 
+   // POP-UP ROUGE + ARRÊT DÉTECTION
+   if (window.TradLive?.notifications) {
+       window.TradLive.notifications.show(getTranslation('mic_closed', 'Microphone fermé'), 'error', { duration: 2000 });
+   }
+   stopVoiceDetection();
+    
+   console.log('🎤 Microphone participant arrêté');
+// 🎵 NOUVEAU - Arrêter les vagues audio participant
+stopWaveAnimation(false); // false = participant
+
+// 🎵 NOUVEAU - Fermer le stream audio
+if (currentStream) {
+    currentStream.getTracks().forEach(track => track.stop());
+    currentStream = null;
+}
+}
+   
 function updateMicButtonState(button, isActive, textKey) {
     if (!button) return;
     
@@ -1007,11 +1231,17 @@ function sendHostTranslation(text) {
     const requestData = {
         user_id: userData.user_id,
         text: text,
-        source_language: 'fr'
+        source_language: userData.language,
+        sender_id: userData.user_id
     };
+    
+    console.log('🟢 Données envoyées:', requestData);
+    console.log('🟢 URL:', `/api/room/${userData.room_id}/translate`);
     
     makeApiRequest(`/api/room/${userData.room_id}/translate`, 'POST', requestData)
         .then(data => {
+            console.log('🟢 Réponse API reçue:', data);
+            
             if (data.success) {
                 const successMessage = getTranslation('message_sent') || 
                     'Message diffusé avec synthèse vocale !';
@@ -1026,11 +1256,12 @@ function sendHostTranslation(text) {
                     language: 'fr'
                 });
             } else {
+                console.log('🔴 API erreur:', data.error);
                 throw new Error(data.error || 'Erreur de traduction');
             }
         })
         .catch(error => {
-            console.error('❌ Erreur envoi traduction hôte:', error);
+            console.error('🔴 Erreur complète:', error);
             showError('Erreur envoi traduction: ' + error.message);
             notifyError('Erreur d\'envoi');
         });
@@ -1051,7 +1282,7 @@ function sendParticipantTranslation(text) {
         user_id: userData.user_id,
         text: text,
         source_language: userData.language,
-        target_language: 'fr'
+        sender_id: userData.user_id
     };
     
     makeApiRequest(`/api/room/${userData.room_id}/translate`, 'POST', requestData)
@@ -1083,28 +1314,80 @@ function sendParticipantTranslation(text) {
 }
 
 function updateHostOriginalText(text) {
-    if (hostOriginalText) {
-        hostOriginalText.textContent = text;
-        hostOriginalText.classList.remove('empty-translation');
-        animateElement(hostOriginalText, 'pulse');
+    // Récupérer l'élément à chaque fois (plus sûr)
+    const hostOriginalTextEl = document.getElementById('host-original-text');
+    if (hostOriginalTextEl) {
+        hostOriginalTextEl.textContent = text;
+        hostOriginalTextEl.classList.remove('empty-translation');
+        animateElement(hostOriginalTextEl, 'pulse');
+        console.log('✅ Texte hôte affiché dans "What you say":', text.substring(0, 30) + '...');
+    } else {
+        console.log('❌ Élément host-original-text non trouvé !');
     }
 }
 
 function updateParticipantOwnText(text) {
-    if (participantOwnText && participantMessageArea) {
-        participantOwnText.textContent = text;
-        showElement(participantMessageArea);
-        animateElement(participantMessageArea, 'slideInUp');
+    // Récupérer les éléments à chaque fois
+    const participantOwnTextEl = document.getElementById('participant-own-text');
+    const participantMessageAreaEl = document.getElementById('participant-message-area');
+    
+    if (participantOwnTextEl && participantMessageAreaEl) {
+        participantOwnTextEl.textContent = text;
+        participantMessageAreaEl.style.display = 'block';
+        animateElement(participantMessageAreaEl, 'slideInUp');
+        console.log('✅ Texte participant affiché dans "Votre message":', text.substring(0, 30) + '...');
+    } else {
+        console.log('❌ Éléments participant non trouvés !');
+        console.log('participantOwnText:', participantOwnTextEl);
+        console.log('participantMessageArea:', participantMessageAreaEl);
     }
 }
 
 function updateParticipantFrenchText() {
-    if (participantFrenchText) {
+    const participantFrenchTextEl = document.getElementById('participant-french-text');
+    if (participantFrenchTextEl) {
         const translatingMessage = getTranslation('translating') || 
             'Traduction en cours...';
-        participantFrenchText.textContent = translatingMessage;
-        animateElement(participantFrenchText, 'pulse');
+        participantFrenchTextEl.textContent = translatingMessage;
+        animateElement(participantFrenchTextEl, 'pulse');
     }
+}
+
+function buildParticipantResponseLabel(senderId, senderLanguage) {
+    // Récupérer le nom du participant
+    const participantName = getParticipantName(senderId);
+    
+    // Récupérer la langue du participant traduite dans la langue de l'interface
+    const languageName = getLanguageName(senderLanguage);
+    
+    // Récupérer "Réponse de" / "Response from" / etc. selon la langue d'interface
+    const responseFromText = getTranslation('response_from', 'Réponse de');
+    
+    // Construire le label final
+    return `💬 ${responseFromText} ${participantName} (${languageName})`;
+}
+
+function updateParticipantResponseLabel(senderId) {
+    // Trouver l'élément du label
+    const labelElement = document.querySelector('#host-interface .translation-section:nth-child(2) .translation-label');
+    
+    if (!labelElement || !senderId) {
+        console.log('❌ Impossible de mettre à jour le label');
+        return;
+    }
+    
+    // Récupérer la langue du participant qui a envoyé le message
+    const sender = roomData.users.find(user => user.user_id === senderId);
+    const senderLanguage = sender ? sender.language : 'fr';
+    
+    console.log('🏷️ Mise à jour label pour:', sender?.nickname, `(${senderLanguage})`);
+    
+    // Construire et appliquer le nouveau label
+    const newLabel = buildParticipantResponseLabel(senderId, senderLanguage);
+    labelElement.innerHTML = newLabel;
+    
+    // Animation pour indiquer le changement
+    animateElement(labelElement, 'pulse');
 }
 
 /* ========================================
@@ -1112,21 +1395,32 @@ function updateParticipantFrenchText() {
 ======================================== */
 function showTextInput() {
     console.log('📝 Affichage mode texte hôte');
+    const textInputFallback = document.getElementById('text-input-fallback');
+    
     if (textInputFallback) {
         textInputFallback.classList.add('show');
         
         const textInput = document.getElementById('text-input');
         if (textInput) {
-            setTimeout(() => textInput.focus(), 300);
+            setTimeout(() => {
+             try {
+                 textInput.focus();
+             } catch (e) {
+                 console.log('Focus interrompu par extension, pas grave');
+             }
+         }, 300);
         }
         
         animateElement(textInputFallback, 'slideInUp');
         console.log('✅ Mode texte hôte activé');
+    } else {
+        console.log('❌ Élément text-input-fallback introuvable');
     }
 }
 
 function hideTextInput() {
     console.log('📝 Masquage mode texte hôte');
+    const textInputFallback = document.getElementById('text-input-fallback');
     if (textInputFallback) {
         textInputFallback.classList.remove('show');
         animateElement(textInputFallback, 'fadeOut');
@@ -1134,34 +1428,54 @@ function hideTextInput() {
 }
 
 function sendHostText() {
+    console.log('🟢 sendHostText() appelée');
+    
     const textInput = document.getElementById('text-input');
+    console.log('🟢 textInput trouvé:', textInput);
+    
     if (!textInput) return;
     
     const text = textInput.value.trim();
+    console.log('🟢 Texte récupéré:', text);
+    
     if (text) {
+        console.log('🟢 Appel sendHostTranslation avec:', text);
         sendHostTranslation(text);
         textInput.value = '';
         hideTextInput();
+    } else {
+        console.log('🔴 Texte vide !');
     }
 }
 
 function showParticipantTextInput() {
     console.log('📝 Affichage mode texte participant');
+    const participantTextInput = document.getElementById('participant-text-input');
+    
     if (participantTextInput) {
         participantTextInput.classList.add('show');
         
         const textInput = document.getElementById('participant-text');
         if (textInput) {
-            setTimeout(() => textInput.focus(), 300);
+            setTimeout(() => {
+                try {
+                    textInput.focus();
+                } catch (e) {
+                    console.log('Focus interrompu par extension, pas grave');
+                }
+            }, 300);
         }
         
         animateElement(participantTextInput, 'slideInUp');
         console.log('✅ Mode texte participant activé');
+    } else {
+        console.log('❌ Élément participant-text-input introuvable');
     }
 }
 
 function hideParticipantTextInput() {
     console.log('📝 Masquage mode texte participant');
+    const participantTextInput = document.getElementById('participant-text-input');
     if (participantTextInput) {
         participantTextInput.classList.remove('show');
         animateElement(participantTextInput, 'fadeOut');
@@ -1169,14 +1483,23 @@ function hideParticipantTextInput() {
 }
 
 function sendParticipantText() {
+    console.log('🟢 sendParticipantText() appelée');
+    
     const textInput = document.getElementById('participant-text');
+    console.log('🟢 textInput trouvé:', textInput);
+    
     if (!textInput) return;
     
     const text = textInput.value.trim();
+    console.log('🟢 Texte récupéré:', text);
+    
     if (text) {
+        console.log('🟢 Appel sendParticipantTranslation avec:', text);
         sendParticipantTranslation(text);
         textInput.value = '';
         hideParticipantTextInput();
+    } else {
+        console.log('🔴 Texte vide !');
     }
 }
 
@@ -1184,30 +1507,37 @@ function sendParticipantText() {
    MISES À JOUR TEMPS RÉEL - FINALISÉES
 ======================================== */
 function startRealTimeUpdates() {
+    // CORRECTION : Éviter les intervals multiples
+    if (updateInterval) {
+        clearInterval(updateInterval);
+        updateInterval = null;
+    }
+    
     updateInterval = setInterval(() => {
         const url = `/api/room/${userData.room_id}/updates?user_id=${userData.user_id}`;
         
         makeApiRequest(url)
-            .then(data => {
-                if (data.success) {
-                    reconnectAttempts = 0;
-                    updateConnectionStatus(true);
-                    processRoomUpdates(data);
-                    
-                    // Émettre événement de mise à jour
-                    emitEvent('room:updated', data);
-                }
-            })
-            .catch(error => {
-                console.error('❌ Erreur mise à jour:', error);
-                reconnectAttempts++;
-                updateConnectionStatus(false);
-                
-                // Notification après plusieurs échecs
-                if (reconnectAttempts >= 3) {
-                    notifyWarning('Problème de connexion détecté');
-                }
-            });
+    .then(data => {
+        if (data.success) {
+            reconnectAttempts = 0;
+            updateConnectionStatus(true);
+            
+            processRoomUpdates(data);
+            
+            // Émettre événement de mise à jour
+            emitEvent('room:updated', data);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Erreur mise à jour:', error);
+        reconnectAttempts++;
+        updateConnectionStatus(false);
+        
+        // Notification après plusieurs échecs
+        if (reconnectAttempts >= 3) {
+            notifyWarning('Problème de connexion détecté');
+        }
+    });
         
         // Recharger les infos de salle périodiquement
         if (Date.now() % 20000 < 3000) {
@@ -1219,33 +1549,71 @@ function startRealTimeUpdates() {
 }
 
 function processRoomUpdates(data) {
+    const actualData = data.data || data;
+    
     if (isHost) {
-        // Interface hôte : afficher les réponses des participants
-        if (data.original && !data.show_translation) {
-            if (hostResponsesText) {
-                hostResponsesText.textContent = data.original;
-                hostResponsesText.classList.remove('empty-translation');
-                animateElement(hostResponsesText, 'pulse');
-            }
-        }
+        // Interface hôte : afficher SEULEMENT les réponses des participants
+        if (actualData.original && !actualData.show_translation) {
+            
+            // 🔧 NOUVELLE LOGIQUE : Utiliser les vraies données du serveur
+            const isMyMessage = actualData.sender_id === userData.user_id;
+            
+            console.log('🔍 DEBUG - actualData.sender_id:', actualData.sender_id);
+            console.log('🔍 DEBUG - userData.user_id:', userData.user_id);
+            console.log('🔍 DEBUG - isMyMessage:', isMyMessage);
+            
+            if (!isMyMessage) {
+             // Ce n'est PAS mon message → C'est un participant qui répond
+             console.log('👤 Message d\'un participant, affichage dans Participant responses');
+             const hostResponsesText = document.getElementById('host-responses-text');
+             if (hostResponsesText) {
+                 hostResponsesText.textContent = actualData.original;
+                 hostResponsesText.classList.remove('empty-translation');
+                 animateElement(hostResponsesText, 'pulse');
+             }
+             
+             // 🆕 NOUVEAU : Mettre à jour le label dynamiquement
+             updateParticipantResponseLabel(actualData.sender_id);
+             
+         } else {
+             // C'est MON message → Ignorer (déjà affiché dans "What you say")
+             console.log('👑 Mon propre message, ignoré (déjà dans What you say)');
+         }
+         }  
     } else {
         // Interface participant : afficher les messages de l'hôte traduits
-        if (data.original && data.show_translation) {
+        if (actualData.original && actualData.show_translation) {
+            const participantOriginalText = document.getElementById('participant-original-text');
             if (participantOriginalText) {
-                participantOriginalText.textContent = data.original;
+                participantOriginalText.textContent = actualData.original;
                 participantOriginalText.classList.remove('empty-translation');
             }
             
-            if (data.translated && participantTranslatedText) {
-                participantTranslatedText.textContent = data.translated;
+            const participantTranslatedText = document.getElementById('participant-translated-text');
+            if (actualData.translated && participantTranslatedText) {
+                participantTranslatedText.textContent = actualData.translated;
                 participantTranslatedText.classList.remove('empty-translation');
                 animateElement(participantTranslatedText, 'pulse');
                 
                 // Synthèse vocale avec ID unique pour éviter les répétitions
-                if (data.enable_speech) {
-                    const translationId = `${data.timestamp}_${data.translated.substring(0, 20)}`;
-                    console.log('🎵 Lecture traduction:', data.translated.substring(0, 30) + '...');
-                    speakText(data.translated, userData.language, translationId);
+                if (actualData.enable_speech) {
+                    const translationId = `${actualData.timestamp}_${actualData.translated.substring(0, 20)}`;
+                    console.log('🎵 Lecture traduction:', actualData.translated.substring(0, 30) + '...');
+                    speakText(actualData.translated, userData.language, translationId);
+                }
+            }
+        }
+        
+        // Affichage des propres messages du participant
+        if (actualData.show_own_message) {
+            const participantOwnText = document.getElementById('participant-own-text');
+            const participantMessageArea = document.getElementById('participant-message-area');
+            
+            if (participantOwnText && actualData.original) {
+                participantOwnText.textContent = actualData.original;
+                if (participantMessageArea) {
+                    participantMessageArea.style.display = 'block';
+                    animateElement(participantMessageArea, 'slideInUp');
                 }
             }
         }
@@ -1273,34 +1641,49 @@ function startHeartbeat() {
 ======================================== */
 function setupButtonListeners() {
     console.log('🔧 Configuration des événements boutons...');
-    
-    // Debouncing pour éviter les clics multiples
-    const debouncedToggleHost = debounce(toggleHostListening, 300);
-    const debouncedToggleParticipant = debounce(toggleParticipantListening, 300);
-    
-    // Boutons hôte
-    addEventListenerOnce(micButton, 'click', debouncedToggleHost);
-    addEventListenerOnce(textModeButton, 'click', showTextInput);
-    
-    // Boutons participant
-    addEventListenerOnce(participantMicButton, 'click', debouncedToggleParticipant);
-    addEventListenerOnce(participantTextButton, 'click', showParticipantTextInput);
-    
-    console.log('✅ Événements boutons configurés');
-}
 
-function addEventListenerOnce(element, event, handler) {
-    if (element && !element.hasAttribute('data-listener')) {
-        element.addEventListener(event, handler);
-        element.setAttribute('data-listener', 'true');
-    }
+    // CORRECTION TIMING : Récupérer les boutons au bon moment
+   let micBtn = null;
+   let textBtn = null; 
+   let partMicBtn = null;
+   let partTextBtn = null;
+   
+   // Debouncing pour éviter les clics multiples
+   const debouncedToggleHost = debounce(toggleHostListening, 300);
+   const debouncedToggleParticipant = debounce(toggleParticipantListening, 300);
+   
+   // Attendre que l'interface soit affichée puis récupérer les boutons
+   setTimeout(() => {
+       micBtn = document.getElementById('mic-button');
+       textBtn = document.getElementById('text-mode-button');
+       partMicBtn = document.getElementById('participant-mic-button');
+       partTextBtn = document.getElementById('participant-text-button');
+       
+       // DEBUG pour voir si c'est corrigé
+       console.log('🔍 NOUVEAU DEBUG micBtn:', micBtn);
+       console.log('🔍 NOUVEAU DEBUG partMicBtn:', partMicBtn);
+       
+       // MAINTENANT ajouter les événements (à l'intérieur du setTimeout !)
+       if (micBtn) micBtn.addEventListener('click', debouncedToggleHost);
+       if (textBtn) textBtn.addEventListener('click', showTextInput);
+       
+       // Boutons participant  
+       if (partMicBtn) partMicBtn.addEventListener('click', debouncedToggleParticipant);
+       if (partTextBtn) partTextBtn.addEventListener('click', showParticipantTextInput);
+       
+       console.log('✅ Événements boutons configurés');
+   }, 500);
 }
-
 function updateQRCode() {
+    console.log('🔍 updateQRCode() appelée');
+    console.log('🔍 qrCodeImage:', qrCodeImage);
+    console.log('🔍 userData:', userData);
+    console.log('🔍 userData.room_id:', userData.room_id);
     if (!qrCodeImage) return;
     
-    const roomUrl = `${window.location.origin}/room/${userData.room_id}?auto_join=true`;
-    qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}&t=${Date.now()}`;
+    const roomUrl = `${window.location.origin}/?auto_join=true&room_id=${userData.room_id}`;
+    // SUPPRESSION du timestamp qui causait les rechargements
+    qrCodeImage.src = `/qrcode?url=${encodeURIComponent(roomUrl)}`;
     
     qrCodeImage.onerror = function() {
         console.warn('⚠️ Erreur chargement QR code');
@@ -1373,8 +1756,8 @@ function cleanup() {
    FONCTIONS D'AIDE - FINALISÉES
 ======================================== */
 function getTranslation(key, defaultValue = null) {
-    if (window.getTranslation && window.interfaceLanguage) {
-        return window.getTranslation(key, window.interfaceLanguage);
+    if (window.TRADLIVE_TRANSLATIONS && window.interfaceLanguage) {
+        return window.TRADLIVE_TRANSLATIONS[window.interfaceLanguage][key] || defaultValue || key;
     }
     return defaultValue || key;
 }
@@ -1442,6 +1825,11 @@ function makeApiRequest(url, method = 'GET', data = null) {
 }
 
 function animateElement(element, animationType = 'fadeIn') {
+    // Si c'est une string, récupérer l'élément par ID
+    if (typeof element === 'string') {
+        element = document.getElementById(element);
+    }
+    
     if (!element) return;
     
     if (window.TradLive?.animations && window.TradLive.animations[animationType]) {
@@ -1456,6 +1844,11 @@ function animateElement(element, animationType = 'fadeIn') {
 }
 
 function showElement(element, addClass = false) {
+    // Si c'est une string, récupérer l'élément par ID
+    if (typeof element === 'string') {
+        element = document.getElementById(element);
+    }
+    
     if (element) {
         element.style.display = 'block';
         if (addClass && element.classList) {
@@ -1595,28 +1988,6 @@ window.addEventListener('beforeunload', function(e) {
     });
 });
 
-// Optimisation batterie pour mobile
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        console.log('📱 Page cachée, optimisation batterie');
-        // Réduire la fréquence des mises à jour
-        if (updateInterval) {
-            clearInterval(updateInterval);
-            updateInterval = setInterval(() => {
-                const requestData = { user_id: userData.user_id };
-                makeApiRequest(`/api/room/${userData.room_id}/heartbeat`, 'POST', requestData)
-                    .catch(() => console.warn('⚠️ Heartbeat failed while hidden'));
-            }, 10000);
-        }
-    } else {
-        console.log('📱 Page visible, restauration normale');
-        if (updateInterval) {
-            clearInterval(updateInterval);
-            startRealTimeUpdates();
-        }
-    }
-});
-
 /* ========================================
    INITIALISATION AUTOMATIQUE - FINALISÉE
 ======================================== */
@@ -1700,3 +2071,270 @@ setTimeout(() => {
     const score = Object.values(integrationCheck).filter(Boolean).length;
     console.log(`📊 Score d'intégration: ${score}/5 (${score >= 4 ? '✅ Excellent' : score >= 3 ? '⚠️ Bon' : '❌ Problème'})`);
 }, 1000);
+
+/* ========================================
+   🎵 MISSION 13 - DIAGNOSTIC VAGUES AUDIO
+======================================== */
+
+// Test pour voir si les vagues s'affichent
+function testWaveVisibility() {
+    console.log('🔍 TEST - Vérification des vagues...');
+    
+    const hostWave = document.getElementById('wave-animation');
+    const participantWave = document.getElementById('participant-wave');
+    
+    console.log('🎵 Vague hôte trouvée:', hostWave ? '✅' : '❌');
+    console.log('🎵 Vague participant trouvée:', participantWave ? '✅' : '❌');
+    
+    if (hostWave) {
+        console.log('🎵 Style vague hôte:', window.getComputedStyle(hostWave).display);
+    }
+    
+    if (participantWave) {
+        console.log('🎵 Style vague participant:', window.getComputedStyle(participantWave).display);
+    }
+}
+
+// Test pour forcer l'affichage des vagues pendant 3 secondes
+function testWaveAnimation() {
+    console.log('🎵 TEST - Forçage animation vagues pendant 3s...');
+    
+    const hostWave = document.getElementById('wave-animation');
+    const participantWave = document.getElementById('participant-wave');
+    
+    // Forcer l'affichage
+    if (hostWave) {
+        hostWave.style.display = 'flex';
+        hostWave.classList.add('active');
+    }
+    
+    if (participantWave) {
+        participantWave.style.display = 'flex';  
+        participantWave.classList.add('active');
+    }
+    
+    // Cacher après 3 secondes
+    setTimeout(() => {
+        if (hostWave) {
+            hostWave.style.display = 'none';
+            hostWave.classList.remove('active');
+        }
+        
+        if (participantWave) {
+            participantWave.style.display = 'none';
+            participantWave.classList.remove('active');
+        }
+        
+        console.log('🎵 Test terminé');
+    }, 3000);
+}
+
+// Ajouter les fonctions de test au window pour pouvoir les appeler
+window.testWaveVisibility = testWaveVisibility;
+window.testWaveAnimation = testWaveAnimation;
+
+/* ========================================
+   🎵 SYSTÈME VAGUES AUDIO TEMPS RÉEL
+======================================== */
+
+// Variables globales pour l'analyse audio
+let audioAnalyser = null;
+let audioDataArray = null;
+let waveAnimationFrame = null;
+let isWaveActive = false;
+
+// Initialiser l'analyseur audio
+function initAudioAnalyser(stream) {
+    try {
+        // Créer le contexte audio s'il n'existe pas déjà
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // Créer l'analyseur
+        audioAnalyser = audioContext.createAnalyser();
+        audioAnalyser.fftSize = 256;
+        audioAnalyser.smoothingTimeConstant = 0.8;
+        
+        // Connecter le microphone à l'analyseur
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(audioAnalyser);
+        
+        // Préparer le buffer de données
+        const bufferLength = audioAnalyser.frequencyBinCount;
+        audioDataArray = new Uint8Array(bufferLength);
+        
+        console.log('🎵 Analyseur audio initialisé');
+        return true;
+    } catch (error) {
+        console.error('❌ Erreur init analyseur audio:', error);
+        return false;
+    }
+}
+
+// Démarrer l'animation des vagues
+function startWaveAnimation(isHost = true) {
+    if (!audioAnalyser || !audioDataArray) {
+        console.warn('⚠️ Analyseur audio non initialisé');
+        return;
+    }
+    
+    isWaveActive = true;
+    const waveElement = isHost ? 
+        document.getElementById('wave-animation') : 
+        document.getElementById('participant-wave');
+    
+    if (!waveElement) {
+        console.warn('⚠️ Élément vague non trouvé');
+        return;
+    }
+    
+    // Afficher les vagues
+    waveElement.style.display = 'flex';
+    waveElement.classList.add('active');
+    
+    console.log('🎵 Animation vagues démarrée:', isHost ? 'HÔTE' : 'PARTICIPANT');
+    
+    // Démarrer la boucle d'animation
+    animateWaves(waveElement);
+}
+
+// Arrêter l'animation des vagues
+function stopWaveAnimation(isHost = true) {
+    isWaveActive = false;
+    
+    if (waveAnimationFrame) {
+        cancelAnimationFrame(waveAnimationFrame);
+        waveAnimationFrame = null;
+    }
+    
+    const waveElement = isHost ? 
+        document.getElementById('wave-animation') : 
+        document.getElementById('participant-wave');
+    
+    if (waveElement) {
+        waveElement.style.display = 'none';
+        waveElement.classList.remove('active');
+        
+        // Remettre les barres à leur taille par défaut
+        const bars = waveElement.querySelectorAll('.wave-bar');
+        bars.forEach(bar => {
+            bar.style.height = '10px';
+            bar.style.opacity = '0.5';
+        });
+    }
+    
+    console.log('🔇 Animation vagues arrêtée:', isHost ? 'HÔTE' : 'PARTICIPANT');
+}
+
+// Animer les vagues en temps réel - VERSION COMPACTE
+function animateWaves(waveElement) {
+    if (!isWaveActive || !audioAnalyser || !audioDataArray) {
+        return;
+    }
+    
+    // Obtenir les données audio
+    audioAnalyser.getByteFrequencyData(audioDataArray);
+    
+    // Calculer le niveau audio moyen
+    let sum = 0;
+    for (let i = 0; i < audioDataArray.length; i++) {
+        sum += audioDataArray[i];
+    }
+    const average = sum / audioDataArray.length;
+    
+    // Seuils de sensibilité
+    const baseLevel = 15;
+    const normalizedLevel = Math.max(0, Math.min(1, (average - baseLevel) / 30));
+    
+    // 🎯 DEBUG (optionnel - retire si trop de logs)
+    if (average > baseLevel) {
+        console.log(`🎵 Audio: ${Math.round(average)} | Normalisé: ${normalizedLevel.toFixed(2)}`);
+    }
+    
+    // Animer les barres avec les nouvelles classes CSS - VERSION COMPACTE
+    const bars = waveElement.querySelectorAll('.wave-bar');
+    bars.forEach((bar, index) => {
+        // Nettoyer les anciennes classes
+        bar.classList.remove('silence', 'low', 'medium', 'high');
+        
+        if (normalizedLevel > 0.02) {
+            // Calcul de la hauteur avec variation fluide - ADAPTÉE POUR CONTAINER 40px
+            const variation = Math.sin((Date.now() / 120) + (index * 0.8)) * 0.4 + 0.6;
+            const baseHeight = 8;  // Plus petit
+            const maxHeight = 28;  // Plus petit (était 55)
+            const height = Math.max(baseHeight, baseHeight + (normalizedLevel * maxHeight * variation));
+            
+            // Animation fluide de la hauteur
+            bar.style.height = `${height}px`;
+            bar.style.transition = 'height 0.08s ease-out';
+            
+            // Classes selon l'intensité (couleurs automatiques via CSS)
+            if (normalizedLevel > 0.6) {
+                bar.classList.add('high');
+            } else if (normalizedLevel > 0.25) {
+                bar.classList.add('medium');
+            } else if (normalizedLevel > 0.08) {
+                bar.classList.add('low');
+            } else {
+                bar.classList.add('silence');
+            }
+        } else {
+            // Silence - état de base compact
+            bar.style.height = '8px';
+            bar.style.transition = 'height 0.2s ease-out';
+            bar.classList.add('silence');
+        }
+    });
+    
+    // Continuer l'animation
+    waveAnimationFrame = requestAnimationFrame(() => animateWaves(waveElement));
+}
+
+// Test manuel des vagues avec micro
+function testRealWaves() {
+    console.log('🎵 TEST - Vagues avec micro réel...');
+    
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            if (initAudioAnalyser(stream)) {
+                startWaveAnimation(true);
+                
+                console.log('🎵 Test en cours... Parlez dans le micro !');
+                
+                // Arrêter après 10 secondes
+                setTimeout(() => {
+                    stopWaveAnimation(true);
+                    stream.getTracks().forEach(track => track.stop());
+                    console.log('🎵 Test terminé');
+                }, 10000);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erreur accès micro pour test:', error);
+        });
+}
+
+// Ajouter la fonction de test au window
+window.testRealWaves = testRealWaves;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

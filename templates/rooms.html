@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,12 +14,14 @@
         }
         
         .rooms-container {
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            width: 90%;
+            padding-top: 20px;
         }
         
         .back-link {
@@ -35,6 +37,7 @@
             transition: all var(--transition-normal);
             border: 1px solid var(--white-30);
             font-weight: 500;
+            z-index: 1000;
         }
         
         .back-link:hover {
@@ -284,80 +287,223 @@
                 transform: translateY(0);
             }
         }
+
+        /* Système de tooltips modernes */
+        .tooltip-trigger {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-left: 8px;
+        }
+
+        /* Container pour label + tooltip alignés horizontalement */
+        .label-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .label-container label {
+            margin: 0;
+            margin-right: 8px;
+        }
+        
+        .label-container .tooltip-trigger {
+            margin-left: 0;
+        }
+        
+        .help-icon {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: help;
+            transition: all 0.2s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+        
+        .help-icon:hover {
+            background: linear-gradient(135deg, #1976D2, #1565C0);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.5);
+        }
+        
+        .tooltip {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+        }
+        
+        .help-icon:hover + .tooltip,
+        .tooltip-trigger:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+            top: -50px;
+        }
+        
+        /* Container pour tab + tooltip */
+        .tab-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .tab-container .tooltip-trigger {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            margin-left: 0;
+            z-index: 10;
+        }
+        
+        .tab-container .help-icon {
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+            overflow: visible !important;  ← AJOUTE CETTE LIGNE
+             margin-top: 30px;
+            width: 100%;           /* AJOUTE cette ligne */
+        }
+        
+        .tab {
+            flex: 1;               /* AJOUTE cette ligne - chaque bouton prend 50% */
+            width: 100%;            /* AJOUTE cette ligne */
+                }
+
+        .tab-container {
+    flex: 1;
+    display: flex;
+    position: relative;
+}
+        
+        .logo-container {
+            margin-bottom: -50px;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 350px;
+            height: auto;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .language-info {
+    margin-bottom: 40px;
+    text-align: center;
+}
+
     </style>
 </head>
 <body>
     <a href="/" class="back-link" data-translate="back_button">← Retour à l'accueil</a>
     
     <div class="container rooms-container">
-        <div class="page-header">
-            <h1 data-translate="page_heading">🌍 TradLive - Traduction Multi-utilisateurs</h1>
-            <div class="language-indicator">
-                <span data-translate="selected_language">Langue sélectionnée :</span>
-                <strong id="current-language">Français</strong>
-            </div>
+        <!-- Logo header -->
+        <div class="logo-container">
+            <img src="/static/images/Tradlive.png" alt="Tradlive" class="logo">
         </div>
         
+      <!-- Langue sélectionnée -->
+        <div class="language-info">
+            <span data-translate="selected_language">Langue sélectionnée :</span>
+            <strong id="current-language">Français</strong>
+        </div>  
+                
         <!-- Notice pour auto-join depuis QR code -->
         <div id="auto-join-notice" class="auto-join-notice">
             <span data-translate="auto_join_notice">✅ Code de salle détecté ! Remplissez vos informations pour rejoindre automatiquement.</span>
         </div>
-        
-        <div class="instructions-card">
-            <h3 data-translate="how_it_works">💡 Comment ça marche ?</h3>
-            <ul class="instructions-list">
-                <li data-translate="instruction_1">Choisissez votre langue ci-dessus</li>
-                <li data-translate="instruction_2">Créez une salle ou rejoignez-en une existante</li>
-                <li data-translate="instruction_3">Parlez dans votre langue, tout le monde comprend !</li>
-                <li data-translate="instruction_4">Jusqu'à 10 personnes peuvent participer simultanément</li>
-            </ul>
-        </div>
-        
+
         <div class="main-tabs">
             <div class="tabs">
-                <button class="tab active" onclick="showTab('create')" data-translate="create_tab">Créer une salle</button>
-                <button class="tab" onclick="showTab('join')" data-translate="join_tab">Rejoindre une salle</button>
+                <div class="tab-container">
+                    <button class="tab active" onclick="showTab('create')" data-translate="create_tab">Créer une salle</button>
+                    <span class="tooltip-trigger">
+                        <div class="help-icon">?</div>
+                        <div class="tooltip" data-translate="tooltip_create_host">Vous serez l'hôte de la conversation</div>
+                    </span>
+                </div>
+                <div class="tab-container">
+                    <button class="tab" onclick="showTab('join')" data-translate="join_tab">Rejoindre une salle</button>
+                    <span class="tooltip-trigger">
+                        <div class="help-icon">?</div>
+                        <div class="tooltip" data-translate="tooltip_join_guest">Vous participerez à une conversation existante</div>
+                    </span>
+                </div>
             </div>
+
             
             <!-- Onglet Créer une salle -->
             <div id="create-tab" class="tab-content active">
                 <form id="create-form">
                     <div class="form-group">
-                        <label for="create-nickname" data-translate="your_nickname">Votre pseudo</label>
+                        <div class="label-container">
+                            <label for="create-nickname" data-translate="your_nickname">Votre pseudo</label>
+                            <span class="tooltip-trigger">
+                                <div class="help-icon">?</div>
+                                <div class="tooltip" data-translate="tooltip_nickname">Tapez votre prénom pour vous identifier</div>
+                            </span>
+                        </div>
                         <input type="text" id="create-nickname" data-translate-placeholder="nickname_placeholder" placeholder="Ex: Marie" required>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="create-language" data-translate="your_language">Votre langue</label>
-                        <select id="create-language" required>
-                            <option value="fr" data-translate="lang_french">Français</option>
-                            <option value="en" data-translate="lang_english">English</option>
-                            <option value="es" data-translate="lang_spanish">Español</option>
-                            <option value="de" data-translate="lang_german">Deutsch</option>
-                            <option value="it" data-translate="lang_italian">Italiano</option>
-                            <option value="pt" data-translate="lang_portuguese">Português</option>
-                            <option value="ru" data-translate="lang_russian">Русский</option>
-                            <option value="zh-CN" data-translate="lang_chinese">中文</option>
-                            <option value="ja" data-translate="lang_japanese">日本語</option>
-                            <option value="ar" data-translate="lang_arabic">العربية</option>
-                            <option value="uk" data-translate="lang_ukrainian">Українська</option>
-                            <option value="fa" data-translate="lang_persian">فارسی</option>
-                            <option value="hi" data-translate="lang_hindi">हिन्दी</option>
-                            <option value="bn" data-translate="lang_bengali">বাংলা</option>
-                            <option value="te" data-translate="lang_telugu">తెలుగు</option>
-                            <option value="mr" data-translate="lang_marathi">मराठी</option>
-                        </select>
-                    </div>
                     
-                    <div class="form-group">
+                <div class="form-group">
+                    <div class="label-container">
                         <label for="room-name" data-translate="room_name">Nom de la salle</label>
-                        <input type="text" id="room-name" data-translate-placeholder="room_name_placeholder" placeholder="Ex: Réunion équipe, Cours d'anglais..." required>
+                        <span class="tooltip-trigger">
+                            <div class="help-icon">?</div>
+                            <div class="tooltip" data-translate="tooltip_room_name">Nommez votre salle (ex: Réunion équipe, Cours d'anglais)</div>
+                        </span>
                     </div>
+                    <input type="text" id="room-name" data-translate-placeholder="room_name_placeholder" placeholder="Ex: Réunion équipe, Cours d'anglais..." required>
+                </div>
                     
-                    <div class="form-group">
+                <div class="form-group">
+                    <div class="label-container">
                         <label for="room-password" data-translate="room_password">Mot de passe (optionnel)</label>
-                        <input type="password" id="room-password" data-translate-placeholder="password_placeholder" placeholder="Laissez vide pour aucun mot de passe">
+                        <span class="tooltip-trigger">
+                            <div class="help-icon">?</div>
+                            <div class="tooltip" data-translate="tooltip_password_create">Protégez votre salle avec un mot de passe (facultatif)</div>
+                        </span>
                     </div>
+                    <input type="password" id="room-password" data-translate-placeholder="password_placeholder" placeholder="Laissez vide pour aucun mot de passe">
+                </div>
                     
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-large" id="create-btn" data-translate="create_button">🎉 Créer la salle</button>
@@ -369,41 +515,39 @@
             <div id="join-tab" class="tab-content">
                 <form id="join-form">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="join-room-id" data-translate="room_code">Code de la salle</label>
-                            <input type="text" id="join-room-id" data-translate-placeholder="room_code_placeholder" placeholder="Ex: 1234" required maxlength="4" pattern="[0-9]{4}">
-                        </div>
+                <div class="form-group">
+                    <div class="label-container">
+                        <label for="join-room-id" data-translate="room_code">Code de la salle</label>
+                        <span class="tooltip-trigger">
+                            <div class="help-icon">?</div>
+                            <div class="tooltip" data-translate="tooltip_room_code">Saisissez le code à 4 chiffres fourni par l'hôte</div>
+                        </span>
+                    </div>
+                    <input type="text" id="join-room-id" data-translate-placeholder="room_code_placeholder" placeholder="Ex: 1234" required maxlength="4" pattern="[0-9]{4}">
+                </div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="join-nickname" data-translate="your_nickname">Votre pseudo</label>
+                        <div class="label-container">
+                            <label for="join-nickname" data-translate="your_nickname">Votre pseudo</label>
+                            <span class="tooltip-trigger">
+                                <div class="help-icon">?</div>
+                                <div class="tooltip" data-translate="tooltip_nickname">Tapez votre prénom pour vous identifier</div>
+                            </span>
+                        </div>
                         <input type="text" id="join-nickname" data-translate-placeholder="nickname_placeholder" placeholder="Ex: Pierre" required>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="join-language" data-translate="your_language">Votre langue</label>
-                        <select id="join-language" required>
-                            <option value="fr" data-translate="lang_french">Français</option>
-                            <option value="en" data-translate="lang_english">English</option>
-                            <option value="es" data-translate="lang_spanish">Español</option>
-                            <option value="de" data-translate="lang_german">Deutsch</option>
-                            <option value="it" data-translate="lang_italian">Italiano</option>
-                            <option value="pt" data-translate="lang_portuguese">Português</option>
-                            <option value="ru" data-translate="lang_russian">Русский</option>
-                            <option value="zh-CN" data-translate="lang_chinese">中文</option>
-                            <option value="ja" data-translate="lang_japanese">日本語</option>
-                            <option value="ar" data-translate="lang_arabic">العربية</option>
-                            <option value="uk" data-translate="lang_ukrainian">Українська</option>
-                            <option value="fa" data-translate="lang_persian">فارسی</option>
-                            <option value="hi" data-translate="lang_hindi">हिन्दी</option>
-                            <option value="bn" data-translate="lang_bengali">বাংলা</option>
-                            <option value="te" data-translate="lang_telugu">తెలుగు</option>
-                            <option value="mr" data-translate="lang_marathi">मराठी</option>
-                        </select>
-                    </div>
+                    
                     
                     <div class="form-group">
-                        <label for="join-password" data-translate="room_password_if_required">Mot de passe (si requis)</label>
+                        <div class="label-container">
+                            <label for="join-password" data-translate="room_password_if_required">Mot de passe (si requis)</label>
+                            <span class="tooltip-trigger">
+                                <div class="help-icon">?</div>
+                                <div class="tooltip" data-translate="tooltip_password_join">Rentrez le mot de passe fourni par l'hôte</div>
+                            </span>
+                        </div>
                         <input type="password" id="join-password" data-translate-placeholder="password_if_required_placeholder" placeholder="Laissez vide si aucun mot de passe">
                     </div>
                     
@@ -436,10 +580,16 @@
                 tab.classList.remove('active');
             });
             
-            // Activer l'onglet et le contenu sélectionnés avec animation
+            // Activer l'onglet et le contenu sélectionnés
             setTimeout(() => {
                 document.getElementById(tabName + '-tab').classList.add('active');
-                event.target.classList.add('active');
+                // Trouver le bon onglet à activer
+                const tabs = document.querySelectorAll('.tab');
+                if (tabName === 'create') {
+                    tabs[0].classList.add('active');
+                } else {
+                    tabs[1].classList.add('active');
+                }
             }, 150);
         }
 
@@ -487,13 +637,24 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🏠 Page des salles chargée');
             
-            // Récupérer et afficher la langue d'interface
-            currentLanguage = window.TradLive?.storage ? 
-                window.TradLive.storage.get('tradlive_language', 'fr') : 
-                localStorage.getItem('tradlive_language') || 'fr';
+        // Récupérer et afficher la langue d'interface
+         currentLanguage = window.TradLive?.storage ? 
+            window.TradLive.storage.get('tradlive_language', 'fr') : 
+            localStorage.getItem('tradlive_language') || 'fr';
+        
+        // CORRECTION QR CODE : Forcer une langue par défaut si undefined
+        if (!currentLanguage || currentLanguage === 'null') {
+            currentLanguage = 'fr';
+            console.log('🔧 currentLanguage forcé à fr');
+        }
+
+        console.log('🌍 currentLanguage final:', currentLanguage);
             
             // Appliquer les traductions
             applyTranslations(currentLanguage);
+
+            // Changer la langue du document pour les messages HTML5
+            document.documentElement.lang = currentLanguage;
             
             // Afficher la langue actuelle
             const currentLangDisplay = document.getElementById('current-language');
@@ -504,33 +665,113 @@
                 currentLangDisplay.textContent = getLanguageName(currentLanguage);
             }
             
-            // Pré-sélectionner la langue dans les selects
-            document.getElementById('create-language').value = currentLanguage;
-            document.getElementById('join-language').value = currentLanguage;
             
-            // Vérifier s'il y a un paramètre join dans l'URL (depuis QR code)
-            const urlParams = new URLSearchParams(window.location.search);
-            const joinRoomId = urlParams.get('join');
-            
-            if (joinRoomId) {
-                // Afficher la notice d'auto-join
-                document.getElementById('auto-join-notice').classList.add('show');
-                
-                // Pré-remplir le code de salle et basculer sur l'onglet Rejoindre
-                document.getElementById('join-room-id').value = joinRoomId;
-                showTab('join');
-                
-                // Mettre l'onglet rejoindre comme actif
-                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-                document.querySelector('.tab[onclick*="join"]').classList.add('active');
-                
-                // Mettre le focus sur le champ pseudo
-                setTimeout(() => {
-                    document.getElementById('join-nickname').focus();
-                }, 500);
-            }
-        });
+            // Vérifier localStorage pour auto-join (depuis QR code)
+            const pendingJoin = localStorage.getItem('pending_auto_join');
+            if (pendingJoin) {
+                const data = JSON.parse(pendingJoin);
+                if (data.auto_join && data.room_id) {
+                    // Afficher la notice d'auto-join
+                    document.getElementById('auto-join-notice').classList.add('show');
+                    
+                    // Pré-remplir le code de salle et basculer sur l'onglet Rejoindre
+                    document.getElementById('join-room-id').value = data.room_id;
+                    showTab('join');
 
+                    // Forcer traduction de la bulle pseudo spécifiquement
+                    setTimeout(() => {
+                        const savedLanguage = window.TradLive?.storage ? 
+                            window.TradLive.storage.get('tradlive_language', 'fr') : 
+                            localStorage.getItem('tradlive_language') || 'fr';
+                        
+                        console.log('🔍 DEBUG - Langue:', savedLanguage);
+                        
+                        // Trouver TOUTES les bulles tooltip_nickname
+                        const allNicknameTooltips = document.querySelectorAll('[data-translate="tooltip_nickname"]');
+                        console.log('📊 Nombre de bulles nickname trouvées:', allNicknameTooltips.length);
+                        
+                        allNicknameTooltips.forEach((tooltip, index) => {
+                            console.log(`🔍 Bulle ${index}:`, tooltip.textContent, tooltip.parentElement);
+                            
+                            // Forcer la traduction sur chaque bulle
+                            if (TRADLIVE_TRANSLATIONS[savedLanguage]) {
+                                tooltip.textContent = TRADLIVE_TRANSLATIONS[savedLanguage]['tooltip_nickname'];
+                                console.log(`✅ Bulle ${index} traduite !`);
+                            }
+                        });
+                    }, 1000);
+                                            
+                    // 🎯 SOLUTION PARFAITE - Ton ancien code + variable corrigée
+                    // ✅ DÉCLARATION DES VARIABLES (ça manquait avant !)
+                    const createTabContainer = document.querySelector('.tab-container:first-child');
+                    const createTabContent = document.getElementById('create-tab');
+                    
+                    // 🔥 TON ANCIEN CODE QUI MARCHAIT POUR CACHER LE BOUTON
+                    if (createTabContainer) {
+                        createTabContainer.style.display = 'none';
+                    }
+                    
+                    // Cacher aussi le contenu de l'onglet
+                    if (createTabContent) {
+                        createTabContent.style.display = 'none';
+                    }
+                    
+                    // NOUVEAU - Masquer le tooltip "Rejoindre" avec debug
+                    function hideJoinTooltip() {
+                        console.log('🔍 Masquage renforcé tooltip Rejoindre...');
+                        
+                        const joinButton = document.querySelector('button[onclick*="join"]');
+                        
+                        if (joinButton) {
+                            const tabContainer = joinButton.closest('.tab-container');
+                            
+                            if (tabContainer) {
+                                const tooltip = tabContainer.querySelector('.tooltip-trigger');
+                                if (tooltip) {
+                                    // Masquage ultra-renforcé
+                                    tooltip.style.display = 'none !important';
+                                    tooltip.style.visibility = 'hidden !important';
+                                    tooltip.style.opacity = '0 !important';
+                                    tooltip.style.width = '0 !important';
+                                    tooltip.style.height = '0 !important';
+                                    tooltip.style.overflow = 'hidden !important';
+                                    
+                                    console.log('✅ Tooltip masqué avec force !');
+                                    return true;
+                                }
+                            }
+                        }
+                        
+                        console.log('❌ Échec masquage');
+                        return false;
+                    }
+                            
+                    // Essayer plusieurs fois avec délais croissants
+                    setTimeout(() => hideJoinTooltip(), 200);
+                    setTimeout(() => hideJoinTooltip(), 500);
+                    setTimeout(() => hideJoinTooltip(), 1000);
+                    setTimeout(() => hideJoinTooltip(), 2000);
+                    
+                    // Optionnel : Changer le titre pour être plus clair
+                    const pageHeading = document.querySelector('[data-translate="page_heading"]');
+                    if (pageHeading) {
+                        pageHeading.textContent = '🔗 Rejoindre la salle';
+                    }
+                    
+                    // Mettre l'onglet rejoindre comme actif
+                    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                    const joinTab = document.querySelector('.tab[onclick*="join"]');
+                    if (joinTab) {
+                        joinTab.classList.add('active');
+                    }
+                    
+                    // Mettre le focus sur le champ pseudo
+                    setTimeout(() => {
+                        document.getElementById('join-nickname').focus();
+                    }, 500);
+                }
+            }
+            
         // Fonction utilitaire pour obtenir le nom de la langue
         function getLanguageName(langCode) {
             const names = {
@@ -551,14 +792,14 @@
             
             const data = {
                 nickname: document.getElementById('create-nickname').value.trim(),
-                language: document.getElementById('create-language').value,
+                language: currentLanguage,
                 room_name: document.getElementById('room-name').value.trim(),
                 password: document.getElementById('room-password').value.trim() || null
             };
             
             // Validation côté client
             if (!data.nickname || !data.room_name) {
-                showStatus('Veuillez remplir tous les champs requis', 'error');
+                showStatus(getTranslation('fill_required_fields', currentLanguage), 'error');
                 setButtonLoading('create-btn', false);
                 return;
             }
@@ -581,9 +822,9 @@
                         const successMessage = document.createElement('div');
                         successMessage.innerHTML = `
                             <div style="text-align: center;">
-                                <h3 style="margin: 0 0 15px 0;">🎉 Salle créée avec succès !</h3>
+                                <h3 style="margin: 0 0 15px 0;">${getTranslation('room_created_success', currentLanguage)}</h3>
                                 <div class="room-code-display">${data.room_id}</div>
-                                <p style="margin: 15px 0 0 0; opacity: 0.9;">Redirection en cours...</p>
+                                <p style="margin: 15px 0 0 0; opacity: 0.9;">${getTranslation('redirecting', currentLanguage)}</p>
                             </div>
                         `;
                         
@@ -598,7 +839,7 @@
                             user_id: data.user_id,
                             room_id: data.room_id,
                             nickname: document.getElementById('create-nickname').value,
-                            language: document.getElementById('create-language').value
+                            language: currentLanguage
                         };
                         
                         if (window.TradLive?.storage) {
@@ -640,19 +881,19 @@
             const data = {
                 room_id: document.getElementById('join-room-id').value.trim(),
                 nickname: document.getElementById('join-nickname').value.trim(),
-                language: document.getElementById('join-language').value,
+                language: currentLanguage,
                 password: document.getElementById('join-password').value.trim() || null
             };
             
             // Validation côté client
             if (!data.room_id || !data.nickname) {
-                showStatus('Veuillez remplir tous les champs requis', 'error');
+                showStatus(getTranslation('fill_required_fields', currentLanguage), 'error');
                 setButtonLoading('join-btn', false);
                 return;
             }
             
             if (!/^\d{4}$/.test(data.room_id)) {
-                showStatus('Le code de salle doit contenir 4 chiffres', 'error');
+                showStatus(getTranslation('room_code_4_digits', currentLanguage), 'error');
                 setButtonLoading('join-btn', false);
                 return;
             }
@@ -671,14 +912,14 @@
                     const data = result.data || result;
                     
                     if (data.success) {
-                        showStatus('✅ Connexion réussie ! Redirection...', 'success');
+                        showStatus(getTranslation('connection_success', currentLanguage), 'success');
                         
                         // Sauvegarder les informations dans le localStorage
                         const userData = {
                             user_id: data.user_id,
                             room_id: data.room_id,
                             nickname: document.getElementById('join-nickname').value,
-                            language: document.getElementById('join-language').value
+                            language: currentLanguage
                         };
                         
                         if (window.TradLive?.storage) {
@@ -739,6 +980,45 @@
                 }, 200);
             });
         });
-    </script>
+
+        // Fonction pour personnaliser les messages de validation
+                function setupCustomValidation() {
+                    console.log('🔧 Setup validation custom...');
+                    const inputs = document.querySelectorAll('input[required]');
+                    console.log('📊 Inputs trouvés:', inputs.length);
+                    
+                    inputs.forEach(input => {
+                        input.addEventListener('invalid', function(e) {
+                            console.log('❌ Validation échouée sur:', input.id);
+                            //e.preventDefault();
+                            
+                            let message = getTranslation('validation_required', currentLanguage);
+                            console.log('💬 Message:', message);
+                            
+                            if (input.id.includes('nickname')) {
+                                message = getTranslation('validation_nickname', currentLanguage);
+                            } else if (input.id.includes('room-name')) {
+                                message = getTranslation('validation_room_name', currentLanguage);
+                            } else if (input.id.includes('room-id')) {
+                                message = getTranslation('validation_room_code', currentLanguage);
+                            }
+                            
+                            if (input.validity.patternMismatch) {
+                                message = getTranslation('validation_pattern', currentLanguage);
+                            }
+                            
+                            console.log('✅ Message final:', message);
+                            input.setCustomValidity(message);
+                        });
+                        
+                        input.addEventListener('input', function() {
+                            input.setCustomValidity('');
+                        });
+                    });
+                }
+                
+                setupCustomValidation();
+            });
+</script>
 </body>
 </html>
